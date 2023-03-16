@@ -7,8 +7,5 @@ module.exports = (command, usage, prefix) => {
         return false;
     }
 
-    console.log(minArgs, maxArgs)
-    console.log(length)
-
     return true;
 }
