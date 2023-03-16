@@ -41,8 +41,9 @@ class CommandHandler {
             const commandObject = this.commands.get(commandName)
             if (!commandObject) return;
 
+            const text = args.join(' ')
             const { callback } = commandObject
-            callback({ message })
+            callback({ message, args, text })
         });
     }
 }
