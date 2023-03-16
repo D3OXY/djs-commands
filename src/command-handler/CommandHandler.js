@@ -7,14 +7,15 @@ class CommandHandler {
     // <CommandName, Instance of the Command class>
     commands = new Map()
 
-    constructor(commandDir, client) {
-        this.commandDir = commandDir
+    constructor(instance, commandDir, client) {
+        this._instance = instance
+        this._commandDir = commandDir
         this.readFiles()
         this.messageListener(client)
     }
 
     readFiles() {
-        const files = getAllFiles(this.commandDir)
+        const files = getAllFiles(this._commandDir)
         const validations = this.getValidations('syntax')
 
         for (const file of files) {
@@ -24,7 +25,7 @@ class CommandHandler {
             commandName = commandName.pop()
             commandName = commandName.split('.')[0]
 
-            const command = new Command(commandName, commandObject)
+            const command = new Command(this._instance, commandName, commandObject)
 
             for (const validation of validations) {
                 validation(command)
@@ -48,8 +49,7 @@ class CommandHandler {
             const command = this.commands.get(commandName)
             if (!command) return;
 
-            const text = args.join(' ')
-            const usage = { message, args, text }
+            const usage = { message, args, text: args.join(' '), guild: message.guild }
 
             for (const validation of validations) {
                 if (!validation(command, usage, prefix)) {
