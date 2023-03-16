@@ -7,9 +7,7 @@ class Command {
     }
 
     verifySyntax() {
-        if (!this.commandObject.callback) {
-            throw new Error(`Command "${this.commandName}" does not have a callback function.`)
-        }
+
     }
 
 
