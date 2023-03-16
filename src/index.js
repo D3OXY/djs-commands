@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const CommandHandler = require("./CommandHandler")
+const CommandHandler = require("./command-handler/CommandHandler")
 
 class Main {
     constructor({ client, mongoUri, commandDir }) {
