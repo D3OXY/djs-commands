@@ -1,3 +1,5 @@
+const { ApplicationCommandOptionType } = require('discord.js');
+
 class SlashCommands {
     constructor(client) {
         this._client = client
@@ -43,6 +45,34 @@ class SlashCommands {
         if (!existingCommand) return;
 
         await existingCommand.delete();
+    }
+
+    createOptions({ expectedArgs = '', minArgs = 0 }) {
+        const options = []
+
+
+        if (expectedArgs) {
+            const split = expectedArgs
+                //<num1> <num2>
+                .substring(1, expectedArgs.length - 1)
+                // num1> <num2
+                .split(/[>\]] [<\[]/)
+            // [ 'num1', 'num2' ]
+
+            for (let a = 0; a < split.length; ++a) {
+                const arg = split[a]
+
+                options.push({
+                    name: arg.toLowerCase().replace(/\s+/g, '-'),
+                    description: arg,
+                    type: ApplicationCommandOptionType.String,
+                    required: a < minArgs
+                })
+            }
+
+        }
+
+        return options;
     }
 }
 
