@@ -20,13 +20,35 @@ class SlashCommands {
         return commands;
     }
 
+    areOptionsDifferent(options, existingOptions) {
+        for (let a = 0; a < options.length; a++) {
+            const option = options[a]
+            const existing = existingOptions[a]
+
+            if (option.name !== existing.name || option.type !== existing.type || option.description !== existing.description) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     async create(name, description, options, guildId) {
         const commands = await this.getCommands(guildId)
 
         const existingCommand = commands.cache.find((cmd) => cmd.name === name)
 
         if (existingCommand) {
-            console.log(`Ignoring command ${name} because it already exists.`)
+            const { description: existingDescription, options: existingOptions } = existingCommand
+
+            if (description !== existingDescription || options.length !== existingOptions.length || this.areOptionsDifferent(options, existingOptions)) {
+                console.log(`Updating Command: ${name}`)
+
+                await commands.edit(existingCommand.id, {
+                    description,
+                    options
+                })
+            }
             return
         }
 
