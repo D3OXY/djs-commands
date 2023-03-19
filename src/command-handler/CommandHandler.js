@@ -15,13 +15,14 @@ class CommandHandler {
         this._instance = instance
         this._commandDir = commandDir
         this._SlashCommands = new SlashCommands(client)
+        this._client = client
 
         this.readFiles()
         this.messageListener(client)
         this.interactionListener(client)
     }
 
-    readFiles() {
+    async readFiles() {
         const files = getAllFiles(this._commandDir)
         const validations = this.getValidations('syntax')
 
@@ -41,6 +42,7 @@ class CommandHandler {
                 testOnly,
                 delete: del,
                 aliases = [],
+                init = () => { },
             } = commandObject
 
             if (del) {
@@ -64,6 +66,8 @@ class CommandHandler {
             for (const validation of validations) {
                 validation(command)
             }
+
+            await init(this._client, this._instance)
 
             const names = [command.commandName, ...aliases]
 
