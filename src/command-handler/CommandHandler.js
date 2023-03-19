@@ -39,7 +39,8 @@ class CommandHandler {
                 description,
                 type,
                 testOnly,
-                delete: del
+                delete: del,
+                aliases = [],
             } = commandObject
 
             if (del) {
@@ -64,7 +65,12 @@ class CommandHandler {
                 validation(command)
             }
 
-            this._commands.set(command.commandName, command)
+            const names = [command.commandName, ...aliases]
+
+            for (const name of names) {
+                this._commands.set(name, command)
+            }
+
 
             if (type === "SLASH" || type === "BOTH") {
                 const options = commandObject.options || this._SlashCommands.createOptions(commandObject)
