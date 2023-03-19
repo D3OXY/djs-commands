@@ -89,7 +89,15 @@ class CommandHandler {
 
         if (message && type === "SLASH") return;
 
-        const usage = { message, interaction, args, text: args.join(' '), guild: message ? message.guild : interaction.guild }
+        const usage = {
+            message,
+            interaction,
+            args,
+            text: args.join(' '),
+            guild: message ? message.guild : interaction.guild,
+            member: message ? message.member : interaction.member,
+            user: message ? message.author : interaction.user
+        }
 
         for (const validation of this._validations) {
             if (!validation(command, usage, this._prefix)) {
