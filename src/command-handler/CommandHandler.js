@@ -91,9 +91,7 @@ class CommandHandler {
         // console.log(this.commands)
     }
 
-    async runCommand(commandName, args, message, interaction) {
-        const command = this._commands.get(commandName)
-        if (!command) return;
+    async runCommand(command, args, message, interaction) {
 
         const { callback, type } = command.commandObject
 
@@ -127,10 +125,19 @@ class CommandHandler {
             const args = content.split(/\s+/)
             const commandName = args.shift().substring(this._prefix.length).toLowerCase()
 
-            const response = await this.runCommand(commandName, args, message, null)
+            const command = this._commands.get(commandName)
+            if (!command) return;
 
-            if (response) {
-                message.reply(response).catch(() => { })
+            const { reply } = command.commandObject
+
+            const response = await this.runCommand(command, args, message, null)
+
+            if (!response) return;
+
+            if (reply) {
+                message.reply(response).catch(() => { });
+            } else {
+                message.channel.send(response).catch(() => { });
             }
         });
     }
@@ -143,7 +150,10 @@ class CommandHandler {
                 return String(value)
             })
 
-            const response = await this.runCommand(interaction.commandName, args, null, interaction)
+            const command = this._commands.get(interaction.commandName)
+            if (!command) return;
+
+            const response = await this.runCommand(command, args, null, interaction)
 
             if (response) {
                 interaction.reply(response).catch(() => { })
