@@ -145,8 +145,15 @@ class CommandHandler {
                 return result
             }
 
-            this._instance.cooldowns.start(cooldownUsage)
+            await this._instance.cooldowns.start(cooldownUsage)
 
+            usage.cancelCooldown = () => {
+                this._instance.cooldowns.cancelCooldown(cooldownUsage)
+            }
+
+            usage.updateCooldown = (expires) => {
+                this._instance.cooldowns.updateCooldown(cooldownUsage, expires)
+            }
         }
 
         return await callback(usage)

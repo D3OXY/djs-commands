@@ -46,6 +46,44 @@ class Cooldowns {
         }
     }
 
+    getKeyFromCooldownUsage(cooldownUsage) {
+        const { cooldownType, userId, actionId, guildId } = cooldownUsage
+
+        return this.getKey(cooldownType, userId, actionId, guildId)
+    }
+
+    async cancelCooldown(cooldownUsage) {
+        const key = this.getKeyFromCooldownUsage(cooldownUsage)
+
+        this._cooldowns.delete(key)
+
+        await cooldownSchema.deleteOne({ _id: key })
+    }
+
+    async updateCooldown(cooldownUsage, expires) {
+        const key = this.getKeyFromCooldownUsage(cooldownUsage)
+
+        this._cooldowns.set(key, expires)
+
+        const now = new Date()
+        const secondDiff = (expires.getTime() - now.getTime()) / 1000
+
+        if (secondDiff > this._dbRequired) {
+            await cooldownSchema.updateOne(
+                {
+                    _id: key
+                },
+                {
+                    _id: key,
+                    expires
+                },
+                {
+                    upsert: true
+                }
+            )
+        }
+    }
+
     verifyCooldown(duration) {
         if (typeof duration === 'number') {
             return duration
