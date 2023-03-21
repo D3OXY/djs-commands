@@ -1,3 +1,5 @@
+const cooldownSchema = require('../models/cooldown-schema')
+
 const cooldownDurations = {
     s: 1,
     m: 60,
@@ -29,9 +31,21 @@ class Cooldowns {
         this._botOwnersBypass = botOwnersBypass
         this._dbRequired = dbRequired
 
-        //TODO: Load all Cooldown from the db
-
+        this.loadCooldowns()
     }
+
+    async loadCooldowns() {
+        await cooldownSchema.deleteMany({ expires: { $lt: new Date() } })
+
+        const results = await cooldownSchema.find({})
+
+        for (const result of results) {
+            const { _id, expires } = result
+
+            this._cooldowns.set(_id, expires)
+        }
+    }
+
     verifyCooldown(duration) {
         if (typeof duration === 'number') {
             return duration
@@ -100,7 +114,7 @@ class Cooldowns {
         return this._botOwnersBypass && this._instance.botOwners.includes(userId)
     }
 
-    start({
+    async start({
         cooldownType,
         userId,
         actionId,
@@ -117,14 +131,23 @@ class Cooldowns {
 
         const seconds = this.verifyCooldown(duration)
 
-        if (seconds >= this._dbRequired) {
-            // TODO: Store this cooldown in the database
-        }
-
         const key = this.getKey(cooldownType, userId, actionId, guildId)
 
         const expires = new Date()
         expires.setSeconds(expires.getSeconds() + seconds)
+
+        if (seconds >= this._dbRequired) {
+            await cooldownSchema.findOneAndUpdate({ _id: key },
+                {
+                    _id: key,
+                    expires
+                },
+                {
+                    upsert: true
+                }
+            )
+        }
+
 
         this._cooldowns.set(key, expires)
 
