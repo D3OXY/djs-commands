@@ -4,6 +4,7 @@ const { InteractionType } = require('discord.js')
 const getAllFiles = require("../utils/get-all-files")
 const Command = require("./Command")
 const SlashCommands = require('./SlashCommands')
+const { cooldownTypes } = require('../utils/Cooldowns')
 
 class CommandHandler {
     // <CommandName, Instance of the Command class>
@@ -93,24 +94,59 @@ class CommandHandler {
 
     async runCommand(command, args, message, interaction) {
 
-        const { callback, type } = command.commandObject
+        const { callback, type, cooldowns } = command.commandObject
 
         if (message && type === "SLASH") return;
+
+        const text = args.join(' ')
+        const guild = message ? message.guild : interaction.guild
+        const member = message ? message.member : interaction.member
+        const user = message ? message.author : interaction.user
+
 
         const usage = {
             message,
             interaction,
             args,
-            text: args.join(' '),
-            guild: message ? message.guild : interaction.guild,
-            member: message ? message.member : interaction.member,
-            user: message ? message.author : interaction.user
+            text,
+            guild,
+            member,
+            user
         }
 
         for (const validation of this._validations) {
             if (!validation(command, usage, this._prefix)) {
                 return
             }
+        }
+
+        if (cooldowns) {
+            let cooldownType
+
+            for (const type of cooldownTypes) {
+                if (cooldowns[type]) {
+                    cooldownType = type
+                    break
+                }
+            }
+
+            const cooldownUsage = {
+                cooldownType,
+                userId: user.id,
+                actionId: `command_${command.commandName}`,
+                guildId: guild?.id,
+                duration: cooldowns[cooldownType],
+                errorMessage: cooldowns.errorMessage,
+            }
+
+            const result = this._instance.cooldowns.canRunAction(cooldownUsage)
+
+            if (typeof result === 'string') {
+                return result
+            }
+
+            this._instance.cooldowns.start(cooldownUsage)
+
         }
 
         return await callback(usage)
