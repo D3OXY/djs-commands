@@ -189,7 +189,7 @@ class Cooldowns {
 
         this._cooldowns.set(key, expires)
 
-        console.log(this._cooldowns)
+        // console.log(this._cooldowns)
     }
 
     canRunAction({
