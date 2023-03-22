@@ -49,7 +49,7 @@ module.exports = {
         if (!permission) {
             const document = await requiredPermissions.findById(_id)
 
-            const permissions = document ? document.permissions.join(', ') : 'None.'
+            const permissions = document && document.permissions?.length ? document.permissions.join(', ') : 'None.'
 
             return `Here are the permissions for "${commandName}": ${permissions}`
         }
