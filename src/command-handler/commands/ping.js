@@ -8,7 +8,7 @@ module.exports = {
         let ping
         if (message) {
             ping = Date.now() - message.createdTimestamp
-        } else if (interation) {
+        } else if (interaction) {
             ping = Date.now() - interaction.createdTimestamp
         }
         return `Bot ping: ${ping}ms`

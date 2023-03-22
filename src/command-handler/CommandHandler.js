@@ -6,6 +6,7 @@ const Command = require("./Command")
 const SlashCommands = require('./SlashCommands')
 const { cooldownTypes } = require('../utils/Cooldowns')
 const ChannelCommands = require('./ChannelCommands')
+const CustomCommands = require('./CustomCommands')
 
 class CommandHandler {
     // <CommandName, Instance of the Command class>
@@ -13,11 +14,12 @@ class CommandHandler {
     _validations = this.getValidations('run-time')
     _prefix = '!';
     _channelCommands = new ChannelCommands()
+    _customCommands = new CustomCommands(this)
 
     constructor(instance, commandDir, client) {
         this._instance = instance
         this._commandDir = commandDir
-        this._SlashCommands = new SlashCommands(client)
+        this._slashCommands = new SlashCommands(client)
         this._client = client
 
         this.readFiles()
@@ -31,6 +33,14 @@ class CommandHandler {
 
     get channelCommands() {
         return this._channelCommands
+    }
+
+    get slashCommands() {
+        return this._slashCommands
+    }
+
+    get customCommands() {
+        return this._customCommands
     }
 
     async readFiles() {
@@ -61,13 +71,13 @@ class CommandHandler {
                 if (type === "SLASH" || type === "BOTH") {
                     if (testOnly) {
                         for (const guildId of this._instance.testServers) {
-                            this._SlashCommands.delete(
+                            this._slashCommands.delete(
                                 command.commandName,
                                 guildId
                             )
                         }
                     } else {
-                        this._SlashCommands.delete(command.commandName)
+                        this._slashCommands.delete(command.commandName)
                     }
                 }
 
@@ -89,14 +99,14 @@ class CommandHandler {
 
 
             if (type === "SLASH" || type === "BOTH") {
-                const options = commandObject.options || this._SlashCommands.createOptions(commandObject)
+                const options = commandObject.options || this._slashCommands.createOptions(commandObject)
 
                 if (testOnly) {
                     for (const guildId of this._instance.testServers) {
-                        this._SlashCommands.create(command.commandName, description, options, guildId)
+                        this._slashCommands.create(command.commandName, description, options, guildId)
                     }
                 } else {
-                    this._SlashCommands.create(command.commandName, description, options)
+                    this._slashCommands.create(command.commandName, description, options)
                 }
             }
         }
@@ -183,7 +193,10 @@ class CommandHandler {
             const commandName = args.shift().substring(this._prefix.length).toLowerCase()
 
             const command = this._commands.get(commandName)
-            if (!command) return;
+            if (!command) {
+                this._customCommands.run(commandName, message)
+                return
+            }
 
             const { reply, deferReply } = command.commandObject
 
@@ -214,7 +227,10 @@ class CommandHandler {
             })
 
             const command = this._commands.get(interaction.commandName)
-            if (!command) return;
+            if (!command) {
+                this._customCommands.run(interaction.commandName, null, interaction)
+                return
+            }
 
             const { deferReply } = command.commandObject
 
