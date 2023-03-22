@@ -10,7 +10,8 @@ class Main {
         commandDir,
         testServers = [],
         botOwners = [],
-        cooldownConfig = {}
+        cooldownConfig = {},
+        disabledDefaultCommands = []
     }) {
         if (!client) throw new Error('A Client is required.')
 
@@ -20,6 +21,7 @@ class Main {
             instance: this,
             ...cooldownConfig
         })
+        this._disabledDefaultCommands = disabledDefaultCommands.map(cmd => cmd.toLowerCase())
 
         if (mongoUri) this.connectToMongo(mongoUri);
 
@@ -39,6 +41,10 @@ class Main {
 
     get cooldowns() {
         return this._cooldowns
+    }
+
+    get disabledDefaultCommands() {
+        return this._disabledDefaultCommands
     }
 
     get commandHandler() {
