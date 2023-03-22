@@ -5,12 +5,14 @@ const getAllFiles = require("../utils/get-all-files")
 const Command = require("./Command")
 const SlashCommands = require('./SlashCommands')
 const { cooldownTypes } = require('../utils/Cooldowns')
+const ChannelCommands = require('./ChannelCommands')
 
 class CommandHandler {
     // <CommandName, Instance of the Command class>
     _commands = new Map()
     _validations = this.getValidations('run-time')
     _prefix = '!';
+    _channelCommands = new ChannelCommands()
 
     constructor(instance, commandDir, client) {
         this._instance = instance
@@ -25,6 +27,10 @@ class CommandHandler {
 
     get commands() {
         return this._commands
+    }
+
+    get channelCommands() {
+        return this._channelCommands
     }
 
     async readFiles() {
@@ -107,6 +113,7 @@ class CommandHandler {
         const guild = message ? message.guild : interaction.guild
         const member = message ? message.member : interaction.member
         const user = message ? message.author : interaction.user
+        const channel = message ? message.channel : interaction.channel
 
 
         const usage = {
@@ -117,7 +124,8 @@ class CommandHandler {
             text,
             guild,
             member,
-            user
+            user,
+            channel
         }
 
         for (const validation of this._validations) {
