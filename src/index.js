@@ -24,7 +24,7 @@ class Main {
         if (mongoUri) this.connectToMongo(mongoUri);
 
         if (commandDir) {
-            new CommandHandler(this, commandDir, client)
+            this._commandHandler = new CommandHandler(this, commandDir, client)
         }
 
     }
@@ -39,6 +39,10 @@ class Main {
 
     get cooldowns() {
         return this._cooldowns
+    }
+
+    get commandHandler() {
+        return this._commandHandler
     }
 
     connectToMongo(mongoUri) {

@@ -23,11 +23,16 @@ class CommandHandler {
         this.interactionListener(client)
     }
 
+    get commands() {
+        return this._commands
+    }
+
     async readFiles() {
+        const defaultCommands = getAllFiles(path.join(__dirname, './commands'))
         const files = getAllFiles(this._commandDir)
         const validations = this.getValidations('syntax')
 
-        for (const file of files) {
+        for (const file of [...defaultCommands, ...files]) {
             const commandObject = require(file)
 
             let commandName = file.split(/[/\\]/)
@@ -105,6 +110,7 @@ class CommandHandler {
 
 
         const usage = {
+            instance: command.instance,
             message,
             interaction,
             args,
@@ -115,7 +121,7 @@ class CommandHandler {
         }
 
         for (const validation of this._validations) {
-            if (!validation(command, usage, this._prefix)) {
+            if (!await validation(command, usage, this._prefix)) {
                 return
             }
         }
@@ -232,9 +238,10 @@ class CommandHandler {
 
         const choices = await autocomplete(interaction, command, focusedOption.name)
 
-        const filtered = choices.filter((choice) => {
-            return choice.toLowerCase().startsWith(focusedOption.value.toLowerCase())
-        }).slice(0, 25)
+        const filtered = choices.filter((choice) =>
+            choice.toLowerCase().startsWith(focusedOption.value.toLowerCase())
+        ).slice(0, 25)
+
 
         await interaction.respond(
             filtered.map((choice) => ({
