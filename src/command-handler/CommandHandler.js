@@ -17,17 +17,16 @@ class CommandHandler {
     _channelCommands = new ChannelCommands()
     _customCommands = new CustomCommands(this)
     _disableCommands = new DisabledCommands()
-    _prefixes = new PrefixHandler()
+    // _prefixes = new PrefixHandler()
 
     constructor(instance, commandDir, client) {
         this._instance = instance
         this._commandDir = commandDir
         this._slashCommands = new SlashCommands(client)
+        this._prefixes = new PrefixHandler(instance._defaultPrefix)
         this._client = client
 
         this.readFiles()
-        this.messageListener(client)
-        this.interactionListener(client)
     }
 
     get commands() {
@@ -62,7 +61,7 @@ class CommandHandler {
         for (const file of [...defaultCommands, ...files]) {
             const commandObject = require(file)
 
-            let commandName = file.split(/[/\\]/)
+            let commandName = file.split(/[\/\\]/)
             commandName = commandName.pop()
             commandName = commandName.split('.')[0]
 
@@ -192,99 +191,6 @@ class CommandHandler {
         }
 
         return await callback(usage)
-    }
-
-    messageListener(client) {
-
-        client.on('messageCreate', async (message) => {
-            const { guild, content } = message
-            const prefix = this._prefixes.get(guild?.id)
-            if (!content.startsWith(prefix)) return;
-
-            const args = content.split(/\s+/)
-            const commandName = args.shift().substring(prefix.length).toLowerCase()
-
-            const command = this._commands.get(commandName)
-            if (!command) {
-                this._customCommands.run(commandName, message)
-                return
-            }
-
-            const { reply = true, deferReply } = command.commandObject
-
-            if (deferReply) message.channel.sendTyping();
-
-            const response = await this.runCommand(command, args, message, null)
-
-            if (!response) return;
-
-            if (reply) {
-                message.reply(response).catch(() => { });
-            } else {
-                message.channel.send(response).catch(() => { });
-            }
-        });
-    }
-
-    interactionListener(client) {
-        client.on('interactionCreate', async (interaction) => {
-            if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-                this.handleAutoComplete(interaction)
-                return
-            }
-            if (interaction.type !== InteractionType.ApplicationCommand) return;
-
-            const args = interaction.options.data.map(({ value }) => {
-                return String(value)
-            })
-
-            const command = this._commands.get(interaction.commandName)
-            if (!command) {
-                this._customCommands.run(interaction.commandName, null, interaction)
-                return
-            }
-
-            const { deferReply } = command.commandObject
-
-            if (deferReply) await interaction.deferReply({
-                ephemeral: deferReply === "ephemeral"
-            });
-
-            const response = await this.runCommand(command, args, null, interaction)
-
-            if (!response) return;
-
-            if (deferReply) {
-                interaction.editReply(response).catch(() => { })
-            } else {
-                interaction.reply(response).catch(() => { })
-            }
-
-        })
-    }
-
-    async handleAutoComplete(interaction) {
-        const command = this._commands.get(interaction.commandName)
-        if (!command) return;
-
-        const { autocomplete } = command.commandObject
-        if (!autocomplete) return;
-
-        const focusedOption = interaction.options.getFocused(true)
-
-        const choices = await autocomplete(interaction, command, focusedOption.name)
-
-        const filtered = choices.filter((choice) =>
-            choice.toLowerCase().startsWith(focusedOption.value.toLowerCase())
-        ).slice(0, 25)
-
-
-        await interaction.respond(
-            filtered.map((choice) => ({
-                name: choice,
-                value: choice
-            }))
-        )
     }
 
     getValidations(folder) {

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 
 const CommandHandler = require("./command-handler/CommandHandler")
+const EventHandler = require('./event-handler/EventHandler')
 const Cooldowns = require('./utils/Cooldowns')
 
 class Main {
@@ -11,7 +12,9 @@ class Main {
         testServers = [],
         botOwners = [],
         cooldownConfig = {},
-        disabledDefaultCommands = []
+        disabledDefaultCommands = [],
+        events = {},
+        defaultPrefix = '!'
     }) {
         if (!client) throw new Error('A Client is required.')
 
@@ -22,12 +25,15 @@ class Main {
             ...cooldownConfig
         })
         this._disabledDefaultCommands = disabledDefaultCommands.map(cmd => cmd.toLowerCase())
+        this._defaultPrefix = defaultPrefix
 
         if (mongoUri) this.connectToMongo(mongoUri);
 
         if (commandDir) {
             this._commandHandler = new CommandHandler(this, commandDir, client)
         }
+
+        this._eventHandler = new EventHandler(this, events, client)
 
     }
 
@@ -49,6 +55,10 @@ class Main {
 
     get commandHandler() {
         return this._commandHandler
+    }
+
+    get eventHandler() {
+        return this._eventHandler
     }
 
     connectToMongo(mongoUri) {

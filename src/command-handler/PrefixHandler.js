@@ -2,9 +2,10 @@ const guildPrefixSchema = require('../models/guild-prefix-schema');
 
 class PrefixHandler {
     _prefixes = new Map();
-    _defaultPrefix = '!';
+    // _defaultPrefix = '!';
 
-    constructor() {
+    constructor(defaultPrefix) {
+        this._defaultPrefix = defaultPrefix;
         this.loadPrefixes();
     }
 
