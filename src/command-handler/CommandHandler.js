@@ -7,6 +7,7 @@ const SlashCommands = require('./SlashCommands')
 const { cooldownTypes } = require('../utils/Cooldowns')
 const ChannelCommands = require('./ChannelCommands')
 const CustomCommands = require('./CustomCommands')
+const DisabledCommands = require('./DisabledCommands')
 
 class CommandHandler {
     // <CommandName, Instance of the Command class>
@@ -15,6 +16,7 @@ class CommandHandler {
     _prefix = '!';
     _channelCommands = new ChannelCommands()
     _customCommands = new CustomCommands(this)
+    _disableCommands = new DisabledCommands()
 
     constructor(instance, commandDir, client) {
         this._instance = instance
@@ -41,6 +43,10 @@ class CommandHandler {
 
     get customCommands() {
         return this._customCommands
+    }
+
+    get disabledCommands() {
+        return this._disableCommands
     }
 
     async readFiles() {
@@ -198,7 +204,7 @@ class CommandHandler {
                 return
             }
 
-            const { reply, deferReply } = command.commandObject
+            const { reply = true, deferReply } = command.commandObject
 
             if (deferReply) message.channel.sendTyping();
 
