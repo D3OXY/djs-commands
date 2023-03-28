@@ -8,15 +8,16 @@ const { cooldownTypes } = require('../utils/Cooldowns')
 const ChannelCommands = require('./ChannelCommands')
 const CustomCommands = require('./CustomCommands')
 const DisabledCommands = require('./DisabledCommands')
+const PrefixHandler = require('./PrefixHandler')
 
 class CommandHandler {
     // <CommandName, Instance of the Command class>
     _commands = new Map()
     _validations = this.getValidations('run-time')
-    _prefix = '!';
     _channelCommands = new ChannelCommands()
     _customCommands = new CustomCommands(this)
     _disableCommands = new DisabledCommands()
+    _prefixes = new PrefixHandler()
 
     constructor(instance, commandDir, client) {
         this._instance = instance
@@ -47,6 +48,10 @@ class CommandHandler {
 
     get disabledCommands() {
         return this._disableCommands
+    }
+
+    get prefixHandler() {
+        return this._prefixes
     }
 
     async readFiles() {
@@ -145,7 +150,7 @@ class CommandHandler {
         }
 
         for (const validation of this._validations) {
-            if (!await validation(command, usage, this._prefix)) {
+            if (!await validation(command, usage, this._prefixes.get(guild?.id))) {
                 return
             }
         }
@@ -192,11 +197,12 @@ class CommandHandler {
     messageListener(client) {
 
         client.on('messageCreate', async (message) => {
-            const { content } = message
-            if (!content.startsWith(this._prefix)) return;
+            const { guild, content } = message
+            const prefix = this._prefixes.get(guild?.id)
+            if (!content.startsWith(prefix)) return;
 
             const args = content.split(/\s+/)
-            const commandName = args.shift().substring(this._prefix.length).toLowerCase()
+            const commandName = args.shift().substring(prefix.length).toLowerCase()
 
             const command = this._commands.get(commandName)
             if (!command) {
