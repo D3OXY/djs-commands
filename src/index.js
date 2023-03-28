@@ -3,12 +3,18 @@ const mongoose = require('mongoose')
 const CommandHandler = require("./command-handler/CommandHandler")
 const EventHandler = require('./event-handler/EventHandler')
 const Cooldowns = require('./utils/Cooldowns')
+const FeatureHandler = require('./utils/FeatureHandler')
 
 class Main {
-    constructor({
+    constructor(obj) {
+        this.init(obj)
+    }
+
+    async init({
         client,
         mongoUri,
         commandDir,
+        featuresDir,
         testServers = [],
         botOwners = [],
         cooldownConfig = {},
@@ -29,14 +35,17 @@ class Main {
         this._validations = validations
         this._defaultPrefix = defaultPrefix
 
-        if (mongoUri) this.connectToMongo(mongoUri);
+        if (mongoUri) await this.connectToMongo(mongoUri);
 
         if (commandDir) {
             this._commandHandler = new CommandHandler(this, commandDir, client)
         }
 
-        this._eventHandler = new EventHandler(this, events, client)
+        if (featuresDir) {
+            this._featuresHandler = new FeatureHandler(this, featuresDir, client)
+        }
 
+        this._eventHandler = new EventHandler(this, events, client)
     }
 
     get testServers() {
@@ -67,8 +76,8 @@ class Main {
         return this._validations
     }
 
-    connectToMongo(mongoUri) {
-        mongoose.connect(mongoUri, {
+    async connectToMongo(mongoUri) {
+        await mongoose.connect(mongoUri, {
             keepAlive: true
         })
     }
