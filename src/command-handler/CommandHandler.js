@@ -13,7 +13,7 @@ const PrefixHandler = require('./PrefixHandler')
 class CommandHandler {
     // <CommandName, Instance of the Command class>
     _commands = new Map()
-    _validations = this.getValidations('run-time')
+    _validations = this.getValidations(path.join(__dirname, './validations', 'runtime'))
     _channelCommands = new ChannelCommands()
     _customCommands = new CustomCommands(this)
     _disableCommands = new DisabledCommands()
@@ -25,6 +25,11 @@ class CommandHandler {
         this._slashCommands = new SlashCommands(client)
         this._prefixes = new PrefixHandler(instance._defaultPrefix)
         this._client = client
+
+        this._validations = [
+            ...this._validations,
+            ...this.getValidations(instance.validations?.runtime)
+        ]
 
         this.readFiles()
     }
@@ -56,7 +61,10 @@ class CommandHandler {
     async readFiles() {
         const defaultCommands = getAllFiles(path.join(__dirname, './commands'))
         const files = getAllFiles(this._commandDir)
-        const validations = this.getValidations('syntax')
+        const validations = [
+            ...this.getValidations(path.join(__dirname, './validations', 'syntax')),
+            ...this.getValidations(this._instance.validations?.syntax),
+        ]
 
         for (const file of [...defaultCommands, ...files]) {
             const commandObject = require(file)
@@ -194,9 +202,8 @@ class CommandHandler {
     }
 
     getValidations(folder) {
-        const validations = getAllFiles(path.join(__dirname, `./validations/${folder}`)).map((filePath) => {
-            return require(filePath)
-        })
+        if (!folder) return [];
+        const validations = getAllFiles(folder).map((filePath) => require(filePath))
 
         return validations;
     }

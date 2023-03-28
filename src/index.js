@@ -14,6 +14,7 @@ class Main {
         cooldownConfig = {},
         disabledDefaultCommands = [],
         events = {},
+        validations = {},
         defaultPrefix = '!'
     }) {
         if (!client) throw new Error('A Client is required.')
@@ -25,6 +26,7 @@ class Main {
             ...cooldownConfig
         })
         this._disabledDefaultCommands = disabledDefaultCommands.map(cmd => cmd.toLowerCase())
+        this._validations = validations
         this._defaultPrefix = defaultPrefix
 
         if (mongoUri) this.connectToMongo(mongoUri);
@@ -59,6 +61,10 @@ class Main {
 
     get eventHandler() {
         return this._eventHandler
+    }
+
+    get validations() {
+        return this._validations
     }
 
     connectToMongo(mongoUri) {
