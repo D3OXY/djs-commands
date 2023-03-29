@@ -10,5 +10,8 @@
     "skipLibCheck": true,
     // "forceConsistentCasingInFileNames": true, /* Skip type checking all .d.ts files. */
     "allowJs": true,
-  }
+  },
+  "exclude": [
+    "example-bot/**/*"
+  ],
 }
