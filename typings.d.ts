@@ -31,8 +31,6 @@ export default class DJSCommands {
     public get defaultPrefix(): string
 }
 
-///////////
-
 export interface MainConfig {
     client: Client;
     mongoUri?: string;
