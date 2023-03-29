@@ -12,7 +12,7 @@
     "allowJs": true,
   },
   "exclude": [
-    "example-bot/**/*",
+    "../../test/example-bot/**/*",
     "dist/**/*"
   ],
 }

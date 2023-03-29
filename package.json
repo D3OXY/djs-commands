@@ -4,9 +4,13 @@
     "type": "git",
     "url": "https://github.com/D3OXY/djs-commands"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "./dist/index.js",
   "typings": "./typings.d.ts",
+  "files": [
+    "dist",
+    "typings.d.ts"
+  ],
   "description": "A feature rich command handler for discord.js",
   "scripts": {
     "install:deps": "npm install",
