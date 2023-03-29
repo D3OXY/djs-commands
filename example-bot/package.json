@@ -1,0 +1,22 @@
+{
+  "name": "example-bot",
+  "version": "1.0.0",
+  "description": "An example discord bot using the @d3oxy/djs-commands package",
+  "main": "./dist/index.js",
+  "scripts": {
+    "tsc": "tsc -w --outDir dist --rootDir src --skipLibCheck"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/D3OXY/djs-commands.git"
+  },
+  "author": "D3OXY, deoxy.dev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/D3OXY/djs-commands/issues"
+  },
+  "homepage": "https://github.com/D3OXY/djs-commands#readme",
+  "dependencies": {
+    "discord.js": "^14.8.0"
+  }
+}

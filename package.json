@@ -1,13 +1,19 @@
 {
-  "name": "command-handler",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/index.js",
+  "name": "@d3oxy/djs-commands",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/D3OXY/djs-commands"
+  },
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "typings": "./typings.d.ts",
+  "description": "A feature rich command handler for discord.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:deps": "npm install",
+    "tsc": "tsc -w --outDir dist --rootDir src --skipLibCheck"
   },
   "keywords": [],
-  "author": "",
+  "author": "D3OXY, deoxy.dev",
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.8.0",
