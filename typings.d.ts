@@ -35,7 +35,7 @@ export interface MainConfig {
     client: Client;
     mongoUri?: string;
     commandDir: string;
-    featuresDir: string;
+    featuresDir?: string;
     testServers?: string[];
     botOwners?: string[];
     cooldownConfig?: CooldownConfig;
