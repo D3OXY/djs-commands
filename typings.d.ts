@@ -96,25 +96,25 @@ export interface CommandUsage {
 }
 
 export interface CommandObject {
-    callback: (commandUsage: CommandUsage) => unknown
-    type: CommandType
-    init?: function
-    description?: string
+    delete?: boolean
     aliases?: string[]
+    minArgs?: number
+    maxArgs?: number
+    options?: ApplicationCommandOption[]
+    correctSyntax?: string
+    description?: string
+    type: CommandType
     testOnly?: boolean
     guildOnly?: boolean
     ownerOnly?: boolean
     permissions?: bigint[]
     deferReply?: 'ephemeral' | boolean
     cooldowns?: CooldownUsage
-    minArgs?: number
-    maxArgs?: number
-    correctSyntax?: string
-    expectedArgs?: string
-    options?: ApplicationCommandOption[]
     autocomplete?: function
+    init?: function
+    callback: (commandUsage: CommandUsage) => unknown
     reply?: boolean
-    delete?: boolean
+    expectedArgs?: string
 }
 
 export type FileData = {
