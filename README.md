@@ -4,12 +4,11 @@
 
 # DJSCommands
 
-DJSCommands is a Discord.JS command handler modified by [D3OXY](https://deoxy.dev).
-This is a modified version of [WOKCommands](https://www.npmjs.com/package/wokcommands).
+DJSCommands is a Discord.JS command handler made by [D3OXY](https://deoxy.dev).
 
 # Documentation
 
-The official documentation can be found here: https://docs.wornoffkeys.com
+Coming Soon!
 
 # Installation
 
@@ -17,4 +16,5 @@ The official documentation can be found here: https://docs.wornoffkeys.com
 npm install @d3oxy/djs-commands
 ```
 
+This is a modified version of [WOKCommands](https://www.npmjs.com/package/wokcommands).
 ---
