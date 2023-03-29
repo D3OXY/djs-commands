@@ -1,7 +1,8 @@
-import { CommandObject, CommandType, CommandUsage } from "../../../typings";
 import Command from "../Command";
+import { CommandObject, CommandUsage } from "../../../typings";
 
 import { ApplicationCommandOptionType } from "discord.js";
+import CommandType from "../../utils/CommandType";
 export default {
     description: "Specify which channels a command can be used in.",
     type: CommandType.SLASH,
