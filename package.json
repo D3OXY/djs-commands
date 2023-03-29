@@ -20,6 +20,10 @@
   "keywords": [],
   "author": "D3OXY, deoxy.dev",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/D3OXY/djs-commands/issues"
+  },
+  "homepage": "https://deoxy.dev",
   "dependencies": {
     "discord.js": "^14.8.0",
     "mongoose": "^7.0.2"
