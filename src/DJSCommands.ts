@@ -21,7 +21,7 @@ class Main {
     private _defaultPrefix!: string;
     constructor(mainConfig: MainConfig) {
         this.init(mainConfig)
-        console.log('DJSCommands Loaded');
+        console.log('DJSCommands Loaded - D3OXY');
     }
 
     private async init(mainConfig: MainConfig) {
