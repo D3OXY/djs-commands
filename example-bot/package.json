@@ -4,7 +4,8 @@
   "description": "An example discord bot using the @d3oxy/djs-commands package",
   "main": "./dist/index.js",
   "scripts": {
-    "tsc": "tsc -w --outDir dist --rootDir src --skipLibCheck"
+    "tsc": "tsc -w --outDir dist --rootDir src --skipLibCheck",
+    "start": "node dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,7 @@
   },
   "homepage": "https://github.com/D3OXY/djs-commands#readme",
   "dependencies": {
-    "discord.js": "^14.8.0"
+    "discord.js": "^14.8.0",
+    "dotenv": "^16.0.3"
   }
 }
