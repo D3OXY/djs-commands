@@ -1,5 +1,6 @@
 import { Client } from 'discord.js'
 import mongoose from 'mongoose'
+import chalk from 'chalk';
 
 import CommandHandler from "./command-handler/CommandHandler"
 import EventHandler from './event-handler/EventHandler'
@@ -21,10 +22,30 @@ class Main {
     private _defaultPrefix!: string;
     constructor(mainConfig: MainConfig) {
         this.init(mainConfig)
-        console.log('DJSCommands By D3OXY Loaded!');
     }
 
     private async init(mainConfig: MainConfig) {
+        //chalk Start
+        const name = chalk.bold(chalk.cyan('D3OXY'))
+        const lines = chalk.yellow("############################################")
+        const line = chalk.yellow("#")
+        const Title = chalk.red(chalk.underline(chalk.bold("DJS Commands")))
+        let firstLine = `${lines}`
+        let secondLine = `${line}               ${Title}               ${line}`
+        let thirdLine = `${line}                                          ${line}`
+        let fourthLine = `${line}           The Bot Has Started!           ${line}`
+        let fifthLine = `${line}          Made with ❤️  by ${name}.          ${line}`
+        let sixthLine = `${lines}`
+        console.log(`
+                ${firstLine}
+                ${secondLine}
+                ${thirdLine}
+                ${fourthLine}
+                ${fifthLine}
+                ${sixthLine}
+        `)
+        //chalk End
+
         const {
             client,
             mongoUri,
@@ -41,7 +62,13 @@ class Main {
 
         if (!client) throw new Error('A Client is required.')
 
-        if (mongoUri) await this.connectToMongo(mongoUri);
+        if (mongoUri) {
+            await this.connectToMongo(mongoUri).then(() => {
+                console.log(chalk.green('Connected to MongoDB!'))
+            })
+        } else {
+            console.log(chalk.red('MongoDB connection failed, No URI provided.'))
+        }
 
         this._client = client
         this._testServers = testServers;
