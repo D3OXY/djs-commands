@@ -38,7 +38,7 @@ export default async (interaction: CommandInteraction, instance: DJSCommands) =>
         return;
     }
 
-    if (deferReply) {
+    if (interaction.deferred) {
         interaction.editReply(response).catch((e) => { console.log(e) });
     } else {
         interaction.reply(response).catch((e) => { console.log(e) });
