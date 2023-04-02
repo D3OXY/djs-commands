@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc --outDir dist --rootDir src --skipLibCheck",
     "build:dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
-    "publish": "rm -rf dist && tsc -w --outDir dist --rootDir src --skipLibCheck && npm publish"
+    "publish": "rm -rf dist && tsc --outDir dist --rootDir src --skipLibCheck && npm publish"
   },
   "keywords": [
     "discord.js",
