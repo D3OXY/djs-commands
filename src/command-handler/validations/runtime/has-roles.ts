@@ -12,7 +12,7 @@ export default async (command: Command, usage: CommandUsage) => {
     const _id = `${guild!.id}-${command.commandName}`;
     const document = await requiredRoles.findById(_id);
 
-    if (document) {
+    if (document && document.roles.length > 0) {
         let hasRole = false;
 
         for (const roleId of document.roles) {
@@ -26,7 +26,7 @@ export default async (command: Command, usage: CommandUsage) => {
             return true;
         }
 
-        const reply = {
+        const text = {
             content: `You need one of these roles: ${document.roles.map(
                 (roleId: string) => `<@&${roleId}>`
             )}`,
@@ -35,8 +35,10 @@ export default async (command: Command, usage: CommandUsage) => {
             },
         };
 
-        if (message) message.reply(reply);
-        else if (interaction) interaction.reply(reply);
+        if (message) message.reply(text);
+        else if (interaction) {
+            interaction.deferred ? interaction.editReply(text) : interaction.reply(text);
+        }
 
         return false;
     }

@@ -17,10 +17,12 @@ export default async (command: Command, usage: CommandUsage) => {
 
     if (availableChannels.length && !availableChannels.includes(channel!.id)) {
         const channelNames = availableChannels.map((c: string) => `<#${c}> `);
-        const reply = `You can only run this command inside of the following channels: ${channelNames}.`;
+        const text = `You can only run this command inside of the following channels: ${channelNames}.`;
 
-        if (message) message.reply(reply);
-        else if (interaction) interaction.reply(reply);
+        if (message) message.reply(text);
+        else if (interaction) {
+            interaction.deferred ? interaction.editReply(text) : interaction.reply(text);
+        }
 
         return false;
     }

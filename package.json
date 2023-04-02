@@ -14,10 +14,23 @@
   ],
   "description": "A feature rich command handler for discord.js",
   "scripts": {
-    "install:deps": "npm install",
-    "tsc": "tsc -w --outDir dist --rootDir src --skipLibCheck"
+    "build": "tsc --outDir dist --rootDir src --skipLibCheck",
+    "build:dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
+    "publish": "rm -rf dist && tsc -w --outDir dist --rootDir src --skipLibCheck && npm publish"
   },
-  "keywords": [],
+  "keywords": [
+    "discord.js",
+    "discord",
+    "bot",
+    "commands",
+    "command handler",
+    "types",
+    "utility",
+    "tool",
+    "library",
+    "module",
+    "automation"
+  ],
   "author": "D3OXY, deoxy.dev",
   "license": "ISC",
   "bugs": {
@@ -28,5 +41,9 @@
     "chalk": "^4.1.2",
     "discord.js": "^14.8.0",
     "mongoose": "^7.0.2"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.3"
   }
 }

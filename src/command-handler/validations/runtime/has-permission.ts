@@ -45,7 +45,9 @@ export default async (command: Command, usage: CommandUsage) => {
             )}"`;
 
             if (message) message.reply(text);
-            else if (interaction) interaction.reply(text);
+            else if (interaction) {
+                interaction.deferred ? interaction.editReply(text) : interaction.reply(text);
+            }
 
             return false;
         }

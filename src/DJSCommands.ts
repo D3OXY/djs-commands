@@ -8,6 +8,7 @@ import DJSCommands, { MainConfig, Validations, Events } from '../typings'
 import Cooldowns from './utils/Cooldowns'
 import DefaultCommands from './utils/DefaultCommands'
 import FeaturesHandler from './utils/FeaturesHandler'
+import logToConsole from './utils/logToConsole';
 
 class Main {
     private _client!: Client
@@ -61,16 +62,15 @@ class Main {
         } = mainConfig
 
         if (!client) {
-            console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.red("A Discord Client is required to use DJSCommands."))
-            process.exit(1)
+            logToConsole(chalk.red("A Discord Client is required to use DJSCommands."), true)
         }
 
         if (mongoUri) {
             await this.connectToMongo(mongoUri).then(() => {
-                console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.green("Connected to MongoDB"))
+                logToConsole(chalk.green("Connected to MongoDB"));
             })
         } else {
-            console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.red("MongoDB connection failed, No URI provided."))
+            logToConsole(chalk.yellow("MongoDB connection failed, No URI provided."));
         }
 
         this._client = client

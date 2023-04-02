@@ -9,7 +9,9 @@ export default (command: Command, usage: CommandUsage) => {
         const text = "This command can only be ran within a guild/server.";
 
         if (message) message.reply(text);
-        else if (interaction) interaction.reply(text);
+        else if (interaction) {
+            interaction.deferred ? interaction.editReply(text) : interaction.reply(text);
+        }
 
         return false;
     }

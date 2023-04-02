@@ -1,3 +1,5 @@
+import chalk from "chalk";
+import logToConsole from "../../../utils/logToConsole";
 import Command from "../../Command";
 
 export default (command: Command) => {
@@ -7,7 +9,5 @@ export default (command: Command) => {
         return;
     }
 
-    throw new Error(
-        `Command "${commandName}" is a owner only command, but no owners were specified.`
-    );
+    logToConsole(chalk.yellow('The command "' + commandName + '" is a owner only command but no bot owners are set.'))
 };

@@ -1,8 +1,12 @@
 import { ApplicationCommandOption, Client, CommandInteraction, Guild, GuildMember, Message, TextChannel, User } from 'discord.js';
 
+/// <reference types="./src/util/CommandType" />
 import CommandType from './src/util/CommandType'
+/// <reference types="./src/util/CooldownTypes" />
 import CooldownTypes from './src/util/CooldownTypes'
+/// <reference types="./src/util/Cooldowns" />
 import Cooldowns from './src/util/Cooldowns'
+/// <reference types="../src/util/DefaultCommands" />
 import DefaultCommands from './src/util/DefaultCommands'
 
 export default class DJSCommands {

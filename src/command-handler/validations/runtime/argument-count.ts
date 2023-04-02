@@ -20,7 +20,9 @@ export default (command: Command, usage: CommandUsage, prefix: string) => {
         const { message, interaction } = usage;
 
         if (message) message.reply(text);
-        else if (interaction) interaction.reply(text);
+        else if (interaction) {
+            interaction.deferred ? interaction.editReply(text) : interaction.reply(text);
+        }
 
         return false;
     }

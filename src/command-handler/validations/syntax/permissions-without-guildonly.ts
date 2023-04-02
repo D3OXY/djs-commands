@@ -1,3 +1,5 @@
+import chalk from "chalk";
+import logToConsole from "../../../utils/logToConsole";
 import Command from "../../Command";
 
 export default (command: Command) => {
@@ -5,8 +7,6 @@ export default (command: Command) => {
     const { guildOnly, permissions = [] } = commandObject;
 
     if (guildOnly !== true && permissions.length) {
-        throw new Error(
-            `Command "${commandName}" is not a guildOnly command, but permissions are specified.`
-        );
+        logToConsole(chalk.yellow(`Command "${commandName}" is not a guildOnly command, but permissions are specified.`))
     }
 };
