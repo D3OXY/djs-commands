@@ -64,7 +64,7 @@ client.on('ready', () => {
         },
     })
 })
-client.login(process.env.APPLICATION_TOKEN);
+client.login("YOUR_BOT_TOKEN");
 ```
 
 ### Typescript
@@ -97,7 +97,7 @@ client.on('ready', () => {
 	},
     })
 })
-client.login(process.env.APPLICATION_TOKEN);
+client.login("YOUR_BOT_TOKEN");
 ```
 
 
