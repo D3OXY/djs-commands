@@ -60,14 +60,17 @@ class Main {
             defaultPrefix = '!'
         } = mainConfig
 
-        if (!client) throw new Error('A Client is required.')
+        if (!client) {
+            console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.red("A Discord Client is required to use DJSCommands."))
+            process.exit(1)
+        }
 
         if (mongoUri) {
             await this.connectToMongo(mongoUri).then(() => {
-                console.log(chalk.green('Connected to MongoDB!'))
+                console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.green("Connected to MongoDB"))
             })
         } else {
-            console.log(chalk.red('MongoDB connection failed, No URI provided.'))
+            console.log(chalk.cyan(chalk.bold("DJSCommands >> ")) + chalk.red("MongoDB connection failed, No URI provided."))
         }
 
         this._client = client
