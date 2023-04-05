@@ -1,10 +1,15 @@
 import { ApplicationCommandOption, Client, ApplicationCommandOptionType } from "discord.js";
+import logToConsole from "../utils/DJSLogger";
+import chalk from "chalk";
+import DJSLogger from "../utils/DJSLogger";
 
 class SlashCommands {
     private _client: Client;
+    private DJSLogger: DJSLogger;
 
     constructor(client: Client) {
         this._client = client
+        this.DJSLogger = new DJSLogger()
     }
 
     async getCommands(guildId?: string) {
@@ -28,7 +33,7 @@ class SlashCommands {
             const option = options[a]
             const existing = existingOptions[a]
 
-            if (option.name !== existing.name || option.type !== existing.type || option.description !== existing.description) {
+            if (option.name !== existing.name || option.type !== existing.type || option.description !== existing.description, option.autocomplete !== existing.autocomplete) {
                 return true
             }
         }
@@ -48,7 +53,7 @@ class SlashCommands {
             const { description: existingDescription, options: existingOptions } = existingCommand
 
             if (description !== existingDescription || options.length !== existingOptions.length || this.areOptionsDifferent(options, existingOptions)) {
-                console.log(`Updating the command "${name}"`);
+                this.DJSLogger.info(`Updating the command "${name}"`)
 
                 await commands.edit(existingCommand.id, {
                     description,

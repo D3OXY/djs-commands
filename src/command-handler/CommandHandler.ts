@@ -69,14 +69,15 @@ class CommandHandler {
     }
 
     private async readFiles() {
-        const defaultCommands = getAllFiles(path.join(__dirname, './commands'))
+        const defaultCommands = getAllFiles(path.join(__dirname, "./default-commands"))
         const files = getAllFiles(this._commandsDir)
         const validations = [
             ...this.getValidations(path.join(__dirname, 'validations', 'syntax')),
             ...this.getValidations(this._instance.validations?.syntax),
         ]
 
-        for (let fileData of [...defaultCommands, ...files]) {
+        // Load default commands
+        for (let fileData of defaultCommands) {
             const { filePath } = fileData;
             const commandObject: CommandObject = fileData.fileContents;
 
@@ -106,7 +107,81 @@ class CommandHandler {
                 }
             }
 
-            if (del || this._instance.disabledDefaultCommands.includes(DefaultCommands)) {
+            if (del || this._instance.disabledDefaultCommands.includes(DefaultCommands) || this._instance.disableAllDefaultCommands) {
+                if (type === "SLASH" || type === "BOTH") {
+                    if (testOnly) {
+                        for (const guildId of this._instance.testServers) {
+                            this._slashCommands.delete(
+                                command.commandName,
+                                guildId
+                            )
+                        }
+                    } else {
+                        this._slashCommands.delete(command.commandName)
+                    }
+                }
+
+
+                continue
+            }
+
+            for (const validation of validations) {
+                validation(command)
+            }
+
+            await init(this._client, this._instance)
+
+            const names = [command.commandName, ...aliases]
+
+            for (const name of names) {
+                this._commands.set(name, command)
+            }
+
+
+            if (type === "SLASH" || type === "BOTH") {
+                const options = commandObject.options || this._slashCommands.createOptions(commandObject)
+
+                if (testOnly) {
+                    for (const guildId of this._instance.testServers) {
+                        this._slashCommands.create(command.commandName, description!, options, guildId)
+                    }
+                }
+                this._slashCommands.create(command.commandName, description!, options)
+            }
+        }
+
+        //Load Other Commands
+        for (let fileData of files) {
+            const { filePath } = fileData;
+            const commandObject: CommandObject = fileData.fileContents;
+
+            const split = filePath.split(/[\/\\]/);
+            let commandName = split.pop()!;
+            commandName = commandName.split(".")[0];
+
+            const command = new Command(this._instance, commandName, commandObject)
+
+
+            const {
+                description,
+                type,
+                testOnly,
+                delete: del,
+                aliases = [],
+                init = () => { },
+            } = commandObject
+
+            let defaultCommandValue: DefaultCommands | undefined;
+
+            for (const [key, value] of Object.entries(DefaultCommands)) {
+                if (value === commandName.toLowerCase()) {
+                    defaultCommandValue =
+                        DefaultCommands[key as keyof typeof DefaultCommands];
+                    break;
+                }
+            }
+
+            if (del) {
                 if (type === "SLASH" || type === "BOTH") {
                     if (testOnly) {
                         for (const guildId of this._instance.testServers) {
@@ -149,7 +224,6 @@ class CommandHandler {
                 }
             }
         }
-        // console.log(this.commands)
     }
 
     public async runCommand(command: Command, args: string[], message: Message | null, interaction: CommandInteraction | null) {

@@ -8,7 +8,7 @@ export default {
 
     minArgs: 1,
     syntaxError: "Correct syntax: {PREFIX}prefix {ARGS}",
-    expectedArgs: "<prefix>",
+    expectedArgs: "<prefix or reset>",
 
     type: CommandType.BOTH,
     guildOnly: true,
@@ -27,6 +27,13 @@ export default {
         }
 
         instance.commandHandler.prefixHandler.set(guild!.id, prefix);
+
+        if (prefix.toLowerCase() === 'reset') {
+            return {
+                content: `Reset the command prefix for this server to \`${instance.defaultPrefix}\``,
+                ephemeral: true,
+            };
+        }
 
         return {
             content: `Set "${prefix}" as the command prefix for this server.`,

@@ -1,19 +1,17 @@
 import { ApplicationCommandOption, Client, CommandInteraction, Guild, GuildMember, Message, TextChannel, User } from 'discord.js';
 
-/// <reference types="./src/util/CommandType" />
 import CommandType from './src/util/CommandType'
-/// <reference types="./src/util/CooldownTypes" />
 import CooldownTypes from './src/util/CooldownTypes'
-/// <reference types="./src/util/Cooldowns" />
 import Cooldowns from './src/util/Cooldowns'
-/// <reference types="../src/util/DefaultCommands" />
 import DefaultCommands from './src/util/DefaultCommands'
+import DJSLogger from "./src/utils/DJSLogger";
 
 export default class DJSCommands {
     private _client!: Client
     private _testServers!: string[];
     private _botOwners!: string[];
     private _cooldowns: Cooldowns | undefined;
+    private _disableAllDefaultCommands!: boolean;
     private _disabledDefaultCommands!: DefaultCommands[];
     private _validations!: Validations;
     private _commandHandler: CommandHandler | undefined;
@@ -21,12 +19,15 @@ export default class DJSCommands {
     private _isConnectedToDB = false
     private _defaultPrefix!: string;
 
+    private DJSLogger: DJSLogger
+
     constructor(mainConfig: MainConfig)
 
     public get client(): Client
     public get testServers(): string[]
     public get botOwners(): string[]
     public get cooldowns(): Cooldowns
+    public get disableAllDefaultCommands(): boolean
     public get disabledDefaultCommands(): DefaultCommands[]
     public get commandHandler(): CommandHandler
     public get eventHandler(): EventHandler
@@ -43,6 +44,7 @@ export interface MainConfig {
     testServers?: string[];
     botOwners?: string[];
     cooldownConfig?: CooldownConfig;
+    disableAllDefaultCommands?: boolean;
     disabledDefaultCommands?: DefaultCommands[];
     events?: Events;
     validations?: Validations;
@@ -134,4 +136,4 @@ export class Command {
     public get commandObject(): CommandObject
 }
 
-export { CommandObject, Command, CommandType, CooldownTypes, DefaultCommands }
+export { CommandObject, Command, CommandType, CooldownTypes, DefaultCommands, DJSLogger }

@@ -40,6 +40,15 @@ class PrefixHandler {
             return;
         }
 
+        if (prefix.toLowerCase() === 'reset') {
+            this._prefixes.delete(guildId);
+
+            await guildPrefixSchema.findOneAndDelete({
+                _id: guildId,
+            });
+            return;
+        }
+
         this._prefixes.set(guildId, prefix);
 
         await guildPrefixSchema.findOneAndUpdate(

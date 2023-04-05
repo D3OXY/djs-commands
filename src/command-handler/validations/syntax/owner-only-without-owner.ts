@@ -1,6 +1,7 @@
 import chalk from "chalk";
-import logToConsole from "../../../utils/logToConsole";
+import logToConsole from "../../../utils/DJSLogger";
 import Command from "../../Command";
+import DJSLogger from "../../../utils/DJSLogger";
 
 export default (command: Command) => {
     const { instance, commandName, commandObject } = command;
@@ -9,5 +10,6 @@ export default (command: Command) => {
         return;
     }
 
-    logToConsole(chalk.yellow('The command "' + commandName + '" is a owner only command but no bot owners are set.'))
+    new DJSLogger()
+        .warn(chalk.yellow('The command "' + commandName + '" is a owner only command but no bot owners are set.'))
 };
