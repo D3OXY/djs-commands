@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc --outDir dist --rootDir src --skipLibCheck",
     "build:dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
-    "publish": "rm -rf dist && tsc --outDir dist --rootDir src --skipLibCheck && npm publish"
+    "publish:dev": "rm -rf dist && tsc --outDir dist --rootDir src --skipLibCheck && npm publish"
   },
   "keywords": [
     "discord.js",
@@ -39,7 +39,7 @@
   "homepage": "https://deoxy.dev",
   "dependencies": {
     "chalk": "^4.1.2",
-    "discord.js": "^14.8.0",
+    "discord.js": "^14.9.0",
     "mongoose": "^7.0.2",
     "validate-color": "^2.2.4"
   },
