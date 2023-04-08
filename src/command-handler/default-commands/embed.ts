@@ -308,20 +308,21 @@ export default {
                             }).then(async (collected) => {
                                 let url
                                 const msg = collected.first() as Message
-                                if (msg.attachments) {
+
+                                if (collected.first()?.content.includes("http://") || collected.first()?.content.includes("https://")) {
+                                    url = collected.first()?.content
+                                } else if (msg.attachments) {
                                     url = msg.attachments.first()?.url
                                 } else {
-                                    if (!collected.first()?.content.includes("http://") && !collected.first()?.content.includes("https://")) {
-                                        return interaction?.channel?.send({
-                                            content: "Invalid url!",
-                                        }).then((int) => {
-                                            setTimeout(() => {
-                                                int.delete()
-                                            }, 3000)
-                                        })
-                                    }
-                                    url = collected.first()?.content
+                                    return interaction?.channel?.send({
+                                        content: "Invalid url!",
+                                    }).then((int) => {
+                                        setTimeout(() => {
+                                            int.delete()
+                                        }, 3000)
+                                    })
                                 }
+
                                 message.delete();
                                 collected.first()?.delete()
 
@@ -350,20 +351,21 @@ export default {
                             }).then(async (collected) => {
                                 let url
                                 const msg = collected.first() as Message
-                                if (msg.attachments) {
+
+                                if (collected.first()?.content.includes("http://") || collected.first()?.content.includes("https://")) {
+                                    url = collected.first()?.content
+                                } else if (msg.attachments) {
                                     url = msg.attachments.first()?.url
                                 } else {
-                                    if (!collected.first()?.content.includes("http://") && !collected.first()?.content.includes("https://")) {
-                                        return interaction?.channel?.send({
-                                            content: "Invalid url!",
-                                        }).then((int) => {
-                                            setTimeout(() => {
-                                                int.delete()
-                                            }, 3000)
-                                        })
-                                    }
-                                    url = collected.first()?.content
+                                    return interaction?.channel?.send({
+                                        content: "Invalid url!",
+                                    }).then((int) => {
+                                        setTimeout(() => {
+                                            int.delete()
+                                        }, 3000)
+                                    })
                                 }
+
                                 message.delete();
                                 collected.first()?.delete()
 
