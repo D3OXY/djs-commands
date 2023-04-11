@@ -39,7 +39,7 @@ export default class DJSCommands {
 export interface MainConfig {
     client: Client;
     mongoUri?: string;
-    commandDir: string;
+    commandDir?: string;
     featuresDir?: string;
     testServers?: string[];
     botOwners?: string[];

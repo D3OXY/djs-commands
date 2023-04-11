@@ -98,6 +98,8 @@ class Main {
 
         if (commandDir) {
             this._commandHandler = new CommandHandler(this as unknown as DJSCommands, commandDir, client)
+        } else {
+            this.DJSLogger.warn("No command directory provided. No commands will be loaded.")
         }
 
         if (featuresDir) {
