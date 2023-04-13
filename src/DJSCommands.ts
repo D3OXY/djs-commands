@@ -81,6 +81,13 @@ class Main {
         }
 
         this._client = client
+
+        testServers.forEach((serverId) => {
+            if (this._client.guilds.cache.has(serverId)) return;
+            this.DJSLogger.warn(`The Guild ID "${serverId}" is not a valid Guild ID. Please check your config.`)
+            testServers.splice(testServers.indexOf(serverId), 1)
+        })
+
         this._testServers = testServers;
         this._botOwners = botOwners
         this._disableAllDefaultCommands = disableAllDefaultCommands
