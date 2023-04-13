@@ -38,7 +38,7 @@
   },
   "homepage": "https://deoxy.dev",
   "dependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "^5.2.0",
     "discord.js": "^14.9.0",
     "mongoose": "^7.0.2",
     "validate-color": "^2.2.4"
