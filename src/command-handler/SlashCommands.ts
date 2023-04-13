@@ -42,7 +42,7 @@ class SlashCommands {
     }
 
     async create(name: string, description: string, options: ApplicationCommandOption[], guildId?: string) {
-        if (guildId && !this._client.guilds.fetch(guildId)) {
+        if (guildId && !this._client.guilds.cache.has(guildId)) {
             new DJSLogger().warn(`Could not find guild ${guildId} to create command ${name} in. Skipping...`)
             return;
         }
@@ -76,6 +76,11 @@ class SlashCommands {
     }
 
     async delete(commandName: string, guildId?: string) {
+        if (guildId && !this._client.guilds.cache.has(guildId)) {
+            new DJSLogger().warn(`Could not find guild ${guildId} to delete command ${commandName} in. Skipping...`)
+            return;
+        }
+
         const commands = await this.getCommands(guildId)
 
         const existingCommand = commands?.cache.find((cmd) => cmd.name === commandName)
