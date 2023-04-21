@@ -10,7 +10,8 @@
   "files": [
     "dist",
     "typings.d.ts",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "description": "A feature rich command handler for discord.js",
   "scripts": {
