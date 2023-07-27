@@ -4,6 +4,9 @@
         "type": "git",
         "url": "https://github.com/D3OXY/djs-commands"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "version": "1.3.1",
     "main": "./dist/index.js",
     "typings": "./typings.d.ts",
