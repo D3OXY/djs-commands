@@ -16,9 +16,10 @@
     "description": "A feature rich command handler for discord.js",
     "scripts": {
         "build": "tsc --outDir dist --rootDir src --skipLibCheck",
+        "lint": "tsc",
         "build:dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
-        "publish:dev": "rm -rf dist && tsc --outDir dist --rootDir src --skipLibCheck && npm publish",
-        "link:dev": "pn link --global"
+        "release": "rm -rf dist && pnpm run lint && pnpm run build && changeset publish",
+        "link:dev": "pnpm link --global"
     },
     "keywords": [
         "discord.js",
@@ -46,6 +47,7 @@
         "validate-color": "^2.2.4"
     },
     "devDependencies": {
+        "@changesets/cli": "^2.26.2",
         "ts-node": "^10.9.1",
         "typescript": "^5.1.6"
     }
