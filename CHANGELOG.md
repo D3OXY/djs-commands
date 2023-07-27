@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+### Patch Changes
+
+- 13e8c13: Reverted #c325c47 (CommandType, Cooldowntypes back to enum)
+
 ## 1.4.0
 
 ### Minor Changes
