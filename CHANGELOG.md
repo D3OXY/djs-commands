@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+- c325c47: Changed CommandType, CooldownTye Enum to a const type for better autocomplete.
+
 ## 1.3.2
 
 ### Patch Changes
