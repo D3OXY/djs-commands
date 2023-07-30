@@ -42,7 +42,7 @@
     "bugs": {
         "url": "https://github.com/D3OXY/djs-commands/issues"
     },
-    "homepage": "https://deoxy.dev",
+    "homepage": "https://djscommands.deoxy.dev",
     "dependencies": {
         "chalk": "^4.1.2",
         "discord.js": "^14.11.0",
