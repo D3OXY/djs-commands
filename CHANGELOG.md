@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.3
+
+### Patch Changes
+
+- 98c45d1: Changed `build:dev` script to `dev`
+- 62fc4e0: Published new [Documentation](https://djscommands.deoxy.dev) page, Updated README.md and package.json with documentation info.
+
 ## 1.4.2
 
 ### Patch Changes
