@@ -20,7 +20,7 @@
     "scripts": {
         "build": "tsc --outDir dist --rootDir src --skipLibCheck",
         "lint": "tsc",
-        "build:dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
+        "dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
         "release": "rm -rf dist && pnpm run lint && pnpm run build && changeset publish",
         "link:dev": "pnpm link --global"
     },
