@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.4.4
+
+### Patch Changes
+
+- 389726a: Added a Initialization option `defaultCommand` which replaces `disableAllDefaultCommands` and `disabledDefaultCommands` options.
+  Example:
+
+  ```js
+  new CommandHandler({
+    disableAllDefaultCommands: false, // Replaced by defaultCommand.disableAll
+    disabledDefaultCommands: ["prefix"], // Replaced by defaultCommand.disabledCommands
+    defaultCommand: {
+      disableAll: false, // Option to disable all default commands
+      testOnly: true, // Option to register the default commands as testOnly
+      disabledCommands: ["prefix"], // Option to disable specific default commands
+    },
+  });
+  ```
+
+- 9b02477: Added a new Initialization option `antiCrash` (disabled by default) which can be used to prevent the bot from crashing if a error is thrown and will instead log the error to the console. **This option is not recommended and only there for some weird edge cases in which you don't want your production bot to crash.**
+- 5bda30b: Added a new **ownerOnly** Default Command `/slashcommand`.
+  Which can be used list/delete slash commands registered by the bot on a guild/global level.
+- f85c0cf: Fixed a bug where some Default commands were registered in both guild and global scope.
+
 ## 1.4.3
 
 ### Patch Changes
