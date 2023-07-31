@@ -22,6 +22,7 @@ class Main {
     private _eventHandler!: EventHandler;
     private _isConnectedToDB = false;
     private _defaultPrefix!: string;
+    private _antiCrash: boolean = false;
 
     private DJSLogger: DJSLogger;
 
@@ -67,6 +68,7 @@ class Main {
             events = {},
             validations = {},
             defaultPrefix = "!",
+            antiCrash = false,
         } = mainConfig;
 
         if (!client) {
@@ -85,6 +87,22 @@ class Main {
             this.DJSLogger.warn(
                 "No MongoDB URI provided. Any features that require a database will not function properly."
             );
+        }
+
+        if (antiCrash) {
+            process.on("uncaughtException", (error, origin) => {
+                console.log("----- Uncaught exception -----");
+                console.log(error);
+                console.log("----- Exception origin -----");
+                console.log(origin);
+            });
+
+            process.on("unhandledRejection", (reason, promise) => {
+                console.log("----- Unhandled Rejection at -----");
+                console.log(promise);
+                console.log("----- Reason -----");
+                console.log(reason);
+            });
         }
 
         this._client = client;

@@ -55,6 +55,7 @@ export default class DJSCommands {
     private _eventHandler!: EventHandler;
     private _isConnectedToDB = false;
     private _defaultPrefix!: string;
+    private _antiCrash: boolean = false;
 
     private DJSLogger: DJSLogger;
 
@@ -86,6 +87,7 @@ export interface MainConfig {
     events?: Events;
     validations?: Validations;
     defaultPrefix?: string;
+    antiCrash?: boolean;
 }
 
 export interface CooldownConfig {
