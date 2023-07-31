@@ -48,8 +48,7 @@ export default class DJSCommands {
     private _testServers!: string[];
     private _botOwners!: string[];
     private _cooldowns: Cooldowns | undefined;
-    private _disableAllDefaultCommands!: boolean;
-    private _disabledDefaultCommands!: DefaultCommands[];
+    private _defaultCommand!: DefaultCommandObject;
     private _validations!: Validations;
     private _commandHandler: CommandHandler | undefined;
     private _eventHandler!: EventHandler;
@@ -65,13 +64,13 @@ export default class DJSCommands {
     public get testServers(): string[];
     public get botOwners(): string[];
     public get cooldowns(): Cooldowns;
-    public get disableAllDefaultCommands(): boolean;
-    public get disabledDefaultCommands(): DefaultCommands[];
+    public get defaultCommand(): DefaultCommandObject;
     public get commandHandler(): CommandHandler;
     public get eventHandler(): EventHandler;
     public get validations(): Validations;
     public get isConnectedToDB(): boolean;
     public get defaultPrefix(): string;
+    public get antiCrash(): boolean;
 }
 
 export interface MainConfig {
@@ -82,8 +81,7 @@ export interface MainConfig {
     testServers?: string[];
     botOwners?: string[];
     cooldownConfig?: CooldownConfig;
-    disableAllDefaultCommands?: boolean;
-    disabledDefaultCommands?: DefaultCommands[];
+    defaultCommand?: DefaultCommandObject;
     events?: Events;
     validations?: Validations;
     defaultPrefix?: string;
@@ -138,6 +136,12 @@ export interface CommandUsage {
     channel?: TextChannel;
     cancelCooldown?: function;
     updateCooldown?: function;
+}
+
+export interface DefaultCommandObject {
+    disableAll?: boolean;
+    testOnly?: boolean;
+    disabledCommands?: DefaultCommands[];
 }
 
 export interface CommandObject {

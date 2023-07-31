@@ -17,6 +17,12 @@ export default {
 
     callback: (commandUsage: CommandUsage) => {
         const { instance, guild, text: prefix } = commandUsage;
+        if (
+            !guild ||
+            (instance.defaultCommand.testOnly &&
+                !instance.testServers.includes(guild?.id))
+        )
+            return "This default command is registered as test server only, and can only be ran on the test servers.";
 
         if (!instance.isConnectedToDB) {
             return {
@@ -28,7 +34,7 @@ export default {
 
         instance.commandHandler.prefixHandler.set(guild!.id, prefix);
 
-        if (prefix.toLowerCase() === 'reset') {
+        if (prefix.toLowerCase() === "reset") {
             return {
                 content: `Reset the command prefix for this server to \`${instance.defaultPrefix}\``,
                 ephemeral: true,

@@ -27,6 +27,12 @@ export default {
         return [...command.instance.commandHandler.commands.keys()];
     },
     callback: async ({ instance, interaction, guild }: CommandUsage) => {
+        if (
+            !guild ||
+            (instance.defaultCommand.testOnly &&
+                !instance.testServers.includes(guild?.id))
+        )
+            return "This default command is registered as test server only, and can only be ran on the test servers.";
         if (!instance.isConnectedToDB) {
             return {
                 content:

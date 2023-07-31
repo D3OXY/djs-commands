@@ -4,9 +4,13 @@ import chalk from "chalk";
 
 import CommandHandler from "./command-handler/CommandHandler";
 import EventHandler from "./event-handler/EventHandler";
-import DJSCommands, { MainConfig, Validations, Events } from "../typings";
+import DJSCommands, {
+    MainConfig,
+    Validations,
+    Events,
+    DefaultCommandObject,
+} from "../typings";
 import Cooldowns from "./utils/Cooldowns";
-import DefaultCommands from "./utils/DefaultCommands";
 import FeaturesHandler from "./utils/FeaturesHandler";
 import DJSLogger from "./utils/DJSLogger";
 
@@ -15,8 +19,7 @@ class Main {
     private _testServers!: string[];
     private _botOwners!: string[];
     private _cooldowns: Cooldowns | undefined;
-    private _disableAllDefaultCommands!: boolean;
-    private _disabledDefaultCommands!: DefaultCommands[];
+    private _defaultCommand!: DefaultCommandObject;
     private _validations!: Validations;
     private _commandHandler: CommandHandler | undefined;
     private _eventHandler!: EventHandler;
@@ -63,8 +66,7 @@ class Main {
             testServers = [],
             botOwners = [],
             cooldownConfig = {},
-            disableAllDefaultCommands = false,
-            disabledDefaultCommands = [],
+            defaultCommand = {},
             events = {},
             validations = {},
             defaultPrefix = "!",
@@ -117,10 +119,10 @@ class Main {
 
         this._testServers = testServers;
         this._botOwners = botOwners;
-        this._disableAllDefaultCommands = disableAllDefaultCommands;
-        this._disabledDefaultCommands = disabledDefaultCommands;
+        this._defaultCommand = defaultCommand;
         this._validations = validations;
         this._defaultPrefix = defaultPrefix;
+        this._antiCrash = antiCrash;
 
         this._cooldowns = new Cooldowns(this as unknown as DJSCommands, {
             errorMessage: "Please wait {TIME} before doing that again.",
@@ -172,12 +174,8 @@ class Main {
         return this._cooldowns;
     }
 
-    public get disableAllDefaultCommands() {
-        return this._disableAllDefaultCommands;
-    }
-
-    public get disabledDefaultCommands() {
-        return this._disabledDefaultCommands;
+    public get defaultCommand() {
+        return this._defaultCommand;
     }
 
     public get commandHandler() {
@@ -198,6 +196,10 @@ class Main {
 
     public get defaultPrefix() {
         return this._defaultPrefix;
+    }
+
+    public get antiCrash() {
+        return this._antiCrash;
     }
 
     private async connectToMongo(mongoUri: string) {

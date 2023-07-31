@@ -131,13 +131,14 @@ class CommandHandler {
             if (
                 del ||
                 (defaultCommandValue &&
-                    this._instance.disabledDefaultCommands.includes(
+                    this._instance.defaultCommand.disabledCommands &&
+                    this._instance.defaultCommand.disabledCommands.includes(
                         defaultCommandValue
                     )) ||
-                this._instance.disableAllDefaultCommands
+                this._instance.defaultCommand.disableAll
             ) {
                 if (type === "SLASH" || type === "BOTH") {
-                    if (testOnly) {
+                    if (testOnly || this._instance.defaultCommand.testOnly) {
                         for (const guildId of this._instance.testServers) {
                             this._slashCommands.delete(
                                 command.commandName,
@@ -169,7 +170,7 @@ class CommandHandler {
                     commandObject.options ||
                     this._slashCommands.createOptions(commandObject);
 
-                if (testOnly) {
+                if (this._instance.defaultCommand.testOnly) {
                     for (const guildId of this._instance.testServers) {
                         this._slashCommands.create(
                             command.commandName,
@@ -178,12 +179,13 @@ class CommandHandler {
                             guildId
                         );
                     }
+                } else {
+                    this._slashCommands.create(
+                        command.commandName,
+                        description!,
+                        options
+                    );
                 }
-                this._slashCommands.create(
-                    command.commandName,
-                    description!,
-                    options
-                );
             }
         }
 

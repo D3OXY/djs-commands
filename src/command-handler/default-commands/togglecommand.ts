@@ -26,6 +26,12 @@ module.exports = {
         text: commandName,
         interaction,
     }: CommandUsage) => {
+        if (
+            !guild ||
+            (instance.defaultCommand.testOnly &&
+                !instance.testServers.includes(guild?.id))
+        )
+            return "This default command is registered as test server only, and can only be ran on the test servers.";
         const { disabledCommands } = instance.commandHandler;
 
         if (disabledCommands.isDisabled(guild!.id, commandName)) {

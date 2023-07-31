@@ -32,6 +32,12 @@ module.exports = {
     },
 
     callback: async ({ instance, guild, args }: CommandUsage) => {
+        if (
+            !guild ||
+            (instance.defaultCommand.testOnly &&
+                !instance.testServers.includes(guild?.id))
+        )
+            return "This default command is registered as test server only, and can only be ran on the test servers.";
         const [commandName, role] = args;
 
         const command = instance.commandHandler.commands.get(commandName);

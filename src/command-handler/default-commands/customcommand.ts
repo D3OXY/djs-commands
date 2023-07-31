@@ -79,7 +79,14 @@ export default {
 
     callback: async (commandUsage: CommandUsage) => {
         const { instance, guild } = commandUsage;
-        const interaction = commandUsage.interaction as ChatInputCommandInteraction;
+        if (
+            !guild ||
+            (instance.defaultCommand.testOnly &&
+                !instance.testServers.includes(guild?.id))
+        )
+            return "This default command is registered as test server only, and can only be ran on the test servers.";
+        const interaction =
+            commandUsage.interaction as ChatInputCommandInteraction;
 
         if (!instance.isConnectedToDB) {
             return {
