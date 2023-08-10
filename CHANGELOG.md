@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.5
+
+### Patch Changes
+
+- aa7a6ba: Updated `discord.js`, `mongoose` to latest version
+
 ## 1.4.4
 
 ### Patch Changes
