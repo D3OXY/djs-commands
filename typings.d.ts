@@ -149,7 +149,7 @@ export interface CommandObject {
     aliases?: string[];
     minArgs?: number;
     maxArgs?: number;
-    options?: ApplicationCommandOption[];
+    options?: APIApplicationCommandOption[];
     correctSyntax?: string;
     description?: string;
     type: CommandType;

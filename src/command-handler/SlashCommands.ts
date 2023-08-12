@@ -1,4 +1,9 @@
-import { ApplicationCommandOption, Client, ApplicationCommandOptionType } from "discord.js";
+import {
+    ApplicationCommandOption,
+    Client,
+    ApplicationCommandOptionType,
+    APIApplicationCommandOption,
+} from "discord.js";
 import logToConsole from "../utils/DJSLogger";
 import chalk from "chalk";
 import DJSLogger from "../utils/DJSLogger";
@@ -8,16 +13,16 @@ class SlashCommands {
     private DJSLogger: DJSLogger;
 
     constructor(client: Client) {
-        this._client = client
-        this.DJSLogger = new DJSLogger()
+        this._client = client;
+        this.DJSLogger = new DJSLogger();
     }
 
     async getCommands(guildId?: string) {
-        let commands
+        let commands;
 
         if (guildId) {
-            const guild = await this._client.guilds.fetch(guildId)
-            commands = guild.commands
+            const guild = await this._client.guilds.fetch(guildId);
+            commands = guild.commands;
         } else {
             commands = this._client.application?.commands;
         }
@@ -28,37 +33,57 @@ class SlashCommands {
         return commands;
     }
 
-    areOptionsDifferent(options: ApplicationCommandOption[], existingOptions: any[]) {
+    areOptionsDifferent(
+        options: ApplicationCommandOption[],
+        existingOptions: any[]
+    ) {
         for (let a = 0; a < options.length; a++) {
-            const option = options[a]
-            const existing = existingOptions[a]
+            const option = options[a];
+            const existing = existingOptions[a];
 
-            if (option.name !== existing.name || option.type !== existing.type || option.description !== existing.description, option.autocomplete !== existing.autocomplete) {
-                return true
+            if (
+                (option.name !== existing.name ||
+                    option.type !== existing.type ||
+                    option.description !== existing.description,
+                option.autocomplete !== existing.autocomplete)
+            ) {
+                return true;
             }
         }
 
-        return false
+        return false;
     }
 
-    async create(name: string, description: string, options: ApplicationCommandOption[], guildId?: string) {
-        const commands = await this.getCommands(guildId)
+    async create(
+        name: string,
+        description: string,
+        options: APIApplicationCommandOption[],
+        guildId?: string
+    ) {
+        const commands = await this.getCommands(guildId);
         if (!commands) {
             throw new Error(`Could not find commands for guild ${guildId}`);
         }
 
-        const existingCommand = commands.cache.find((cmd) => cmd.name === name)
+        const existingCommand = commands.cache.find((cmd) => cmd.name === name);
 
         if (existingCommand) {
-            const { description: existingDescription, options: existingOptions } = existingCommand
+            const {
+                description: existingDescription,
+                options: existingOptions,
+            } = existingCommand;
 
-            if (description !== existingDescription || options.length !== existingOptions.length || this.areOptionsDifferent(options, existingOptions)) {
-                this.DJSLogger.info(`Updating the command "${name}"`)
+            if (
+                description !== existingDescription ||
+                options.length !== existingOptions.length ||
+                this.areOptionsDifferent(options, existingOptions)
+            ) {
+                this.DJSLogger.info(`Updating the command "${name}"`);
 
                 await commands.edit(existingCommand.id, {
                     description,
-                    options
-                })
+                    options,
+                });
             }
             return;
         }
@@ -66,43 +91,46 @@ class SlashCommands {
         await commands.create({
             name,
             description,
-            options
-        })
+            options,
+        });
     }
 
     async delete(commandName: string, guildId?: string) {
-        const commands = await this.getCommands(guildId)
+        const commands = await this.getCommands(guildId);
 
-        const existingCommand = commands?.cache.find((cmd) => cmd.name === commandName)
+        const existingCommand = commands?.cache.find(
+            (cmd) => cmd.name === commandName
+        );
 
         if (!existingCommand) return;
 
         await existingCommand.delete();
     }
 
-    createOptions({ expectedArgs = '', minArgs = 0 }): ApplicationCommandOption[] {
-        const options: ApplicationCommandOption[] = []
-
+    createOptions({
+        expectedArgs = "",
+        minArgs = 0,
+    }): ApplicationCommandOption[] {
+        const options: ApplicationCommandOption[] = [];
 
         if (expectedArgs) {
             const split = expectedArgs
                 //<num1> <num2>
                 .substring(1, expectedArgs.length - 1)
                 // num1> <num2
-                .split(/[>\]] [<\[]/)
+                .split(/[>\]] [<\[]/);
             // [ 'num1', 'num2' ]
 
             for (let a = 0; a < split.length; ++a) {
-                const arg = split[a]
+                const arg = split[a];
 
                 options.push({
-                    name: arg.toLowerCase().replace(/\s+/g, '-'),
+                    name: arg.toLowerCase().replace(/\s+/g, "-"),
                     description: arg,
                     type: ApplicationCommandOptionType.String,
-                    required: a < minArgs
-                })
+                    required: a < minArgs,
+                });
             }
-
         }
 
         return options;
