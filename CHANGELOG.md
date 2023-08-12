@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.6
+
+### Patch Changes
+
+- ec09e27: Fixed type errors
+
 ## 1.4.5
 
 ### Patch Changes
