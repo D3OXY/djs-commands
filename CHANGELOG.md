@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.7
+
+### Patch Changes
+
+- b653f40: Fix Readme not showing up on npmjs page
+
 ## 1.4.6
 
 ### Patch Changes
