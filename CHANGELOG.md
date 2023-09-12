@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.8
+
+### Patch Changes
+
+- e5c5349: Update: Dependencies
+
 ## 1.4.7
 
 ### Patch Changes
