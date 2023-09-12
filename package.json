@@ -1,57 +1,58 @@
 {
-    "name": "@d3oxy/djs-commands",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/D3OXY/djs-commands"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "version": "1.4.7",
-    "main": "./dist/index.js",
-    "typings": "./typings.d.ts",
-    "files": [
-        "dist",
-        "typings.d.ts",
-        "README.md",
-        "CHANGELOG.md"
-    ],
-    "description": "A feature rich command handler for discord.js",
-    "scripts": {
-        "build": "tsc --outDir dist --rootDir src --skipLibCheck",
-        "lint": "tsc",
-        "dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
-        "release": "rm -rf dist && pnpm run lint && pnpm run build && changeset publish",
-        "link:dev": "pnpm link --global"
-    },
-    "keywords": [
-        "discord.js",
-        "discord",
-        "bot",
-        "commands",
-        "command handler",
-        "types",
-        "utility",
-        "tool",
-        "library",
-        "module",
-        "automation"
-    ],
-    "author": "D3OXY, deoxy.dev",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/D3OXY/djs-commands/issues"
-    },
-    "homepage": "https://djscommands.deoxy.dev",
-    "dependencies": {
-        "chalk": "^4.1.2",
-        "discord.js": "^14.11.0",
-        "mongoose": "^7.4.1",
-        "validate-color": "^2.2.4"
-    },
-    "devDependencies": {
-        "@changesets/cli": "^2.26.2",
-        "ts-node": "^10.9.1",
-        "typescript": "^5.1.6"
-    }
+  "name": "@d3oxy/djs-commands",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/D3OXY/djs-commands"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "1.4.7",
+  "main": "./dist/index.js",
+  "typings": "./typings.d.ts",
+  "files": [
+    "dist",
+    "typings.d.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "description": "A feature rich command handler for discord.js",
+  "scripts": {
+    "build": "tsc --outDir dist --rootDir src --skipLibCheck",
+    "lint": "tsc",
+    "dev": "tsc -w --outDir dist --rootDir src --skipLibCheck",
+    "release": "rm -rf dist && pnpm run lint && pnpm run build && changeset publish",
+    "link:dev": "pnpm link --global"
+  },
+  "keywords": [
+    "discord.js",
+    "discord",
+    "bot",
+    "commands",
+    "command handler",
+    "types",
+    "utility",
+    "tool",
+    "library",
+    "module",
+    "automation"
+  ],
+  "author": "D3OXY, deoxy.dev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/D3OXY/djs-commands/issues"
+  },
+  "homepage": "https://djscommands.deoxy.dev",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "discord.js": "^14.13.0",
+    "mongoose": "^7.5.1",
+    "validate-color": "^2.2.4"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "bun-types": "latest"
+  }
 }
