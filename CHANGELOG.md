@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.9
+
+### Patch Changes
+
+- d8d0dc1: Update Dependencies to latest version
+
 ## 1.4.8
 
 ### Patch Changes
