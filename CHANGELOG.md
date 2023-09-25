@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.10
+
+### Patch Changes
+
+- e2be835: Downgrader Chalk to V4
+
 ## 1.4.9
 
 ### Patch Changes
