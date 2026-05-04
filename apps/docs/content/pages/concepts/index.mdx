@@ -1,0 +1,39 @@
+---
+title: Concepts
+description: The mental model behind djs-commands v2.
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+These pages explain the **building blocks** of `djs-commands` — what they do, when to reach for them, and how they compose. Read them in order on your first pass; jump in topically afterwards.
+
+<Cards>
+	<Card title="Commands" href="/concepts/commands" description="Defining commands with defineCommand. Naming, options, subcommands, contexts." />
+	<Card title="Validators" href="/concepts/validators" description="Pre-handler checks: roles, channels, custom predicates. Composable, async-friendly." />
+	<Card title="Cooldowns" href="/concepts/cooldowns" description="Per-user, per-guild, per-command rate limiting backed by your storage adapter." />
+	<Card title="Plugins" href="/concepts/plugins" description="Cross-cutting hooks: logging, metrics, custom interaction types, lifecycle wrappers." />
+	<Card title="Storage" href="/concepts/storage" description="The adapter interface that backs cooldowns, prefixes, and user state. Bring your own DB." />
+	<Card title="Components V2" href="/concepts/components-v2" description="First-class JSX for the new Discord component model — buttons, selects, modals, layouts." />
+</Cards>
+
+## How the pieces fit
+
+```
+Discord interaction
+       ↓
+createCommandHandler (subscribes to events)
+       ↓
+Dispatcher (looks up command by name)
+       ↓
+Validators (gate the call)
+       ↓
+Plugins (wrap the call — before/after)
+       ↓
+command.run({ interaction, ...context })
+       ↓
+Components V2 reply (optional)
+```
+
+Storage sits orthogonal to that pipeline — anything that needs to remember state across calls (cooldowns, per-guild prefixes, user preferences) reads and writes through the adapter you provide.
+
+Only the **Commands** page is fully written today; the other concept pages stub out the shape and link to the slice that lands them. See the [v2 roadmap](https://github.com/D3OXY/djs-commands/issues/51).

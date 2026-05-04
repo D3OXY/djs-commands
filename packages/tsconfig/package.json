@@ -7,6 +7,7 @@
 	"private": true,
 	"files": [
 		"base.json",
-		"library.json"
+		"library.json",
+		"vite.json"
 	]
 }

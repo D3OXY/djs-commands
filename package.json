@@ -25,12 +25,18 @@
 			"typescript": "^5.9.3",
 			"@types/node": "^22.0.0",
 			"@types/bun": "^1.2.20",
-			"discord.js": "^14.26.0"
+			"@types/react": "^19.2.14",
+			"@types/react-dom": "^19.2.3",
+			"discord.js": "^14.26.0",
+			"react": "^19.2.0",
+			"react-dom": "^19.2.0"
 		}
 	},
 	"scripts": {
 		"build": "turbo build",
+		"build:docs": "bun run --cwd apps/docs build:docs",
 		"dev": "turbo dev",
+		"dev:docs": "bun run --cwd apps/docs dev:docs",
 		"typecheck": "turbo typecheck",
 		"check": "biome check",
 		"check:write": "biome check --write",

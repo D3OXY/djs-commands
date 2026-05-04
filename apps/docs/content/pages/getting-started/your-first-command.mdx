@@ -1,0 +1,91 @@
+---
+title: Your first command
+description: Define, register, and run a slash command end-to-end.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+
+<Steps>
+<Step>
+### Define a command
+
+A command is just a plain object you build with `defineCommand`. The function is identity at runtime — it exists for IDE autocomplete and type inference.
+
+```ts title="src/commands/ping.ts"
+import { defineCommand } from "@djs-commands/core";
+
+export const ping = defineCommand({
+	name: "ping",
+	description: "Replies with pong",
+	run: async ({ interaction }) => {
+		await interaction.reply("pong");
+	},
+});
+```
+
+The handler receives a `CommandRunContext` — for now, that's just the underlying `ChatInputCommandInteraction` from discord.js. Future slices add validators, plugins, and storage to that context.
+</Step>
+
+<Step>
+### Wire up a Client
+
+Pass your commands to `createCommandHandler` along with a discord.js `Client`. The handler subscribes to `interactionCreate` and dispatches matching slash commands to the right `run` function. On `clientReady`, it registers the command list with Discord.
+
+```ts title="src/index.ts"
+import { createCommandHandler } from "@djs-commands/core";
+import { Client, GatewayIntentBits } from "discord.js";
+import { ping } from "./commands/ping";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+	console.error("DISCORD_TOKEN environment variable is required");
+	process.exit(1);
+}
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+createCommandHandler({
+	client,
+	commands: [ping],
+});
+
+client.once("clientReady", (c) => {
+	console.log(`Logged in as ${c.user.tag}`);
+});
+
+await client.login(token);
+```
+</Step>
+
+<Step>
+### Run the bot
+
+```bash
+DISCORD_TOKEN=... bun run src/index.ts
+```
+
+Once the bot is online, run `/ping` in any guild it's invited to. You should see `pong` come back.
+
+<Callout type="info">
+The first time you run a freshly registered command, Discord may take a minute to propagate it. Subsequent code edits with the same command name update instantly.
+</Callout>
+</Step>
+</Steps>
+
+## What changed from v1?
+
+If you're coming from the legacy `@d3oxy/djs-commands` package, here's the short version:
+
+- **Commands are objects, not files.** v1 read a `commandDir` from disk; v2 takes an array. You bring your own loader (or skip it entirely and import directly).
+- **No more `legacyCommands` toggle.** v2 is slash-first. Message commands are coming back as an opt-in plugin in a later slice.
+- **No more global state.** The handler returned by `createCommandHandler` exposes `destroy()` so you can tear down cleanly in tests.
+- **MongoDB is gone from core.** Persistence (cooldowns, prefixes, user state) is now plugin-shaped — bring your own adapter. See [Concepts → storage](/concepts) once that slice ships.
+
+The v1 package will keep working at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit). It will not receive feature updates.
+
+## Next
+
+- Read [Concepts → commands](/concepts/commands) for the deep dive on `defineCommand`.
+- Browse [Recipes](/recipes) for ready-made patterns.
+- Join the [Discord support server](https://deoxy.dev/links?redirect=support).

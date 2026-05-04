@@ -1,0 +1,10 @@
+{
+	"extends": "@djs-commands/tsconfig/vite.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"],
+			"~/*": ["./src/*"]
+		}
+	},
+	"include": ["src", "content", "source.config.ts", "vite.config.ts", "*.d.ts"]
+}

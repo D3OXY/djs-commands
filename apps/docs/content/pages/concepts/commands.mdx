@@ -1,0 +1,103 @@
+---
+title: Commands
+description: Define, register, and dispatch slash commands with @djs-commands/core.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+A **command** in djs-commands is a plain object. There are no decorators, no class hierarchies, and no on-disk conventions you have to follow. You build the object with `defineCommand`, you put the object somewhere your bot can find it, and you pass it to `createCommandHandler`.
+
+## `defineCommand`
+
+`defineCommand(command)` returns its argument unchanged. It exists purely so the TypeScript compiler can give you autocomplete and structural validation as you type. At runtime it's identity.
+
+```ts
+import { defineCommand } from "@djs-commands/core";
+
+const ping = defineCommand({
+	name: "ping",
+	description: "Replies with pong",
+	run: async ({ interaction }) => {
+		await interaction.reply("pong");
+	},
+});
+```
+
+### Required fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `name` | `string` | The slash-command name. Must match Discord's naming rules: 1–32 characters, lowercase, `[a-z0-9_-]`. |
+| `description` | `string` | The 1–100-character description shown in the Discord client. |
+| `run` | `(ctx) => void \| Promise<void>` | The handler. Receives a [`CommandRunContext`](#commandruncontext). |
+
+<Callout type="warn">
+The current core slice (#52) ships only those three fields. Options, subcommands, validators, and cooldowns land in upcoming slices — track them via the [v2 roadmap](https://github.com/D3OXY/djs-commands/issues/51).
+</Callout>
+
+## `CommandRunContext`
+
+```ts
+interface CommandRunContext {
+	interaction: ChatInputCommandInteraction;
+}
+```
+
+Today, the context exposes the raw discord.js interaction. Future slices wrap it with:
+
+- `validators` — pre-handler outcomes
+- `storage` — the adapter you registered for cooldowns, prefixes, etc.
+- `plugins` — extra fields contributed by plugins (typed via module augmentation)
+- helpers like `t()` for i18n, `defer()` shortcuts, and Components V2 builders
+
+That augmentation surface is intentional: every concept page in this section adds something to the context.
+
+## Registering commands
+
+`createCommandHandler` accepts a `client` and an array of commands. It does two things on your behalf:
+
+1. **Subscribes** to `interactionCreate`. When a chat-input interaction comes in, it looks up the command by `name` and calls `run`.
+2. **Registers** the command list with Discord on `clientReady`. This calls `client.application.commands.set(...)` with the names and descriptions of every command you passed in.
+
+```ts
+import { createCommandHandler } from "@djs-commands/core";
+import { Client, GatewayIntentBits } from "discord.js";
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+const handler = createCommandHandler({
+	client,
+	commands: [ping /*, more commands */],
+});
+
+await client.login(process.env.DISCORD_TOKEN);
+```
+
+The returned `handler` exposes a single method:
+
+```ts
+await handler.destroy();
+```
+
+This unsubscribes the listeners. Use it in tests or when you want to swap out a handler without restarting the process. It does **not** delete the registered application commands from Discord — those persist until you explicitly clear them.
+
+## Loading commands from a directory
+
+v2's core stays out of the file-system business. If you want a v1-style "drop a file in `commands/` and it just works" loader, build one yourself or wait for the official `@djs-commands/loader` plugin (slated for a later slice). A four-line loader using Bun's glob looks like:
+
+```ts
+import { Glob } from "bun";
+
+const commands = await Promise.all(
+	Array.from(new Glob("./commands/*.ts").scanSync()).map(async (file) => (await import(file)).default)
+);
+```
+
+For Node, use `fs.glob` (Node 22+) or any directory-import library you like. The shape of `commands` is just `Command[]`, so anything that produces an array works.
+
+## Best practices
+
+- **One command per file.** Export the `defineCommand` result as the default export so any loader can `import(file).default`.
+- **Keep `run` thin.** Move business logic into ordinary functions you can unit-test without spinning up a Discord client.
+- **Don't share state via module scope.** When a feature wants memory across calls (cooldowns, per-guild config), reach for the Storage adapter — that's its job.
+- **Test handlers in isolation.** Construct a `ChatInputCommandInteraction` mock and call `command.run({ interaction: mock })` directly. The dispatcher is just a `Map.get` + function call.
