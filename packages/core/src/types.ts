@@ -1,4 +1,5 @@
 import type { ChatInputCommandInteraction, Client, PermissionsString } from "discord.js";
+import type { CacheAdapter, CooldownConfig } from "./cooldowns";
 import type { CommandOptions, ResolveOptions } from "./options";
 import type { PluginManifest } from "./plugin";
 import type { CanRunCommand, Validator } from "./validators";
@@ -21,6 +22,7 @@ export interface Command<S extends CommandOptions = Record<string, never>> {
 	permissions?: readonly PermissionsString[];
 	roles?: readonly string[];
 	validators?: readonly Validator[];
+	cooldown?: CooldownConfig;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous command list erases the schema generic
@@ -33,6 +35,7 @@ export interface CommandHandlerOptions {
 	validators?: readonly Validator[];
 	canRunCommand?: CanRunCommand;
 	plugins?: PluginManifest[];
+	cacheAdapter?: CacheAdapter;
 }
 
 export interface CommandHandler {

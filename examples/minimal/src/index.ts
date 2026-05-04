@@ -5,6 +5,7 @@ import { echoPlugin } from "./echo-plugin";
 const ping = defineCommand({
 	name: "ping",
 	description: "Replies with pong",
+	cooldown: { type: "perUser", duration: 5_000 },
 	run: async ({ interaction }) => {
 		await interaction.reply("pong");
 	},
