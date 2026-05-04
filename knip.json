@@ -8,6 +8,9 @@
 		"packages/jsx": {
 			"entry": ["src/index.ts", "src/jsx-runtime.ts", "src/jsx-dev-runtime.ts", "src/**/*.test.ts", "src/**/*.test-d.ts", "src/**/*.test-d.tsx"]
 		},
+		"packages/adapter-redis": {
+			"entry": ["src/index.ts", "src/**/*.test.ts", "src/**/*.test-d.ts"]
+		},
 		"packages/tsconfig": {},
 		"examples/minimal": {},
 		"examples/components-v2-showcase": {},

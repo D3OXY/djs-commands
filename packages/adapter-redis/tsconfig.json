@@ -1,0 +1,10 @@
+{
+	"extends": "@djs-commands/tsconfig/library.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"noEmit": true,
+		"types": ["bun"]
+	},
+	"include": ["src/**/*"],
+	"exclude": ["dist", "node_modules"]
+}
