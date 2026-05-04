@@ -19,8 +19,8 @@ export function echoPlugin(options: EchoPluginOptions = {}): PluginManifest {
 		options: {
 			message: { type: "string", description: "What to echo", required: true },
 		},
-		run: async ({ interaction, options: opts }) => {
-			await interaction.reply(`${prefix}${opts.message}`);
+		run: async (ctx) => {
+			await ctx.reply(`${prefix}${ctx.options.message}`);
 		},
 	});
 
