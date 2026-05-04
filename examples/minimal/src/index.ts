@@ -1,32 +1,7 @@
-import { createCommandHandler, defineCommand } from "@djs-commands/core";
+import { fileURLToPath } from "node:url";
+import { createCommandHandler } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
 import { echoPlugin } from "./echo-plugin";
-
-// One definition, two invocation styles: `/ping` (slash) and `!ping` (legacy).
-// `ctx.reply` works for both. Use `ctx.type` to narrow if you need raw access
-// to ctx.interaction or ctx.message.
-const ping = defineCommand({
-	name: "ping",
-	description: "Replies with pong",
-	cooldown: { type: "perUser", duration: 5_000 },
-	legacy: { enabled: true, aliases: ["p"] },
-	run: async (ctx) => {
-		await ctx.reply("pong");
-	},
-});
-
-// Demonstrates validators: gated by ownerOnly + guildOnly.
-// The framework auto-replies ephemerally with the failure reason if
-// validation fails, so the run handler only sees authorized invocations.
-const shutdown = defineCommand({
-	name: "shutdown",
-	description: "Owner-only command (demo)",
-	ownerOnly: true,
-	guildOnly: true,
-	run: async (ctx) => {
-		await ctx.reply("Pretending to shut down…");
-	},
-});
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -38,11 +13,14 @@ const client = new Client({
 	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
+// `commandDir` walks the directory recursively, dynamically importing each
+// module's default export. Hot reload is on automatically when NODE_ENV !==
+// "production". Existing commands continue to work via `commands: [...]`
+// alongside the directory loader.
 const handler = createCommandHandler({
 	client,
-	commands: [ping, shutdown],
+	commandDir: fileURLToPath(new URL("./commands", import.meta.url)),
 	plugins: [echoPlugin()],
-	// Comma-separated user IDs allowed to run owner-gated commands.
 	botOwners:
 		process.env.BOT_OWNERS?.split(",")
 			.map((id) => id.trim())

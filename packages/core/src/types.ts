@@ -63,7 +63,13 @@ export interface HandlerLegacyConfig {
 
 export interface CommandHandlerOptions {
 	client: Client;
-	commands: AnyCommand[];
+	commands?: AnyCommand[];
+	/** Directory to recursively load command files from. Each file's default export is registered if it looks like a Command. */
+	commandDir?: string;
+	/** Directory to recursively load event files from. Each file's default export is registered if it looks like an EventDefinition (see defineEvent). */
+	eventDir?: string;
+	/** Enable hot-reload of command files while the process runs. Defaults to true when NODE_ENV !== "production". */
+	dev?: boolean;
 	botOwners?: readonly string[];
 	validators?: readonly Validator[];
 	canRunCommand?: CanRunCommand;

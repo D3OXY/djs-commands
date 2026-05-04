@@ -33,6 +33,8 @@ export {
 export { normalizeLegacyContext, normalizeSlashContext } from "./context";
 export type { CacheAdapter, CooldownActor, CooldownConfig, CooldownType } from "./cooldowns";
 export { defineCommand } from "./define-command";
+export { defineEvent, type EventDefinition } from "./define-event";
+export { loadCommandsFromDir, loadEventsFromDir, watchCommandsDir } from "./fs-loader";
 export { createCommandHandler } from "./handler";
 export type { LegacyParseResult } from "./legacy-parser";
 export { parseLegacyArgs } from "./legacy-parser";
