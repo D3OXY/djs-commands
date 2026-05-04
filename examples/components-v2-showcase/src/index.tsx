@@ -11,8 +11,11 @@ import { Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
 const welcome = defineCommand({
 	name: "welcome",
 	description: "Show off Components V2 (JSX runtime)",
-	run: async ({ interaction }) => {
-		await interaction.reply({
+	run: async (ctx) => {
+		// Components V2 messages require the interaction-level `flags` field,
+		// which only the slash dispatch path can deliver. Narrow on ctx.type.
+		if (ctx.type !== "slash") return;
+		await ctx.interaction.reply({
 			flags: MessageFlags.IsComponentsV2,
 			components: render(
 				<Container accentColor={0x5865f2}>

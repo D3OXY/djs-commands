@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
+import type { ChatInputCommandInteraction, Guild, GuildMember, User } from "discord.js";
 import type { AnyCommand } from "./types";
-import { runValidatorChain, type Validator } from "./validators";
+import { runValidatorChain, type Validator, type ValidatorContext } from "./validators";
 
 const fakeMember = (perms: string[] = [], roleIds: string[] = []) =>
 	({
@@ -15,23 +15,20 @@ const fakeMember = (perms: string[] = [], roleIds: string[] = []) =>
 		},
 	}) as unknown as GuildMember;
 
-const fakeInteraction = (
-	overrides: Partial<{
-		commandName: string;
-		channelId: string;
-		user: { id: string };
-		guild: object | null;
-		member: GuildMember | null;
-	}> = {}
-) =>
-	({
-		commandName: "test",
-		channelId: "channel-1",
-		user: { id: "user-1" },
-		guild: null,
-		member: null,
-		...overrides,
-	}) as unknown as ChatInputCommandInteraction;
+const fakeUser = (id: string) => ({ id }) as unknown as User;
+const fakeGuild = (id: string) => ({ id }) as unknown as Guild;
+const fakeInteraction = () => ({}) as unknown as ChatInputCommandInteraction;
+
+const ctx = (overrides: Partial<ValidatorContext> = {}): ValidatorContext => ({
+	command: { name: "test", description: "test", run: async () => {} },
+	botOwners: [],
+	user: fakeUser("user-1"),
+	guild: null,
+	member: null,
+	channelId: "channel-1",
+	source: { type: "slash", interaction: fakeInteraction() },
+	...overrides,
+});
 
 const baseCommand = (overrides: Partial<AnyCommand> = {}): AnyCommand => ({
 	name: "test",
@@ -43,130 +40,131 @@ const baseCommand = (overrides: Partial<AnyCommand> = {}): AnyCommand => ({
 // ─── ownerOnly ──────────────────────────────────────────────────────────────
 
 test("ownerOnly: blocks non-owners", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ user: { id: "regular" } }),
-		command: baseCommand({ ownerOnly: true }),
-		botOwners: ["owner-1"],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			user: fakeUser("regular"),
+			botOwners: ["owner-1"],
+			command: baseCommand({ ownerOnly: true }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 test("ownerOnly: passes for owners", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ user: { id: "owner-1" } }),
-		command: baseCommand({ ownerOnly: true }),
-		botOwners: ["owner-1"],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			user: fakeUser("owner-1"),
+			botOwners: ["owner-1"],
+			command: baseCommand({ ownerOnly: true }),
+		})
+	);
 	expect(result.ok).toBe(true);
 });
 
 test("ownerOnly: is a no-op when not set on the command", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction(),
-		command: baseCommand(),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(ctx({ command: baseCommand() }));
 	expect(result.ok).toBe(true);
 });
 
 // ─── guildOnly ──────────────────────────────────────────────────────────────
 
 test("guildOnly: blocks DMs", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ guild: null }),
-		command: baseCommand({ guildOnly: true }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			guild: null,
+			command: baseCommand({ guildOnly: true }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 test("guildOnly: passes inside a guild", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ guild: { id: "g1" } }),
-		command: baseCommand({ guildOnly: true }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			guild: fakeGuild("g1"),
+			command: baseCommand({ guildOnly: true }),
+		})
+	);
 	expect(result.ok).toBe(true);
 });
 
 // ─── channelOnly ────────────────────────────────────────────────────────────
 
 test("channelOnly: blocks disallowed channel", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ channelId: "channel-99" }),
-		command: baseCommand({ channels: ["channel-1", "channel-2"] }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			channelId: "channel-99",
+			command: baseCommand({ channels: ["channel-1", "channel-2"] }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 test("channelOnly: passes for allowed channel", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ channelId: "channel-1" }),
-		command: baseCommand({ channels: ["channel-1"] }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			channelId: "channel-1",
+			command: baseCommand({ channels: ["channel-1"] }),
+		})
+	);
 	expect(result.ok).toBe(true);
 });
 
 // ─── permissions ────────────────────────────────────────────────────────────
 
 test("permissions: blocks when missing one of the required perms", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({
-			guild: { id: "g1" },
+	const result = await runValidatorChain(
+		ctx({
+			guild: fakeGuild("g1"),
 			member: fakeMember(["KickMembers"]),
-		}),
-		command: baseCommand({ permissions: ["KickMembers", "BanMembers"] }),
-		botOwners: [],
-	});
+			command: baseCommand({ permissions: ["KickMembers", "BanMembers"] }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 test("permissions: passes when all required perms are present", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({
-			guild: { id: "g1" },
+	const result = await runValidatorChain(
+		ctx({
+			guild: fakeGuild("g1"),
 			member: fakeMember(["KickMembers", "BanMembers"]),
-		}),
-		command: baseCommand({ permissions: ["KickMembers", "BanMembers"] }),
-		botOwners: [],
-	});
+			command: baseCommand({ permissions: ["KickMembers", "BanMembers"] }),
+		})
+	);
 	expect(result.ok).toBe(true);
 });
 
 test("permissions: blocks in DM context", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ guild: null }),
-		command: baseCommand({ permissions: ["KickMembers"] }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			guild: null,
+			command: baseCommand({ permissions: ["KickMembers"] }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 // ─── roles ──────────────────────────────────────────────────────────────────
 
 test("roles: blocks when missing one of the required roles", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({
-			guild: { id: "g1" },
+	const result = await runValidatorChain(
+		ctx({
+			guild: fakeGuild("g1"),
 			member: fakeMember([], ["role-1"]),
-		}),
-		command: baseCommand({ roles: ["role-1", "role-2"] }),
-		botOwners: [],
-	});
+			command: baseCommand({ roles: ["role-1", "role-2"] }),
+		})
+	);
 	expect(result.ok).toBe(false);
 });
 
 test("roles: passes when all required roles are present", async () => {
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({
-			guild: { id: "g1" },
+	const result = await runValidatorChain(
+		ctx({
+			guild: fakeGuild("g1"),
 			member: fakeMember([], ["role-1", "role-2"]),
-		}),
-		command: baseCommand({ roles: ["role-1", "role-2"] }),
-		botOwners: [],
-	});
+			command: baseCommand({ roles: ["role-1", "role-2"] }),
+		})
+	);
 	expect(result.ok).toBe(true);
 });
 
@@ -178,11 +176,12 @@ test("chain short-circuits on first failure: built-in failure skips later valida
 		secondCalled = true;
 		return { ok: true };
 	};
-	const result = await runValidatorChain({
-		interaction: fakeInteraction({ guild: null }),
-		command: baseCommand({ guildOnly: true, validators: [second] }),
-		botOwners: [],
-	});
+	const result = await runValidatorChain(
+		ctx({
+			guild: null,
+			command: baseCommand({ guildOnly: true, validators: [second] }),
+		})
+	);
 	expect(result.ok).toBe(false);
 	expect(secondCalled).toBe(false);
 });
@@ -200,11 +199,10 @@ test("global validators run after built-ins", async () => {
 		return { ok: true };
 	};
 	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction({ guild: { id: "g1" } }),
+		ctx({
+			guild: fakeGuild("g1"),
 			command: baseCommand({ guildOnly: true, validators: [cmdV] }),
-			botOwners: [],
-		},
+		}),
 		{ globalValidators: [globalV] }
 	);
 	expect(result.ok).toBe(true);
@@ -213,14 +211,7 @@ test("global validators run after built-ins", async () => {
 
 test("a failing custom validator returns its reason", async () => {
 	const failing: Validator = () => ({ ok: false, reason: "custom failure" });
-	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction(),
-			command: baseCommand(),
-			botOwners: [],
-		},
-		{ globalValidators: [failing] }
-	);
+	const result = await runValidatorChain(ctx(), { globalValidators: [failing] });
 	expect(result.ok).toBe(false);
 	if (!result.ok) expect(result.reason).toBe("custom failure");
 });
@@ -228,50 +219,28 @@ test("a failing custom validator returns its reason", async () => {
 // ─── canRunCommand hook ────────────────────────────────────────────────────
 
 test("canRunCommand: returning false fails with default reason", async () => {
-	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction(),
-			command: baseCommand(),
-			botOwners: [],
-		},
-		{ canRunCommand: () => false }
-	);
+	const result = await runValidatorChain(ctx(), { canRunCommand: () => false });
 	expect(result.ok).toBe(false);
 });
 
 test("canRunCommand: returning a string uses it as the reason", async () => {
-	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction(),
-			command: baseCommand(),
-			botOwners: [],
-		},
-		{ canRunCommand: () => "rate limited" }
-	);
+	const result = await runValidatorChain(ctx(), { canRunCommand: () => "rate limited" });
 	expect(result.ok).toBe(false);
 	if (!result.ok) expect(result.reason).toBe("rate limited");
 });
 
 test("canRunCommand: returning true passes", async () => {
-	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction(),
-			command: baseCommand(),
-			botOwners: [],
-		},
-		{ canRunCommand: () => true }
-	);
+	const result = await runValidatorChain(ctx(), { canRunCommand: () => true });
 	expect(result.ok).toBe(true);
 });
 
 test("canRunCommand: runs after all other validators", async () => {
 	let hookCalled = false;
 	const result = await runValidatorChain(
-		{
-			interaction: fakeInteraction({ guild: null }),
+		ctx({
+			guild: null,
 			command: baseCommand({ guildOnly: true }),
-			botOwners: [],
-		},
+		}),
 		{
 			canRunCommand: () => {
 				hookCalled = true;

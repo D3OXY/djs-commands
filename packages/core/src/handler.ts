@@ -1,4 +1,4 @@
-import { type ApplicationCommandDataResolvable, type Client, Events, type Interaction } from "discord.js";
+import { type ApplicationCommandDataResolvable, type Client, Events, type Interaction, type Message } from "discord.js";
 import { Dispatcher } from "./dispatcher";
 import { buildOptionsData } from "./options";
 import type { AnyCommand, CommandHandler, CommandHandlerOptions } from "./types";
@@ -20,10 +20,19 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		dispatcher.register(command);
 	}
 
+	const legacyEnabled = options.legacy?.enabled === true;
+	const legacyPrefix = options.legacy?.defaultPrefix ?? "!";
+
 	const onInteraction = (interaction: Interaction) => {
 		if (!interaction.isChatInputCommand()) return;
 		dispatcher.dispatch(interaction).catch((err) => {
 			console.error("[djs-commands] Unhandled command error:", err);
+		});
+	};
+
+	const onMessage = (message: Message) => {
+		dispatcher.dispatchMessage(message, legacyPrefix, legacyEnabled).catch((err) => {
+			console.error("[djs-commands] Unhandled legacy command error:", err);
 		});
 	};
 
@@ -41,6 +50,9 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 	options.client.on(Events.InteractionCreate, onInteraction);
 	options.client.once(Events.ClientReady, onReady);
+	if (legacyEnabled) {
+		options.client.on(Events.MessageCreate, onMessage);
+	}
 
 	const bootPromise = (async () => {
 		for (const plugin of plugins) {
@@ -57,6 +69,9 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		destroy: async () => {
 			options.client.off(Events.InteractionCreate, onInteraction);
 			options.client.off(Events.ClientReady, onReady);
+			if (legacyEnabled) {
+				options.client.off(Events.MessageCreate, onMessage);
+			}
 			// Wait for boot to settle so we don't tear down mid-setup. Boot errors
 			// are surfaced via `ready`; destroy still tears plugins down.
 			await bootPromise.catch(() => {});

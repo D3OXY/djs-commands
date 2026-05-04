@@ -10,6 +10,16 @@ const fakeChatInteraction = (commandName: string, optionValues: Record<string, u
 	({
 		isChatInputCommand: () => true,
 		commandName,
+		user: { id: "user-1" },
+		guild: null,
+		guildId: null,
+		member: null,
+		channel: null,
+		channelId: "channel-1",
+		client: {} as unknown,
+		replied: false,
+		deferred: false,
+		reply: mock(async () => undefined),
 		options: {
 			getString: (name: string) => optionValues[name] ?? null,
 			getInteger: (name: string) => optionValues[name] ?? null,

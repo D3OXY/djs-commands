@@ -1,4 +1,3 @@
-import type { ChatInputCommandInteraction } from "discord.js";
 import type { AnyCommand } from "./types";
 
 export type CooldownType = "perUser" | "perGuild" | "perUserPerGuild" | "global";
@@ -7,6 +6,12 @@ export interface CooldownConfig {
 	type: CooldownType;
 	/** Duration in milliseconds */
 	duration: number;
+}
+
+/** Identifies the actor (and optionally the guild) for cooldown key derivation. */
+export interface CooldownActor {
+	userId: string;
+	guildId: string | null;
 }
 
 /**
@@ -29,14 +34,10 @@ export class CooldownEngine {
 		this.cache = cache;
 	}
 
-	/**
-	 * Returns the remaining cooldown in ms if the command is on cooldown for this
-	 * interaction's actor; null otherwise (no cooldown configured, never started,
-	 * or already expired).
-	 */
-	async check(command: AnyCommand, interaction: ChatInputCommandInteraction): Promise<number | null> {
+	/** Returns remaining ms if the command is on cooldown for this actor; null otherwise. */
+	async check(command: AnyCommand, actor: CooldownActor): Promise<number | null> {
 		if (!command.cooldown) return null;
-		const key = makeKey(command, interaction);
+		const key = makeKey(command, actor);
 		const expiresAt = await this.read(key);
 		if (expiresAt === null) return null;
 		const now = Date.now();
@@ -45,9 +46,9 @@ export class CooldownEngine {
 		return null;
 	}
 
-	async start(command: AnyCommand, interaction: ChatInputCommandInteraction): Promise<void> {
+	async start(command: AnyCommand, actor: CooldownActor): Promise<void> {
 		if (!command.cooldown) return;
-		const key = makeKey(command, interaction);
+		const key = makeKey(command, actor);
 		const expiresAt = Date.now() + command.cooldown.duration;
 		await this.write(key, expiresAt, command.cooldown.duration);
 	}
@@ -74,18 +75,17 @@ export class CooldownEngine {
 	}
 }
 
-function makeKey(command: AnyCommand, interaction: ChatInputCommandInteraction): string {
+function makeKey(command: AnyCommand, actor: CooldownActor): string {
 	const cooldown = command.cooldown;
 	if (!cooldown) throw new Error("makeKey called on a command without a cooldown");
-	const userId = interaction.user.id;
-	const guildId = interaction.guildId ?? "dm";
+	const guildId = actor.guildId ?? "dm";
 	switch (cooldown.type) {
 		case "perUser":
-			return `cd:${command.name}:user:${userId}`;
+			return `cd:${command.name}:user:${actor.userId}`;
 		case "perGuild":
 			return `cd:${command.name}:guild:${guildId}`;
 		case "perUserPerGuild":
-			return `cd:${command.name}:user:${userId}:guild:${guildId}`;
+			return `cd:${command.name}:user:${actor.userId}:guild:${guildId}`;
 		case "global":
 			return `cd:${command.name}:global`;
 	}

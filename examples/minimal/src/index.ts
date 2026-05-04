@@ -2,12 +2,16 @@ import { createCommandHandler, defineCommand } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
 import { echoPlugin } from "./echo-plugin";
 
+// One definition, two invocation styles: `/ping` (slash) and `!ping` (legacy).
+// `ctx.reply` works for both. Use `ctx.type` to narrow if you need raw access
+// to ctx.interaction or ctx.message.
 const ping = defineCommand({
 	name: "ping",
 	description: "Replies with pong",
 	cooldown: { type: "perUser", duration: 5_000 },
-	run: async ({ interaction }) => {
-		await interaction.reply("pong");
+	legacy: { enabled: true, aliases: ["p"] },
+	run: async (ctx) => {
+		await ctx.reply("pong");
 	},
 });
 
@@ -19,8 +23,8 @@ const shutdown = defineCommand({
 	description: "Owner-only command (demo)",
 	ownerOnly: true,
 	guildOnly: true,
-	run: async ({ interaction }) => {
-		await interaction.reply("Pretending to shut down…");
+	run: async (ctx) => {
+		await ctx.reply("Pretending to shut down…");
 	},
 });
 
@@ -30,7 +34,9 @@ if (!token) {
 	process.exit(1);
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+});
 
 const handler = createCommandHandler({
 	client,
@@ -41,6 +47,7 @@ const handler = createCommandHandler({
 		process.env.BOT_OWNERS?.split(",")
 			.map((id) => id.trim())
 			.filter(Boolean) ?? [],
+	legacy: { enabled: true, defaultPrefix: "!" },
 });
 
 handler.ready.catch((err) => {

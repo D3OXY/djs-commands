@@ -5,6 +5,16 @@ import { Dispatcher } from "./dispatcher";
 const fakeInteraction = (commandName: string, optionValues: Record<string, unknown> = {}) =>
 	({
 		commandName,
+		user: { id: "user-1" },
+		guild: null,
+		guildId: null,
+		member: null,
+		channel: null,
+		channelId: "channel-1",
+		client: {} as unknown,
+		replied: false,
+		deferred: false,
+		reply: mock(async () => undefined),
 		options: {
 			getString: (name: string) => optionValues[name] ?? null,
 			getInteger: (name: string) => optionValues[name] ?? null,
@@ -51,7 +61,7 @@ test("registering a command with the same name overwrites the previous one", asy
 	expect(second).toHaveBeenCalledTimes(1);
 });
 
-test("dispatch extracts options from the interaction and passes them to run", async () => {
+test("dispatch extracts options from the interaction and passes them via ctx.options", async () => {
 	const dispatcher = new Dispatcher();
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({
@@ -66,7 +76,7 @@ test("dispatch extracts options from the interaction and passes them to run", as
 	await dispatcher.dispatch(fakeInteraction("echo", { message: "hello" }));
 
 	expect(run).toHaveBeenCalledTimes(1);
-	expect(run.mock.calls[0]?.[0]).toMatchObject({ options: { message: "hello" } });
+	expect(run.mock.calls[0]?.[0]).toMatchObject({ options: { message: "hello" }, type: "slash" });
 });
 
 test("dispatch passes undefined for missing optional options", async () => {
@@ -96,4 +106,17 @@ test("dispatch passes empty options object when the command declares no schema",
 
 	expect(run).toHaveBeenCalledTimes(1);
 	expect(run.mock.calls[0]?.[0]).toMatchObject({ options: {} });
+});
+
+test("dispatch passes a unified ctx with reply/author/guild/channelId", async () => {
+	const dispatcher = new Dispatcher();
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(fakeInteraction("ping"));
+
+	const ctx = run.mock.calls[0]?.[0] as { type: string; channelId: string; reply: unknown };
+	expect(ctx?.type).toBe("slash");
+	expect(ctx?.channelId).toBe("channel-1");
+	expect(typeof ctx?.reply).toBe("function");
 });
