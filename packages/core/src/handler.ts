@@ -1,4 +1,4 @@
-import { Events, type Interaction } from "discord.js";
+import { type Client, Events, type Interaction } from "discord.js";
 import { Dispatcher } from "./dispatcher";
 import type { CommandHandler, CommandHandlerOptions } from "./types";
 
@@ -10,20 +10,26 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 	const onInteraction = (interaction: Interaction) => {
 		if (!interaction.isChatInputCommand()) return;
-		void dispatcher.dispatch(interaction);
+		dispatcher.dispatch(interaction).catch((err) => {
+			console.error("[djs-commands] Unhandled command error:", err);
+		});
+	};
+
+	const onReady = (client: Client<true>) => {
+		if (!client.application) return;
+		const data = options.commands.map((c) => ({ name: c.name, description: c.description }));
+		client.application.commands.set(data).catch((err) => {
+			console.error("[djs-commands] Failed to register application commands:", err);
+		});
 	};
 
 	options.client.on(Events.InteractionCreate, onInteraction);
-
-	options.client.once(Events.ClientReady, async (client) => {
-		if (!client.application) return;
-		const data = options.commands.map((c) => ({ name: c.name, description: c.description }));
-		await client.application.commands.set(data);
-	});
+	options.client.once(Events.ClientReady, onReady);
 
 	return {
 		destroy: async () => {
 			options.client.off(Events.InteractionCreate, onInteraction);
+			options.client.off(Events.ClientReady, onReady);
 		},
 	};
 }

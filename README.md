@@ -2,7 +2,7 @@
 
 > Modern command handler for Discord.js — TypeScript-first, Components V2 native, with pluggable persistence.
 
-**v2 is in active development.** v1 (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](../../tree/v1-final-commit).
+**v2 is in active development.** v1 (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit).
 
 ## Quick start
 
