@@ -17,6 +17,9 @@
 		"packages/adapter-prisma": {
 			"entry": ["src/index.ts", "src/**/*.test.ts"]
 		},
+		"packages/adapter-mongoose": {
+			"entry": ["src/index.ts", "src/models.ts", "src/**/*.test.ts"]
+		},
 		"packages/cli": {
 			"entry": ["src/cli.ts", "src/**/*.test.ts"]
 		},
