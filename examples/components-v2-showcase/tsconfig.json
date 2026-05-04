@@ -1,0 +1,13 @@
+{
+	"extends": "@djs-commands/tsconfig/base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@djs-commands/jsx",
+		"types": ["bun"]
+	},
+	"include": ["src/**/*"]
+}

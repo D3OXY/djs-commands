@@ -1,19 +1,208 @@
 ---
 title: Components V2
-description: JSX-first builders and a function-call fallback for Discord's new component model.
+description: JSX runtime and a function-call fallback for Discord's new component model.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-<Callout type="warn">
-**Coming with [Slice #61 — Components V2](https://github.com/D3OXY/djs-commands/issues/61).** This section is currently a placeholder.
+Discord's [Components V2](https://discord.com/developers/docs/components/reference) message format replaces the
+old "embed + button rows" pattern with composable layout primitives — Containers, Sections, Text Displays,
+Media Galleries, Separators, Files, and Action Rows of Buttons.
+
+`djs-commands` ships **two ways** to build them. Pick whichever fits your project:
+
+- **`@djs-commands/jsx`** — write components as JSX, like React. Best DX if your toolchain (TS, Bun, ESBuild,
+  SWC) already supports JSX.
+- **Function fallback from `@djs-commands/core`** — the same builders, exposed as plain functions. No JSX
+  pragma, no extra dependency.
+
+Both produce real `discord.js` builder objects, so you can mix the two freely.
+
+## Quick start (JSX)
+
+```bash
+bun add @djs-commands/jsx
+```
+
+Configure TypeScript to use the runtime:
+
+```json title="tsconfig.json"
+{
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "@djs-commands/jsx"
+    }
+}
+```
+
+That's it — no Babel, no SWC. Bun's transpiler and TypeScript both honor `jsxImportSource` directly.
+
+```tsx title="src/welcome.tsx"
+import { defineCommand } from "@djs-commands/core";
+import { Button, Container, Section, TextDisplay, render } from "@djs-commands/jsx";
+import { MessageFlags } from "discord.js";
+
+export const welcome = defineCommand({
+    name: "welcome",
+    description: "Show a Components V2 welcome card",
+    run: async ({ interaction }) => {
+        await interaction.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: render(
+                <Container accentColor={0x5865f2}>
+                    <TextDisplay># Welcome</TextDisplay>
+                    <Section accessory={<Button style="primary" customId="welcome:next" label="Next" />}>
+                        Components V2 lets you compose rich messages from layout primitives.
+                    </Section>
+                </Container>
+            ),
+        });
+    },
+});
+```
+
+## Quick start (function fallback)
+
+If you can't (or won't) enable JSX, every component has a function-form sibling re-exported from
+`@djs-commands/core`. They return the same `discord.js` builders.
+
+```ts title="src/welcome.ts"
+import { button, container, defineCommand, section, textDisplay } from "@djs-commands/core";
+import { MessageFlags } from "discord.js";
+
+export const welcome = defineCommand({
+    name: "welcome",
+    description: "Show a Components V2 welcome card",
+    run: async ({ interaction }) => {
+        await interaction.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                container({
+                    accentColor: 0x5865f2,
+                    children: [
+                        textDisplay("# Welcome"),
+                        section({
+                            accessory: button({ style: "primary", customId: "welcome:next", label: "Next" }),
+                            text: "Components V2 lets you compose rich messages from layout primitives.",
+                        }),
+                    ],
+                }),
+            ],
+        });
+    },
+});
+```
+
+## Side-by-side: same output
+
+The two APIs are isomorphic. Here's the identical message expressed both ways:
+
+<Tabs items={["JSX", "Functions"]}>
+<Tab value="JSX">
+
+```tsx
+render(
+    <Container accentColor={0xff6b35}>
+        <TextDisplay># Bug report</TextDisplay>
+        <Section accessory={<Button style="link" url="https://github.com/owner/repo" label="Repo" />}>
+            File an issue if something looks off.
+        </Section>
+        <Separator divider={true} />
+        <ActionRow>
+            <Button style="primary" customId="bug:reopen" label="Reopen" />
+            <Button style="danger" customId="bug:close" label="Close" />
+        </ActionRow>
+    </Container>
+);
+```
+
+</Tab>
+<Tab value="Functions">
+
+```ts
+container({
+    accentColor: 0xff6b35,
+    children: [
+        textDisplay("# Bug report"),
+        section({
+            accessory: button({ style: "link", url: "https://github.com/owner/repo", label: "Repo" }),
+            text: "File an issue if something looks off.",
+        }),
+        separator({ divider: true }),
+        actionRow({
+            children: [button({ style: "primary", customId: "bug:reopen", label: "Reopen" }), button({ style: "danger", customId: "bug:close", label: "Close" })],
+        }),
+    ],
+});
+```
+
+</Tab>
+</Tabs>
+
+## Modals
+
+Both runtimes can build modals. The JSX form mirrors the message API:
+
+<Tabs items={["JSX", "Functions"]}>
+<Tab value="JSX">
+
+```tsx
+import { Modal, TextInput, renderModal } from "@djs-commands/jsx";
+
+await interaction.showModal(
+    renderModal(
+        <Modal title="Send Feedback" customId="feedback-modal">
+            <TextInput customId="subject" label="Subject" style="short" required={true} />
+            <TextInput customId="body" label="What's on your mind?" style="paragraph" />
+        </Modal>
+    )
+);
+```
+
+</Tab>
+<Tab value="Functions">
+
+```ts
+import { modal, textInput } from "@djs-commands/core";
+
+await interaction.showModal(
+    modal({
+        title: "Send Feedback",
+        customId: "feedback-modal",
+        fields: [textInput({ customId: "subject", label: "Subject", style: "short", required: true }), textInput({ customId: "body", label: "What's on your mind?", style: "paragraph" })],
+    })
+);
+```
+
+</Tab>
+</Tabs>
+
+`<RadioGroup>` and `<CheckboxGroup>` are also available for modal forms; the function-form equivalents are
+`radioGroup()` and `checkboxGroup()`.
+
+## What you can build
+
+The full component set covers everything Discord exposes today:
+
+| Layout         | Form           |
+| -------------- | -------------- |
+| `Container`    | `ActionRow`    |
+| `Section`      | `Button`       |
+| `TextDisplay`  | `Modal`        |
+| `MediaGallery` | `TextInput`    |
+| `Separator`    | `RadioGroup`   |
+| `File`         | `CheckboxGroup`|
+| `Thumbnail`    |                |
+
+## Full example
+
+For a runnable bot covering every primitive — slash command, container, section, gallery, separator,
+action row, and a modal — see
+[`examples/components-v2-showcase`](https://github.com/D3OXY/djs-commands/tree/main/examples/components-v2-showcase).
+
+<Callout type="info">
+Interaction routing (a click in `<Button customId="..." />` reaching a typed handler) is the next slice's
+focus. Today, you wire button/modal interactions on `client.on(Events.InteractionCreate, ...)` as in the
+showcase example.
 </Callout>
-
-Components V2 is the headline feature of djs-commands v2. The plan:
-
-- **JSX builders** for projects with a JSX-capable toolchain (TS, ESBuild, SWC, Bun). Write Discord components like React.
-- **Function-call fallback** with the same primitives, for plain-JS projects that can't compile JSX.
-- **Type-safe interaction routing** so a button click in one command can be handled by a function with the right argument types.
-- **Layout primitives** (Action Row, Container, Section) wired into the component tree.
-
-Track issue [#61](https://github.com/D3OXY/djs-commands/issues/61) for the API design and rollout. The dedicated [Components V2 concept page](/concepts/components-v2) will explain how the runtime fits into the rest of the framework.

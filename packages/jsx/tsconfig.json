@@ -1,0 +1,16 @@
+{
+	"extends": "@djs-commands/tsconfig/library.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@djs-commands/jsx",
+		"types": ["bun"],
+		"paths": {
+			"@djs-commands/jsx/jsx-runtime": ["./src/jsx-runtime.ts"],
+			"@djs-commands/jsx/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["dist", "node_modules"]
+}
