@@ -1,0 +1,52 @@
+{
+	"name": "@djs-commands/cli",
+	"version": "0.0.0",
+	"description": "Scaffolding CLI for djs-commands — `npx create-djs-commands`",
+	"author": "D3OXY <hello@deoxy.dev>",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/cli.js",
+	"types": "./dist/cli.d.ts",
+	"bin": {
+		"create-djs-commands": "./dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"templates",
+		"README.md"
+	],
+	"scripts": {
+		"build": "bun build src/cli.ts --target=node --outfile=dist/cli.js --banner='#!/usr/bin/env node' && chmod +x dist/cli.js",
+		"dev": "bun run --watch src/cli.ts",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.11.0",
+		"picocolors": "^1.1.1"
+	},
+	"devDependencies": {
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/D3OXY/djs-commands",
+		"directory": "packages/cli"
+	},
+	"keywords": [
+		"discord.js",
+		"discord",
+		"bot",
+		"scaffold",
+		"create-djs-commands"
+	]
+}
