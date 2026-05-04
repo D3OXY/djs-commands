@@ -11,11 +11,15 @@
 		"packages/adapter-redis": {
 			"entry": ["src/index.ts", "src/**/*.test.ts", "src/**/*.test-d.ts"]
 		},
+		"packages/adapter-drizzle": {
+			"entry": ["src/index.ts", "src/schema.ts", "src/**/*.test.ts"]
+		},
 		"packages/tsconfig": {},
 		"examples/minimal": {
-			"entry": ["src/index.ts", "src/commands/**/*.{ts,tsx}", "src/events/**/*.{ts,tsx}"]
+			"entry": ["src/commands/**/*.{ts,tsx}"]
 		},
 		"examples/components-v2-showcase": {},
+		"examples/moderation-drizzle": {},
 		"apps/docs": {
 			"entry": ["src/client.tsx", "src/ssr.tsx", "src/router.tsx", "src/start.ts", "src/routes/**/*.{ts,tsx}", "source.config.ts"]
 		}

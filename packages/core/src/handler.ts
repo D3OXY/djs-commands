@@ -3,6 +3,7 @@ import type { EventDefinition } from "./define-event";
 import { Dispatcher } from "./dispatcher";
 import { loadCommandsFromDir, loadEventsFromDir, type WatchHandle, watchCommandsDir } from "./fs-loader";
 import { buildOptionsData } from "./options";
+import { getGuildPrefix } from "./storage";
 import type { AnyCommand, CommandHandler, CommandHandlerOptions } from "./types";
 
 export function createCommandHandler(options: CommandHandlerOptions): CommandHandler {
@@ -35,8 +36,21 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		});
 	};
 
+	const handleMessage = async (message: Message): Promise<void> => {
+		let prefix = legacyPrefix;
+		if (options.storage && message.guild) {
+			try {
+				const override = await getGuildPrefix(options.storage, message.guild.id);
+				if (override) prefix = override;
+			} catch (err) {
+				console.error("[djs-commands] Failed to load guild prefix override:", err);
+			}
+		}
+		await dispatcher.dispatchMessage(message, prefix, legacyEnabled);
+	};
+
 	const onMessage = (message: Message) => {
-		dispatcher.dispatchMessage(message, legacyPrefix, legacyEnabled).catch((err) => {
+		handleMessage(message).catch((err) => {
 			console.error("[djs-commands] Unhandled legacy command error:", err);
 		});
 	};

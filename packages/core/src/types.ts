@@ -2,6 +2,7 @@ import type { ChatInputCommandInteraction, Client, Guild, GuildMember, Message, 
 import type { CacheAdapter, CooldownConfig } from "./cooldowns";
 import type { CommandOptions, ResolveOptions } from "./options";
 import type { PluginManifest } from "./plugin";
+import type { Storage } from "./storage";
 import type { CanRunCommand, Validator } from "./validators";
 
 interface BaseRunContext<S extends CommandOptions = Record<string, never>> {
@@ -76,6 +77,8 @@ export interface CommandHandlerOptions {
 	plugins?: PluginManifest[];
 	cacheAdapter?: CacheAdapter;
 	legacy?: HandlerLegacyConfig;
+	/** Persistent storage adapter for framework features that need it (e.g. per-guild legacy prefix). */
+	storage?: Storage;
 }
 
 export interface CommandHandler {

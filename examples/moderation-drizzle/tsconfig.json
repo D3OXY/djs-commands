@@ -1,0 +1,11 @@
+{
+	"extends": "@djs-commands/tsconfig/base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"types": ["bun"]
+	},
+	"include": ["src/**/*"]
+}
