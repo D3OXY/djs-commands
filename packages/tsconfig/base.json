@@ -1,0 +1,14 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"strict": true,
+		"skipLibCheck": true,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"noUncheckedIndexedAccess": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitOverride": true,
+		"target": "ES2022",
+		"lib": ["ES2022"]
+	}
+}

@@ -1,17 +1,5 @@
 {
-  "compilerOptions": {
-    "resolveJsonModule": true,
-    "target": "esnext",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-  },
-  "exclude": [
-    "../../test/example-bot/**/*",
-    "dist/**/*"
-  ],
+	"extends": "./packages/tsconfig/base.json",
+	"include": [],
+	"exclude": ["**/node_modules", "**/dist"]
 }
