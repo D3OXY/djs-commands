@@ -12,7 +12,9 @@
 			"entry": ["src/index.ts", "src/**/*.test.ts", "src/**/*.test-d.ts"]
 		},
 		"packages/tsconfig": {},
-		"examples/minimal": {},
+		"examples/minimal": {
+			"entry": ["src/index.ts", "src/commands/**/*.{ts,tsx}", "src/events/**/*.{ts,tsx}"]
+		},
 		"examples/components-v2-showcase": {},
 		"apps/docs": {
 			"entry": ["src/client.tsx", "src/ssr.tsx", "src/router.tsx", "src/start.ts", "src/routes/**/*.{ts,tsx}", "source.config.ts"]
