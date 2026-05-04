@@ -1,3 +1,4 @@
+export type { CacheAdapter, CooldownConfig, CooldownType } from "./cooldowns";
 export { defineCommand } from "./define-command";
 export { createCommandHandler } from "./handler";
 export type {

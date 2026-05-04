@@ -14,6 +14,7 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		botOwners: options.botOwners ?? [],
 		globalValidators: options.validators ?? [],
 		canRunCommand: options.canRunCommand,
+		cacheAdapter: options.cacheAdapter,
 	});
 	for (const command of allCommands) {
 		dispatcher.register(command);
