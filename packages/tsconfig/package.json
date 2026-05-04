@@ -1,0 +1,12 @@
+{
+	"name": "@djs-commands/tsconfig",
+	"version": "0.0.0",
+	"description": "Shared TypeScript configurations for the djs-commands monorepo",
+	"author": "D3OXY <hello@deoxy.dev>",
+	"license": "MIT",
+	"private": true,
+	"files": [
+		"base.json",
+		"library.json"
+	]
+}

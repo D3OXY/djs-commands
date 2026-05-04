@@ -1,0 +1,54 @@
+{
+	"name": "@djs-commands/core",
+	"version": "0.0.0",
+	"description": "Modern Discord.js command handler — dispatcher, definitions, validators, plugins",
+	"author": "D3OXY <hello@deoxy.dev>",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"peerDependencies": {
+		"discord.js": "^14.26.0"
+	},
+	"devDependencies": {
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"discord.js": "catalog:",
+		"typescript": "catalog:"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/D3OXY/djs-commands",
+		"directory": "packages/core"
+	},
+	"keywords": [
+		"discord.js",
+		"discord",
+		"bot",
+		"command-handler",
+		"typescript"
+	]
+}

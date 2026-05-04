@@ -1,0 +1,9 @@
+{
+	"$schema": "https://unpkg.com/knip/schema.json",
+	"workspaces": {
+		".": {},
+		"packages/core": {},
+		"packages/tsconfig": {},
+		"examples/minimal": {}
+	}
+}

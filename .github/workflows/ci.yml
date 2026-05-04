@@ -1,0 +1,51 @@
+name: CI
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    ci:
+        name: ${{ matrix.runtime.name }} on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, macos-latest]
+                runtime:
+                    - { name: bun-latest, node: 24 }
+                    - { name: node-22, node: 22 }
+                    - { name: node-24, node: 24 }
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.runtime.node }}
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Lint
+              run: bun run check
+
+            - name: Typecheck
+              run: bun run typecheck
+
+            - name: Knip
+              run: bun run knip
+
+            - name: Build
+              run: bun run build
+
+            - name: Test
+              run: bun run test
