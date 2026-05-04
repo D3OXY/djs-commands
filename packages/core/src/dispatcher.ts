@@ -3,6 +3,7 @@ import { normalizeLegacyContext, normalizeSlashContext } from "./context";
 import { type CacheAdapter, CooldownEngine } from "./cooldowns";
 import { parseLegacyArgs } from "./legacy-parser";
 import { extractOptions } from "./options";
+import { getChannelLocks, isCommandDisabled, type Storage } from "./storage";
 import type { AnyCommand } from "./types";
 import { type CanRunCommand, runValidatorChain, type Validator, type ValidatorContext, type ValidatorSource } from "./validators";
 
@@ -11,6 +12,7 @@ interface DispatcherConfig {
 	globalValidators: readonly Validator[];
 	canRunCommand?: CanRunCommand;
 	cacheAdapter?: CacheAdapter;
+	storage?: Storage;
 }
 
 export class Dispatcher {
@@ -25,6 +27,7 @@ export class Dispatcher {
 			globalValidators: config.globalValidators ?? [],
 			canRunCommand: config.canRunCommand,
 			cacheAdapter: config.cacheAdapter,
+			storage: config.storage,
 		};
 		this.cooldowns = new CooldownEngine(this.config.cacheAdapter);
 	}
@@ -57,6 +60,12 @@ export class Dispatcher {
 
 		if (!validation.ok) {
 			await replyFailure(validatorCtx.source, validation.reason);
+			return;
+		}
+
+		const storageGate = await this.runStorageGates(command, interaction.guildId, interaction.channelId);
+		if (storageGate) {
+			await replyFailure(validatorCtx.source, storageGate);
 			return;
 		}
 
@@ -106,6 +115,12 @@ export class Dispatcher {
 			return;
 		}
 
+		const storageGate = await this.runStorageGates(command, message.guildId, message.channelId);
+		if (storageGate) {
+			await replyFailure(validatorCtx.source, storageGate);
+			return;
+		}
+
 		const actor = { userId: message.author.id, guildId: message.guildId };
 		const remaining = await this.cooldowns.check(command, actor);
 		if (remaining !== null) {
@@ -121,6 +136,30 @@ export class Dispatcher {
 
 		await this.cooldowns.start(command, actor);
 		await command.run(normalizeLegacyContext(message, parsed.options));
+	}
+
+	/**
+	 * Storage-backed runtime gates: per-guild kill switch (DisabledCommands) and
+	 * per-guild channel allow-list (ChannelLocks). Returns a failure reason if
+	 * the command should be blocked, or null if it can proceed. No-op when no
+	 * storage is configured or the invocation is outside a guild.
+	 */
+	private async runStorageGates(command: AnyCommand, guildId: string | null, channelId: string): Promise<string | null> {
+		const storage = this.config.storage;
+		if (!storage || !guildId) return null;
+
+		try {
+			if (await isCommandDisabled(storage, guildId, command.name)) {
+				return "This command is currently disabled in this server.";
+			}
+			const locks = await getChannelLocks(storage, guildId, command.name);
+			if (locks.length > 0 && !locks.includes(channelId)) {
+				return "This command is locked to a different channel.";
+			}
+		} catch (err) {
+			console.error("[djs-commands] Storage gate check failed:", err);
+		}
+		return null;
 	}
 }
 

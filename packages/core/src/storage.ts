@@ -52,3 +52,84 @@ export async function setGuildPrefix(storage: Storage, guildId: string, prefix: 
 export async function clearGuildPrefix(storage: Storage, guildId: string): Promise<void> {
 	await storage.delete(GuildPrefixModel, { guild_id: guildId });
 }
+
+// ─── DisabledCommands model ────────────────────────────────────────────────
+
+export const DisabledCommandsModel = "disabled_commands" as const;
+
+export interface DisabledCommandRow extends Record<string, unknown> {
+	guild_id: string;
+	command_name: string;
+}
+
+/** Returns true if the named command is disabled for the given guild. */
+export async function isCommandDisabled(storage: Storage, guildId: string, commandName: string): Promise<boolean> {
+	const row = await storage.findOne<DisabledCommandRow>(DisabledCommandsModel, {
+		guild_id: guildId,
+		command_name: commandName,
+	});
+	return row !== null;
+}
+
+export async function disableCommand(storage: Storage, guildId: string, commandName: string): Promise<void> {
+	const existing = await storage.findOne<DisabledCommandRow>(DisabledCommandsModel, {
+		guild_id: guildId,
+		command_name: commandName,
+	});
+	if (existing) return;
+	await storage.create<DisabledCommandRow>(DisabledCommandsModel, {
+		guild_id: guildId,
+		command_name: commandName,
+	});
+}
+
+export async function enableCommand(storage: Storage, guildId: string, commandName: string): Promise<void> {
+	await storage.delete(DisabledCommandsModel, {
+		guild_id: guildId,
+		command_name: commandName,
+	});
+}
+
+// ─── ChannelLocks model ────────────────────────────────────────────────────
+
+export const ChannelLocksModel = "channel_locks" as const;
+
+export interface ChannelLockRow extends Record<string, unknown> {
+	guild_id: string;
+	command_name: string;
+	channel_id: string;
+}
+
+/**
+ * Returns the list of channel IDs the named command is locked to in the given
+ * guild. An empty array means no lock — the command runs anywhere (subject to
+ * other validators). Non-empty means the command ONLY runs in those channels.
+ */
+export async function getChannelLocks(storage: Storage, guildId: string, commandName: string): Promise<string[]> {
+	const rows = await storage.findMany<ChannelLockRow>(ChannelLocksModel, {
+		where: { guild_id: guildId, command_name: commandName },
+	});
+	return rows.map((r) => r.channel_id);
+}
+
+export async function lockCommandToChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void> {
+	const existing = await storage.findOne<ChannelLockRow>(ChannelLocksModel, {
+		guild_id: guildId,
+		command_name: commandName,
+		channel_id: channelId,
+	});
+	if (existing) return;
+	await storage.create<ChannelLockRow>(ChannelLocksModel, {
+		guild_id: guildId,
+		command_name: commandName,
+		channel_id: channelId,
+	});
+}
+
+export async function unlockCommandFromChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void> {
+	await storage.delete(ChannelLocksModel, {
+		guild_id: guildId,
+		command_name: commandName,
+		channel_id: channelId,
+	});
+}

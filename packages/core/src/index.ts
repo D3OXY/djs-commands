@@ -54,7 +54,26 @@ export type {
 	UserOption,
 } from "./options";
 export type { PluginManifest, PluginSetupContext } from "./plugin";
-export { clearGuildPrefix, GuildPrefixModel, type GuildPrefixRow, getGuildPrefix, type Storage, type StorageFindOpts, type StorageWhere, setGuildPrefix } from "./storage";
+export {
+	type ChannelLockRow,
+	ChannelLocksModel,
+	clearGuildPrefix,
+	type DisabledCommandRow,
+	DisabledCommandsModel,
+	disableCommand,
+	enableCommand,
+	GuildPrefixModel,
+	type GuildPrefixRow,
+	getChannelLocks,
+	getGuildPrefix,
+	isCommandDisabled,
+	lockCommandToChannel,
+	type Storage,
+	type StorageFindOpts,
+	type StorageWhere,
+	setGuildPrefix,
+	unlockCommandFromChannel,
+} from "./storage";
 export { runStorageConformance } from "./storage-conformance";
 export type {
 	AnyCommand,

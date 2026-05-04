@@ -20,6 +20,7 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		globalValidators: options.validators ?? [],
 		canRunCommand: options.canRunCommand,
 		cacheAdapter: options.cacheAdapter,
+		storage: options.storage,
 	});
 
 	for (const command of allCommands) {

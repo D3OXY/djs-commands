@@ -1,25 +1,29 @@
-import { GuildPrefixModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
 import type mongoose from "mongoose";
-import { createGuildPrefixModel, type GuildPrefixDoc } from "./models";
+import { type ChannelLockDoc, createChannelLockModel, createDisabledCommandModel, createGuildPrefixModel, type DisabledCommandDoc, type GuildPrefixDoc } from "./models";
 
-export type { GuildPrefixDoc } from "./models";
-export { createGuildPrefixModel } from "./models";
+export type { ChannelLockDoc, DisabledCommandDoc, GuildPrefixDoc } from "./models";
+export { createChannelLockModel, createDisabledCommandModel, createGuildPrefixModel } from "./models";
 
 interface ModelMap {
 	[GuildPrefixModel]: mongoose.Model<GuildPrefixDoc>;
+	[DisabledCommandsModel]: mongoose.Model<DisabledCommandDoc>;
+	[ChannelLocksModel]: mongoose.Model<ChannelLockDoc>;
 }
 
 interface MongooseStorageOptions {
 	models?: {
 		guildPrefix?: mongoose.Model<GuildPrefixDoc>;
+		disabledCommands?: mongoose.Model<DisabledCommandDoc>;
+		channelLocks?: mongoose.Model<ChannelLockDoc>;
 	};
 }
 
 /**
  * Returns a `Storage` implementation backed by Mongoose. Models the framework
- * knows about (currently only GuildPrefix) are mapped to their Mongoose
- * models. Unknown models throw — adapters that don't recognize a model name
- * should fail loud, not silently no-op.
+ * knows about (GuildPrefix, DisabledCommands, ChannelLocks) are mapped to their
+ * Mongoose models. Unknown models throw — adapters that don't recognize a model
+ * name should fail loud, not silently no-op.
  *
  * Bring-your-own-models: pass `options.models` to override defaults if you've
  * already registered a compatible model on the connection.
@@ -27,6 +31,8 @@ interface MongooseStorageOptions {
 export function mongooseStorage(connection: mongoose.Connection, options: MongooseStorageOptions = {}): Storage {
 	const models: ModelMap = {
 		[GuildPrefixModel]: options.models?.guildPrefix ?? createGuildPrefixModel(connection),
+		[DisabledCommandsModel]: options.models?.disabledCommands ?? createDisabledCommandModel(connection),
+		[ChannelLocksModel]: options.models?.channelLocks ?? createChannelLockModel(connection),
 	};
 
 	const modelFor = (name: string): mongoose.Model<Record<string, unknown>> => {
