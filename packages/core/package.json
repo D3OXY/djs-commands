@@ -18,8 +18,8 @@
 		"README.md"
 	],
 	"scripts": {
-		"build": "tsc",
-		"dev": "tsc --watch",
+		"build": "tsc -p tsconfig.build.json",
+		"dev": "tsc -p tsconfig.build.json --watch",
 		"typecheck": "tsc --noEmit",
 		"test": "bun test"
 	},
@@ -31,6 +31,7 @@
 		"@types/bun": "catalog:",
 		"@types/node": "catalog:",
 		"discord.js": "catalog:",
+		"expect-type": "^1.2.0",
 		"typescript": "catalog:"
 	},
 	"publishConfig": {
