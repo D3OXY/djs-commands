@@ -1,3 +1,35 @@
+export type {
+	ActionRowOptions,
+	ButtonOptions,
+	ButtonStyleName,
+	CheckboxGroupOptions,
+	ContainerChild,
+	ContainerOptions,
+	FileOptions,
+	MediaGalleryOptions,
+	ModalOptions,
+	RadioGroupOptions,
+	SectionOptions,
+	SeparatorOptions,
+	TextInputOptions,
+	TextInputStyleName,
+	ThumbnailOptions,
+} from "./components";
+export {
+	actionRow,
+	button,
+	checkboxGroup,
+	container,
+	file,
+	mediaGallery,
+	modal,
+	radioGroup,
+	section,
+	separator,
+	textDisplay,
+	textInput,
+	thumbnail,
+} from "./components";
 export type { CacheAdapter, CooldownConfig, CooldownType } from "./cooldowns";
 export { defineCommand } from "./define-command";
 export { createCommandHandler } from "./handler";

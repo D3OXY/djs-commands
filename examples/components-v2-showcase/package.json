@@ -1,0 +1,23 @@
+{
+	"name": "components-v2-showcase",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "djs-commands example showing Components V2 via JSX",
+	"scripts": {
+		"dev": "bun run --watch src/index.tsx",
+		"start": "bun run src/index.tsx",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@djs-commands/core": "workspace:*",
+		"@djs-commands/jsx": "workspace:*",
+		"discord.js": "catalog:"
+	},
+	"devDependencies": {
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

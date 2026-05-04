@@ -37,6 +37,21 @@
         "typescript": "catalog:",
       },
     },
+    "examples/components-v2-showcase": {
+      "name": "components-v2-showcase",
+      "version": "0.0.0",
+      "dependencies": {
+        "@djs-commands/core": "workspace:*",
+        "@djs-commands/jsx": "workspace:*",
+        "discord.js": "catalog:",
+      },
+      "devDependencies": {
+        "@djs-commands/tsconfig": "workspace:*",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "examples/minimal": {
       "name": "minimal",
       "version": "0.0.0",
@@ -53,6 +68,21 @@
     },
     "packages/core": {
       "name": "@djs-commands/core",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@djs-commands/tsconfig": "workspace:*",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "discord.js": "catalog:",
+        "expect-type": "^1.2.0",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "discord.js": "^14.26.0",
+      },
+    },
+    "packages/jsx": {
+      "name": "@djs-commands/jsx",
       "version": "0.0.0",
       "devDependencies": {
         "@djs-commands/tsconfig": "workspace:*",
@@ -187,6 +217,8 @@
     "@discordjs/ws": ["@discordjs/ws@1.2.3", "", { "dependencies": { "@discordjs/collection": "^2.1.0", "@discordjs/rest": "^2.5.1", "@discordjs/util": "^1.1.0", "@sapphire/async-queue": "^1.5.2", "@types/ws": "^8.5.10", "@vladfrangu/async_event_emitter": "^2.2.4", "discord-api-types": "^0.38.1", "tslib": "^2.6.2", "ws": "^8.17.0" } }, "sha512-wPlQDxEmlDg5IxhJPuxXr3Vy9AjYq5xCvFWGJyD7w7Np8ZGu+Mc+97LCoEc/+AYCo2IDpKioiH0/c/mj5ZR9Uw=="],
 
     "@djs-commands/core": ["@djs-commands/core@workspace:packages/core"],
+
+    "@djs-commands/jsx": ["@djs-commands/jsx@workspace:packages/jsx"],
 
     "@djs-commands/tsconfig": ["@djs-commands/tsconfig@workspace:packages/tsconfig"],
 
@@ -653,6 +685,8 @@
     "collapse-white-space": ["collapse-white-space@2.1.0", "", {}, "sha512-loKTxY1zCOuG4j9f6EPnuyyYkf58RnhhWTvRoZEokgB+WbdXehfjFviyOVYkqzEWz1Q5kRiZdBYS5SwxbQYwzw=="],
 
     "comma-separated-tokens": ["comma-separated-tokens@2.0.3", "", {}, "sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg=="],
+
+    "components-v2-showcase": ["components-v2-showcase@workspace:examples/components-v2-showcase"],
 
     "compute-scroll-into-view": ["compute-scroll-into-view@3.1.1", "", {}, "sha512-VRhuHOLoKYOy4UbilLbUzbYg93XLjv2PncJC50EuTWPA3gaja1UjBsUP/D/9/juV3vQFr6XBEzn9KCAHdUvOHw=="],
 

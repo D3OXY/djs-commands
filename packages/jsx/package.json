@@ -1,0 +1,63 @@
+{
+	"name": "@djs-commands/jsx",
+	"version": "0.0.0",
+	"description": "JSX runtime + components for djs-commands — Components V2 expressed as JSX",
+	"author": "D3OXY <hello@deoxy.dev>",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./jsx-runtime": {
+			"types": "./dist/jsx-runtime.d.ts",
+			"import": "./dist/jsx-runtime.js"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./dist/jsx-dev-runtime.d.ts",
+			"import": "./dist/jsx-dev-runtime.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"dev": "tsc -p tsconfig.build.json --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"peerDependencies": {
+		"discord.js": "^14.26.0"
+	},
+	"devDependencies": {
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"discord.js": "catalog:",
+		"expect-type": "^1.2.0",
+		"typescript": "catalog:"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/D3OXY/djs-commands",
+		"directory": "packages/jsx"
+	},
+	"keywords": [
+		"discord.js",
+		"discord",
+		"components-v2",
+		"jsx",
+		"jsx-runtime"
+	]
+}
