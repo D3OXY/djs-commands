@@ -14,6 +14,9 @@
 		"packages/adapter-drizzle": {
 			"entry": ["src/index.ts", "src/schema.ts", "src/**/*.test.ts"]
 		},
+		"packages/cli": {
+			"entry": ["src/cli.ts", "src/**/*.test.ts"]
+		},
 		"packages/tsconfig": {},
 		"examples/minimal": {
 			"entry": ["src/commands/**/*.{ts,tsx}"]
