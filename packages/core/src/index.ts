@@ -16,3 +16,4 @@ export type {
 	UserOption,
 } from "./options";
 export type { AnyCommand, Command, CommandHandler, CommandHandlerOptions, CommandRun, CommandRunContext } from "./types";
+export type { CanRunCommand, ValidationResult, Validator, ValidatorContext } from "./validators";
