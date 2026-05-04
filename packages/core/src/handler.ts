@@ -1,5 +1,6 @@
-import { type Client, Events, type Interaction } from "discord.js";
+import { type ApplicationCommandDataResolvable, type Client, Events, type Interaction } from "discord.js";
 import { Dispatcher } from "./dispatcher";
+import { buildOptionsData } from "./options";
 import type { CommandHandler, CommandHandlerOptions } from "./types";
 
 export function createCommandHandler(options: CommandHandlerOptions): CommandHandler {
@@ -17,7 +18,11 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 	const onReady = (client: Client<true>) => {
 		if (!client.application) return;
-		const data = options.commands.map((c) => ({ name: c.name, description: c.description }));
+		const data = options.commands.map((c) => ({
+			name: c.name,
+			description: c.description,
+			options: buildOptionsData(c.options),
+		})) as unknown as ApplicationCommandDataResolvable[];
 		client.application.commands.set(data).catch((err) => {
 			console.error("[djs-commands] Failed to register application commands:", err);
 		});

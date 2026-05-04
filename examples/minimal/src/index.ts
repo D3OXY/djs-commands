@@ -9,6 +9,18 @@ const ping = defineCommand({
 	},
 });
 
+const echo = defineCommand({
+	name: "echo",
+	description: "Echoes a message back",
+	options: {
+		message: { type: "string", description: "What to echo", required: true },
+	},
+	run: async ({ interaction, options }) => {
+		// options.message is statically typed as `string` (required)
+		await interaction.reply(options.message);
+	},
+});
+
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
 	console.error("DISCORD_TOKEN environment variable is required");
@@ -19,7 +31,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 createCommandHandler({
 	client,
-	commands: [ping],
+	commands: [ping, echo],
 });
 
 client.once("clientReady", (c) => {
