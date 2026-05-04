@@ -144,8 +144,9 @@ describe("prismaStorage (mocked)", () => {
 		expect(await storage.count(GuildPrefixModel, { guild_id: "g1" })).toBe(1);
 	});
 
-	test("unknown delegate on the client throws loud", () => {
-		expect(() => prismaStorage({})).toThrow(/no delegate for model "guild_prefix"/);
+	test("missing delegate on the client throws loud at first use (lazy)", async () => {
+		const storage = prismaStorage({});
+		await expect(async () => storage.findOne(GuildPrefixModel, { guild_id: "x" })).toThrow(/no delegate for "prisma\.guildPrefix"/);
 	});
 
 	test("GUILD_PREFIX_PRISMA_MODEL exports the schema fragment string", () => {

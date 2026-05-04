@@ -1,4 +1,4 @@
-import { GuildPrefixModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
 
 /**
  * Minimal structural shape of a generated Prisma Client. We only need the
@@ -19,6 +19,8 @@ export type PrismaClientLike = Record<string, unknown>;
 
 interface ModelDelegates {
 	[GuildPrefixModel]: PrismaDelegate;
+	[DisabledCommandsModel]: PrismaDelegate;
+	[ChannelLocksModel]: PrismaDelegate;
 }
 
 interface PrismaStorageOptions {
@@ -44,6 +46,25 @@ export const GUILD_PREFIX_PRISMA_MODEL = `model GuildPrefix {
 }
 `;
 
+export const DISABLED_COMMANDS_PRISMA_MODEL = `model DisabledCommand {
+    guildId     String @map("guild_id")
+    commandName String @map("command_name")
+
+    @@id([guildId, commandName])
+    @@map("disabled_commands")
+}
+`;
+
+export const CHANNEL_LOCKS_PRISMA_MODEL = `model ChannelLock {
+    guildId     String @map("guild_id")
+    commandName String @map("command_name")
+    channelId   String @map("channel_id")
+
+    @@id([guildId, commandName, channelId])
+    @@map("channel_locks")
+}
+`;
+
 /**
  * Returns a `Storage` implementation backed by a Prisma Client. Models the
  * framework knows about (currently only GuildPrefix) are looked up on the
@@ -55,14 +76,24 @@ export const GUILD_PREFIX_PRISMA_MODEL = `model GuildPrefix {
  * lookup if you've renamed the model in your schema.
  */
 export function prismaStorage(prisma: PrismaClientLike, options: PrismaStorageOptions = {}): Storage {
-	const delegates: ModelDelegates = {
-		[GuildPrefixModel]: options.delegates?.[GuildPrefixModel] ?? resolveDelegate(prisma, GuildPrefixModel),
-	};
+	const overrides = options.delegates ?? {};
+	const cache = new Map<string, PrismaDelegate>();
 
+	// Lazy delegate resolution — we only look up a delegate when the model is
+	// actually used at runtime. This avoids requiring every Prisma client we
+	// touch to have all framework models generated; users that only use
+	// GuildPrefix don't pay for DisabledCommands / ChannelLocks delegate
+	// existence checks at construction time.
 	const delegateFor = (model: string): PrismaDelegate => {
-		const delegate = delegates[model as keyof ModelDelegates];
-		if (!delegate) throw new Error(`@djs-commands/adapter-prisma: unknown model "${model}"`);
-		return delegate;
+		const cached = cache.get(model);
+		if (cached) return cached;
+		if (model === GuildPrefixModel || model === DisabledCommandsModel || model === ChannelLocksModel) {
+			const override = overrides[model as keyof ModelDelegates];
+			const resolved = override ?? resolveDelegate(prisma, prismaDelegateName(model));
+			cache.set(model, resolved);
+			return resolved;
+		}
+		throw new Error(`@djs-commands/adapter-prisma: unknown model "${model}"`);
 	};
 
 	return {
@@ -121,25 +152,36 @@ export function prismaStorage(prisma: PrismaClientLike, options: PrismaStorageOp
 }
 
 /**
- * Maps a framework model name (e.g. `"guild_prefix"`) to its Prisma delegate.
- * Prisma exposes models as camelCase properties on the client, so we translate
- * `snake_case` → `camelCase` and read it off the client.
+ * The Prisma delegate name for each framework model. We can't just snake→camel
+ * the model name because the framework's plural/singular doesn't always match
+ * Prisma's convention (e.g. `disabled_commands` model → `disabledCommand`
+ * delegate per the Prisma model fragment we ship).
  */
-function resolveDelegate(prisma: PrismaClientLike, model: string): PrismaDelegate {
-	const key = snakeToCamel(model);
+function prismaDelegateName(model: string): string {
+	if (model === GuildPrefixModel) return "guildPrefix";
+	if (model === DisabledCommandsModel) return "disabledCommand";
+	if (model === ChannelLocksModel) return "channelLock";
+	return snakeToCamel(model);
+}
+
+/**
+ * Reads a Prisma delegate by camelCase name from the client. Throws loud if
+ * the delegate isn't on the client (means the model wasn't merged into
+ * `schema.prisma` or the client wasn't regenerated).
+ */
+function resolveDelegate(prisma: PrismaClientLike, key: string): PrismaDelegate {
 	const delegate = (prisma as Record<string, unknown>)[key];
 	if (!delegate || typeof delegate !== "object") {
-		throw new Error(`@djs-commands/adapter-prisma: Prisma client has no delegate for model "${model}" (expected prisma.${key})`);
+		throw new Error(`@djs-commands/adapter-prisma: Prisma client has no delegate for "prisma.${key}"`);
 	}
 	return delegate as PrismaDelegate;
 }
 
-// Prisma's TS-side field names use camelCase (guildId) while the database
-// uses snake_case (guild_id) via @map. The framework's `Where`/`Row` shapes are
-// the snake_case API names, so we translate at the boundary.
+// Prisma's TS-side field names use camelCase while the database uses
+// snake_case via @map. The framework's API uses snake_case, so translate at
+// the boundary.
 function mapColumn(name: string): string {
-	if (name === "guild_id") return "guildId";
-	return name;
+	return snakeToCamel(name);
 }
 
 function mapKeys(obj: Record<string, unknown>): Record<string, unknown> {
@@ -150,13 +192,14 @@ function mapKeys(obj: Record<string, unknown>): Record<string, unknown> {
 
 function unmapKeys(obj: Record<string, unknown>): Record<string, unknown> {
 	const out: Record<string, unknown> = {};
-	for (const [k, v] of Object.entries(obj)) {
-		const reversed = k === "guildId" ? "guild_id" : k;
-		out[reversed] = v;
-	}
+	for (const [k, v] of Object.entries(obj)) out[camelToSnake(k)] = v;
 	return out;
 }
 
 function snakeToCamel(input: string): string {
 	return input.replace(/_([a-z])/g, (_match, ch: string) => ch.toUpperCase());
+}
+
+function camelToSnake(input: string): string {
+	return input.replace(/([A-Z])/g, (_match, ch: string) => `_${ch.toLowerCase()}`);
 }

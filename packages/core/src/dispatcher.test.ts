@@ -1,6 +1,7 @@
 import { expect, mock, test } from "bun:test";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { Dispatcher } from "./dispatcher";
+import type { Storage, StorageFindOpts, StorageWhere } from "./storage";
 
 const fakeInteraction = (commandName: string, optionValues: Record<string, unknown> = {}) =>
 	({
@@ -119,4 +120,148 @@ test("dispatch passes a unified ctx with reply/author/guild/channelId", async ()
 	expect(ctx?.type).toBe("slash");
 	expect(ctx?.channelId).toBe("channel-1");
 	expect(typeof ctx?.reply).toBe("function");
+});
+
+// ─── storage-backed runtime gates ─────────────────────────────────────────
+
+type FakeRow = Record<string, unknown>;
+
+const matches = (row: FakeRow, where: StorageWhere): boolean => {
+	for (const [k, v] of Object.entries(where)) {
+		if (row[k] !== v) return false;
+	}
+	return true;
+};
+
+const fakeStorage = (initial: Record<string, FakeRow[]> = {}): Storage => {
+	const tables = new Map<string, FakeRow[]>(Object.entries(initial));
+	const getTable = (model: string) => {
+		if (!tables.has(model)) tables.set(model, []);
+		const t = tables.get(model);
+		if (!t) throw new Error("unreachable");
+		return t;
+	};
+	return {
+		async create(model, data) {
+			getTable(model).push({ ...data });
+			return data;
+		},
+		async findOne(model, where) {
+			const row = getTable(model).find((r) => matches(r, where));
+			return (row ?? null) as never;
+		},
+		async findMany(model, opts: StorageFindOpts = {}) {
+			const where = opts.where;
+			let rows = getTable(model);
+			if (where) rows = rows.filter((r) => matches(r, where));
+			return [...rows] as never;
+		},
+		async update(model, where, data) {
+			const row = getTable(model).find((r) => matches(r, where));
+			if (!row) throw new Error("no match");
+			Object.assign(row, data);
+			return row as never;
+		},
+		async delete(model, where) {
+			const t = getTable(model);
+			for (let i = t.length - 1; i >= 0; i--) {
+				const row = t[i];
+				if (row && matches(row, where)) t.splice(i, 1);
+			}
+		},
+		async count(model, where) {
+			const t = getTable(model);
+			return where ? t.filter((r) => matches(r, where)).length : t.length;
+		},
+	};
+};
+
+const guildInteraction = (commandName: string, channelId = "channel-1", guildId = "guild-1") =>
+	({
+		commandName,
+		user: { id: "user-1" },
+		guild: { id: guildId },
+		guildId,
+		member: null,
+		channel: null,
+		channelId,
+		client: {} as unknown,
+		replied: false,
+		deferred: false,
+		reply: mock(async () => undefined),
+		options: {
+			getString: () => null,
+			getInteger: () => null,
+			getNumber: () => null,
+			getBoolean: () => null,
+			getUser: () => null,
+			getChannel: () => null,
+			getRole: () => null,
+			getMentionable: () => null,
+			getAttachment: () => null,
+		},
+	}) as unknown as ChatInputCommandInteraction;
+
+test("storage gate: blocks when DisabledCommands has a row for this guild+command", async () => {
+	const storage = fakeStorage({
+		disabled_commands: [{ guild_id: "guild-1", command_name: "ping" }],
+	});
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(guildInteraction("ping"));
+
+	expect(run).toHaveBeenCalledTimes(0);
+});
+
+test("storage gate: lets command through when not disabled", async () => {
+	const storage = fakeStorage();
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(guildInteraction("ping"));
+
+	expect(run).toHaveBeenCalledTimes(1);
+});
+
+test("storage gate: blocks when channel locks exist and current channel is not allowed", async () => {
+	const storage = fakeStorage({
+		channel_locks: [{ guild_id: "guild-1", command_name: "ping", channel_id: "allowed-channel" }],
+	});
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(guildInteraction("ping", "blocked-channel"));
+
+	expect(run).toHaveBeenCalledTimes(0);
+});
+
+test("storage gate: allows when current channel is in the lock list", async () => {
+	const storage = fakeStorage({
+		channel_locks: [{ guild_id: "guild-1", command_name: "ping", channel_id: "allowed-channel" }],
+	});
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(guildInteraction("ping", "allowed-channel"));
+
+	expect(run).toHaveBeenCalledTimes(1);
+});
+
+test("storage gate: no-op when invocation isn't in a guild (DMs)", async () => {
+	const storage = fakeStorage({
+		disabled_commands: [{ guild_id: "guild-1", command_name: "ping" }],
+	});
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	// guildId: null → DM context, gates skip and command runs
+	await dispatcher.dispatch(fakeInteraction("ping"));
+
+	expect(run).toHaveBeenCalledTimes(1);
 });
