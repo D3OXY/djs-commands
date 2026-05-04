@@ -21,6 +21,19 @@ const echo = defineCommand({
 	},
 });
 
+// Demonstrates validators: gated by ownerOnly + guildOnly.
+// The framework auto-replies ephemerally with the failure reason if
+// validation fails, so the run handler only sees authorized invocations.
+const shutdown = defineCommand({
+	name: "shutdown",
+	description: "Owner-only command (demo)",
+	ownerOnly: true,
+	guildOnly: true,
+	run: async ({ interaction }) => {
+		await interaction.reply("Pretending to shut down…");
+	},
+});
+
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
 	console.error("DISCORD_TOKEN environment variable is required");
@@ -31,7 +44,12 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 createCommandHandler({
 	client,
-	commands: [ping, echo],
+	commands: [ping, echo, shutdown],
+	// Comma-separated user IDs allowed to run owner-gated commands.
+	botOwners:
+		process.env.BOT_OWNERS?.split(",")
+			.map((id) => id.trim())
+			.filter(Boolean) ?? [],
 });
 
 client.once("clientReady", (c) => {

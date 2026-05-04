@@ -1,6 +1,5 @@
 {
 	"$schema": "https://unpkg.com/knip/schema.json",
-	"ignore": [".claude/**"],
 	"workspaces": {
 		".": {},
 		"packages/core": {

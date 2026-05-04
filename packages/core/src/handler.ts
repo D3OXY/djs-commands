@@ -4,7 +4,11 @@ import { buildOptionsData } from "./options";
 import type { CommandHandler, CommandHandlerOptions } from "./types";
 
 export function createCommandHandler(options: CommandHandlerOptions): CommandHandler {
-	const dispatcher = new Dispatcher();
+	const dispatcher = new Dispatcher({
+		botOwners: options.botOwners ?? [],
+		globalValidators: options.validators ?? [],
+		canRunCommand: options.canRunCommand,
+	});
 	for (const command of options.commands) {
 		dispatcher.register(command);
 	}
