@@ -1,0 +1,4 @@
+{
+	"title": "Migration from v1",
+	"pages": ["index", "handler", "commands", "validators", "persistence", "events-and-plugins", "dropped-features"]
+}

@@ -1,0 +1,82 @@
+---
+title: Dropped features
+description: What didn't make the cut and why
+---
+
+# Dropped features
+
+These features existed in v1 and intentionally don't ship in v2. Each section explains the rationale and the recommended replacement.
+
+## Custom commands (user-defined runtime slash commands)
+
+v1 had a `custom-command-schema` and built-in `/customcommand` admin command that let server admins create new slash commands from inside Discord, persisted to MongoDB.
+
+**Why dropped**: it's a whole feature inside a feature. It complicates persistence (every adapter would have to support it), it's a moderate fraction of v1's surface area, and most users either built their own version with richer behavior or never used it at all.
+
+**Replacement**: build it yourself on top of v2 if you need it. Define an admin command (`/define`) that writes to your own table and dynamically registers handlers via your application logic. Your data shape, your UI.
+
+## Built-in default admin commands
+
+v1 shipped 8 commands automatically: `prefix`, `slashcommand list/delete`, `togglecommand`, `embed`, `channelonly`, `requiredPermissions`, `requiredroles`, etc.
+
+**Why dropped**: every bot has different opinions about how admin UI should look. Shipping these as defaults forced users to either accept them or fight to disable them.
+
+**Replacement**: each helper is now a one-liner you can call from your own admin command. See [Persistence](./persistence) — `setGuildPrefix`, `disableCommand`, `lockCommandToChannel`, etc.
+
+## FeaturesHandler
+
+v1's `featuresDir` walked a directory and called `require(file)(commandHandler, client)` for each entry. It worked but was bundle-hostile (uses dynamic `require()`) and listener leaks were common.
+
+**Why dropped**: the [plugin system](./events-and-plugins#plugins-replacing-featureshandler) is a strict superset — same dynamic-loading capability, plus lifecycle hooks, type safety, and cleaner unmounting on `destroy()`.
+
+**Replacement**: factory functions returning `PluginManifest`, registered via the `plugins: [...]` option.
+
+## Anti-crash mode
+
+v1 had `antiCrash: true` that registered an `uncaughtException` handler keeping the process alive after errors.
+
+**Why dropped**: this hides bugs. Production deployments should let the process crash and restart via PM2 / systemd / Docker — that way crash loops show up in monitoring and the bug actually gets noticed.
+
+**Replacement**: handle it at the process level if you really want it:
+
+```ts
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught exception:", err);
+});
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled rejection:", err);
+});
+```
+
+Or better: don't add it at all. Let your supervisor restart the bot on crash and pipe logs to a place you'll actually see them.
+
+## `testServers` (deploy-only-on-startup gate)
+
+v1 had a `testServers` option that registered new commands against a list of guild IDs first, then promoted to global on success.
+
+**Why dropped**: the deploy story for slash commands varies a lot (you might use `discord.js`'s REST helpers directly, run a separate deploy script, gate on environment, etc.). Forcing one model in the framework limited flexibility.
+
+**Replacement**: handle it yourself in the `clientReady` event:
+
+```ts
+client.once("clientReady", async (c) => {
+    if (process.env.NODE_ENV === "production") {
+        await c.application.commands.set(commands);
+    } else {
+        for (const guildId of TEST_GUILDS) {
+            const guild = await c.guilds.fetch(guildId);
+            await guild.commands.set(commands);
+        }
+    }
+});
+```
+
+The framework's default `clientReady` listener registers globally. If you want test-server gating, override it with your own listener BEFORE calling `createCommandHandler` (or pass `commands: []` to skip the framework's auto-register).
+
+## `cooldownConfig.dbRequired` (5-minute DB persistence threshold)
+
+v1 had a magic 300-second threshold above which cooldowns were persisted to MongoDB and below which they were in-memory.
+
+**Why dropped**: it was a heuristic that pleased no one. v2 makes it explicit: in-memory by default; provide `cacheAdapter` (e.g. `@djs-commands/adapter-redis`) if you want distributed cooldowns regardless of duration.
+
+**Replacement**: `cacheAdapter: redisCacheAdapter(redis)` from `@djs-commands/adapter-redis`.

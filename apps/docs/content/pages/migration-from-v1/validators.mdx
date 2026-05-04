@@ -1,0 +1,113 @@
+---
+title: Validators
+description: requiredPermissions / requiredRoles / ownerOnly / guildOnly / channelOnly map cleanly
+---
+
+# Validators
+
+v1's command-level validation flags map 1:1 to v2 properties on `defineCommand`.
+
+| v1 | v2 |
+|---|---|
+| `requiredPermissions: ["BanMembers"]` | `permissions: ["BanMembers"]` |
+| `requiredRoles: ["role-id-1"]` | `roles: ["role-id-1"]` |
+| `ownerOnly: true` | `ownerOnly: true` |
+| `guildOnly: true` | `guildOnly: true` |
+| `testOnly: true` | dropped — handle deploy gating yourself |
+
+```ts
+// v1
+module.exports = {
+    type: CommandType.SLASH,
+    description: "Ban a user",
+    requiredPermissions: ["BanMembers"],
+    guildOnly: true,
+    callback: ({ interaction }) => {…},
+};
+```
+
+```ts
+// v2
+export default defineCommand({
+    name: "ban",
+    description: "Ban a user",
+    permissions: ["BanMembers"],
+    guildOnly: true,
+    options: { user: { type: "user", description: "Who", required: true } },
+    run: async (ctx) => {…},
+});
+```
+
+## Channel locks: static vs dynamic
+
+v1 had a `channels` array on the command (static) and a separate `channel-commands-schema` for runtime channel locks. In v2:
+
+- **Static**: `channels: ["channel-id"]` on `defineCommand` (declared once, in code)
+- **Dynamic**: `ChannelLocks` storage model (per-guild ops control)
+
+```ts
+// Static — applies in every guild
+export default defineCommand({
+    name: "admin",
+    channels: ["channel-id"],
+    // …
+});
+
+// Dynamic — per-guild, set at runtime
+import { lockCommandToChannel } from "@djs-commands/core";
+await lockCommandToChannel(storage, guildId, "admin", channelId);
+```
+
+The framework runs both: a command must satisfy static `channels` AND any `ChannelLocks` entries for the guild.
+
+## Custom validators
+
+```ts
+// v1 — registered through `customValidations`
+new CommandHandler({
+    client,
+    customValidations: [
+        ({ command, interaction }) => {
+            if (command.beta && !isBetaUser(interaction.user.id)) {
+                interaction.reply({ content: "Beta only", ephemeral: true });
+                return false;
+            }
+            return true;
+        },
+    ],
+});
+```
+
+```ts
+// v2 — global `validators` or per-command
+import type { Validator } from "@djs-commands/core";
+
+const betaOnly: Validator = ({ command, user }) => {
+    if (!command.beta || isBetaUser(user.id)) return { ok: true };
+    return { ok: false, reason: "Beta only" };
+};
+
+createCommandHandler({
+    client,
+    validators: [betaOnly],
+    // …
+});
+```
+
+Custom validators return `{ ok: true } | { ok: false, reason: string }`. The framework auto-replies ephemerally with the reason; you no longer call `.reply()` from the validator yourself.
+
+## Dynamic per-invocation gates
+
+v1 didn't have a hook for runtime gating (you'd build one through `customValidations`). v2 has `canRunCommand`:
+
+```ts
+createCommandHandler({
+    client,
+    canRunCommand: async ({ user }) => {
+        const limited = await rateLimiter.check(user.id);
+        return limited ? "You're rate-limited." : true;
+    },
+});
+```
+
+Returns `boolean | string | Promise<…>`. A string becomes the user-visible reason.

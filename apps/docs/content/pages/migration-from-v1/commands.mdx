@@ -1,0 +1,142 @@
+---
+title: Command files
+description: CommandType.SLASH/LEGACY/BOTH and callback(usage) become defineCommand(ctx)
+---
+
+# Command files
+
+v1 used `CommandType.SLASH | LEGACY | BOTH` and a `callback(usage)` shape. v2 unifies everything under `defineCommand`. The same `defineCommand` serves slash invocations, prefix invocations, or both.
+
+## Slash command
+
+```ts
+// v1 — commands/ping.js
+const { CommandType } = require("@d3oxy/djs-commands");
+
+module.exports = {
+    type: CommandType.SLASH,
+    description: "Replies with pong",
+    callback: ({ interaction }) => {
+        interaction.reply("pong");
+    },
+};
+```
+
+```ts
+// v2 — commands/ping.ts
+import { defineCommand } from "@djs-commands/core";
+
+export default defineCommand({
+    name: "ping",
+    description: "Replies with pong",
+    run: async (ctx) => {
+        await ctx.reply("pong");
+    },
+});
+```
+
+The big shifts:
+
+- `module.exports = { … }` → `export default defineCommand({ … })`. The wrapper is just an identity function for type inference.
+- `callback(usage)` → `run(ctx)`. The `ctx` is normalized — `ctx.reply(...)` works for both slash and legacy invocations.
+- Slash is the default; you don't need a `type` flag.
+- Filename → command name in v1 was implicit; v2 is explicit (`name: "ping"`).
+
+## Slash + legacy from one definition
+
+v1's `CommandType.BOTH` is now `legacy: { enabled: true }` on the same command:
+
+```ts
+// v1 — commands/ping.js
+module.exports = {
+    type: CommandType.BOTH,
+    description: "Replies with pong",
+    callback: ({ interaction, message }) => {
+        const target = interaction ?? message;
+        target.reply("pong");
+    },
+};
+```
+
+```ts
+// v2 — commands/ping.ts
+export default defineCommand({
+    name: "ping",
+    description: "Replies with pong",
+    legacy: { enabled: true, aliases: ["p"] },
+    run: async (ctx) => {
+        await ctx.reply("pong");
+    },
+});
+```
+
+Use `ctx.type === "slash"` or `ctx.type === "legacy"` if you need to access the raw `interaction` or `message`:
+
+```ts
+run: async (ctx) => {
+    if (ctx.type === "slash") {
+        await ctx.interaction.deferReply();
+    }
+    // …
+};
+```
+
+## Typed options
+
+v1 didn't infer types for command arguments. v2 does — `options.user` is typed as `User`, `options.message` is typed as `string`, choices narrow to literal unions.
+
+```ts
+// v1 — manually pulled args from `usage.args` (string[])
+module.exports = {
+    type: CommandType.SLASH,
+    description: "Echo a message",
+    options: [{ name: "message", description: "What to echo", type: 3, required: true }],
+    callback: ({ interaction }) => {
+        const message = interaction.options.getString("message", true);
+        interaction.reply(message);
+    },
+};
+```
+
+```ts
+// v2 — schema is the source of truth, run handler args inferred
+export default defineCommand({
+    name: "echo",
+    description: "Echo a message",
+    options: {
+        message: { type: "string", description: "What to echo", required: true },
+    },
+    run: async (ctx) => {
+        // ctx.options.message is statically typed as `string`
+        await ctx.reply(ctx.options.message);
+    },
+});
+```
+
+In legacy mode, arguments are auto-parsed from the message text using the same schema (the last `string` option consumes all remaining tokens, so `!echo hello world` works out of the box).
+
+## Cooldowns
+
+v1 had a global `cooldownConfig` plus per-command cooldown declarations. v2 is per-command only:
+
+```ts
+// v1
+module.exports = {
+    type: CommandType.SLASH,
+    description: "…",
+    cooldowns: { perUser: "5s" },
+    callback: () => {…},
+};
+```
+
+```ts
+// v2
+export default defineCommand({
+    name: "ping",
+    description: "…",
+    cooldown: { type: "perUser", duration: 5_000 }, // ms
+    run: async (ctx) => {…},
+});
+```
+
+Cooldown types are the same: `perUser`, `perGuild`, `perUserPerGuild`, `global`.

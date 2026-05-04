@@ -1,0 +1,95 @@
+---
+title: Events and plugins
+description: events.dir → eventDir, FeaturesHandler → plugins
+---
+
+# Events and plugins
+
+## Events
+
+v1's `events.dir` becomes `eventDir`. Each event file changes to use `defineEvent`:
+
+```ts
+// v1 — events/ready/log.js
+module.exports = (client) => {
+    console.log(`Logged in as ${client.user.tag}`);
+};
+// (the directory name was the event name)
+```
+
+```ts
+// v2 — events/ready.ts
+import { defineEvent } from "@djs-commands/core";
+
+export default defineEvent({
+    event: "clientReady",
+    once: true,
+    handler: (client) => {
+        console.log(`Logged in as ${client.user.tag}`);
+    },
+});
+```
+
+A single file with an explicit `event` name replaces the v1 convention of "directory name = event name". `handler`'s argument types are inferred from `event` against `keyof ClientEvents`.
+
+## Plugins (replacing FeaturesHandler)
+
+v1's `featuresDir` loaded files that called `client.on(...)` directly. The pattern is replaced by **plugins**: a factory function returning a manifest of commands, events, and lifecycle hooks.
+
+```ts
+// v1 — features/leveling.js
+const mongoose = require("mongoose");
+const xpSchema = new mongoose.Schema({ … });
+const Xp = mongoose.model("Xp", xpSchema);
+
+module.exports = (commandHandler, client) => {
+    client.on("messageCreate", async (msg) => {
+        await Xp.findOneAndUpdate(
+            { user: msg.author.id },
+            { $inc: { xp: 10 } },
+            { upsert: true },
+        );
+    });
+};
+```
+
+```ts
+// v2 — plugins/leveling.ts
+import { defineCommand, type PluginManifest } from "@djs-commands/core";
+
+interface LevelingOptions {
+    storage: Storage;
+}
+
+export function levelingPlugin(opts: LevelingOptions): PluginManifest {
+    return {
+        name: "@example/leveling",
+        commands: [levelCommand],
+        setup: async ({ client }) => {
+            client.on("messageCreate", async (msg) => {
+                // …award XP via opts.storage…
+            });
+        },
+        teardown: async () => {
+            // close connections, etc.
+        },
+    };
+}
+
+// app entry
+createCommandHandler({
+    client,
+    plugins: [levelingPlugin({ storage })],
+});
+```
+
+Why this is better:
+
+- Plugins return manifests; the framework owns lifecycle ordering. v1's `client.on(...)` from a feature file leaked listeners that were hard to remove.
+- `setup` and `teardown` hooks are awaited in registration order. `handler.destroy()` cleanly unwinds everything.
+- Plugins can register commands, events, and validators in one manifest.
+- Errors from `setup` are surfaced via `handler.ready` — boot fails fast with the plugin name in the message.
+
+## Hot reload
+
+v2's fs-autoloader watches `commandDir` and re-imports files on change in dev mode (`NODE_ENV !== "production"`). v1 required a full restart on every command change. No code changes needed to opt in — it just works.

@@ -1,4 +1,4 @@
 {
 	"title": "Documentation",
-	"pages": ["index", "getting-started", "concepts", "recipes", "api-reference", "adapter-cookbook", "components-v2"]
+	"pages": ["index", "getting-started", "concepts", "recipes", "api-reference", "adapter-cookbook", "components-v2", "migration-from-v1"]
 }
