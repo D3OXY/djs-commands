@@ -1,0 +1,21 @@
+---
+title: Adapter Cookbook
+description: End-to-end recipes for plugging djs-commands into a real database.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="warn">
+**Coming with [Slice #59 — Adapter Cookbook](https://github.com/D3OXY/djs-commands/issues/59).** This section is currently a placeholder.
+</Callout>
+
+Each entry walks through wiring a specific backing store to djs-commands' storage adapter interface, soup-to-nuts:
+
+- **Postgres** with Prisma
+- **Postgres** with Drizzle
+- **Redis** (Upstash, ioredis)
+- **MongoDB** (Mongoose)
+- **Cloudflare KV / Durable Objects**
+- **In-memory** (the default — for dev and tests)
+
+Want to contribute an adapter recipe? Open a PR against [`apps/docs/content/pages/adapter-cookbook/`](https://github.com/D3OXY/djs-commands/tree/main/apps/docs/content/pages/adapter-cookbook). Track issue [#59](https://github.com/D3OXY/djs-commands/issues/59) for progress on the cookbook structure.

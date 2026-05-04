@@ -2,7 +2,21 @@
 	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/node_modules", "!**/dist", "!**/.turbo", "!**/.vscode", "!**/.claude", "!**/.changeset", "!**/CHANGELOG.md"]
+		"includes": [
+			"**",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/.turbo",
+			"!**/.vscode",
+			"!**/.claude",
+			"!**/.changeset",
+			"!**/CHANGELOG.md",
+			"!**/.source",
+			"!**/.output",
+			"!**/.tanstack",
+			"!**/routeTree.gen.ts",
+			"!apps/docs/source.generated.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,

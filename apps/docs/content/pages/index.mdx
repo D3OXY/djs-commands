@@ -1,0 +1,32 @@
+---
+title: djs-commands
+description: Modern Discord.js command handler — TypeScript-first, Components V2 native, with pluggable persistence.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+`djs-commands` is a modern command framework for [Discord.js](https://discordjs.dev/) built around three ideas:
+
+1. **TypeScript-first.** Commands are plain objects with strongly-typed handlers. No magic decorators, no runtime reflection.
+2. **Components V2 native.** First-class support for the new Discord component model, so building rich, interactive responses is the default path — not an afterthought.
+3. **Pluggable persistence.** Cooldowns, guild prefixes, and user state plug into adapters you control: in-memory for dev, your own database in production.
+
+<Callout type="warn">
+v2 is in active development. The legacy v1 package (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit). Track the v2 rollout on the [roadmap](https://github.com/D3OXY/djs-commands/issues/51).
+</Callout>
+
+## Where to start
+
+<Cards>
+	<Card title="Getting Started" href="/getting-started" description="Install the package, write your first command, and get a bot online in under five minutes." />
+	<Card title="Concepts" href="/concepts" description="The mental model: commands, validators, cooldowns, plugins, storage, Components V2." />
+	<Card title="API Reference" href="/api-reference" description="The full surface area of `@djs-commands/core` and friends — generated from the source." />
+	<Card title="Recipes" href="/recipes" description="Copy-paste solutions for common bot patterns: pagination, modals, role gates, and more." />
+</Cards>
+
+## Useful links
+
+- [GitHub](https://github.com/D3OXY/djs-commands) — source, issues, discussions
+- [npm org](https://www.npmjs.com/org/djs-commands) — `@djs-commands/*` packages
+- [Discord support](https://deoxy.dev/links?redirect=support) — get help from the maintainers and community

@@ -1,0 +1,27 @@
+---
+title: Validators
+description: Pre-handler checks that gate command execution.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="warn">
+**Coming with [Slice #54 — Validators](https://github.com/D3OXY/djs-commands/issues/54).** This page is a placeholder; it will be filled in once that slice lands.
+</Callout>
+
+Validators are composable, async-friendly checks that run before `command.run`. Use them for role gates, channel restrictions, custom permission logic, and anything else that should short-circuit the call.
+
+The shape will look roughly like:
+
+```ts
+defineCommand({
+	name: "kick",
+	description: "Kicks a user",
+	validators: [hasRole("moderator"), inGuild()],
+	run: async ({ interaction }) => {
+		// only runs if every validator passed
+	},
+});
+```
+
+Subscribe to issue [#54](https://github.com/D3OXY/djs-commands/issues/54) for progress.

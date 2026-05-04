@@ -1,0 +1,12 @@
+---
+title: Storage
+description: The pluggable persistence layer behind cooldowns, prefixes, and user state.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="warn">
+**Coming with [Slice #58 — Storage adapter interface](https://github.com/D3OXY/djs-commands/issues/58).** This page is a placeholder; it will be filled in once that slice lands.
+</Callout>
+
+The storage layer is a small, well-typed interface. djs-commands core ships an in-memory implementation for dev, and you bring your own for production — Postgres, Redis, MongoDB, Cloudflare KV, anything. Adapter recipes will live in the [Adapter Cookbook](/adapter-cookbook). Track issue [#58](https://github.com/D3OXY/djs-commands/issues/58).

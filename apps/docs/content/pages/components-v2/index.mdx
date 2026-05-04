@@ -1,0 +1,19 @@
+---
+title: Components V2
+description: JSX-first builders and a function-call fallback for Discord's new component model.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="warn">
+**Coming with [Slice #61 — Components V2](https://github.com/D3OXY/djs-commands/issues/61).** This section is currently a placeholder.
+</Callout>
+
+Components V2 is the headline feature of djs-commands v2. The plan:
+
+- **JSX builders** for projects with a JSX-capable toolchain (TS, ESBuild, SWC, Bun). Write Discord components like React.
+- **Function-call fallback** with the same primitives, for plain-JS projects that can't compile JSX.
+- **Type-safe interaction routing** so a button click in one command can be handled by a function with the right argument types.
+- **Layout primitives** (Action Row, Container, Section) wired into the component tree.
+
+Track issue [#61](https://github.com/D3OXY/djs-commands/issues/61) for the API design and rollout. The dedicated [Components V2 concept page](/concepts/components-v2) will explain how the runtime fits into the rest of the framework.

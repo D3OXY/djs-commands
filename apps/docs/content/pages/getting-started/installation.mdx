@@ -1,0 +1,114 @@
+---
+title: Installation
+description: Add @djs-commands/core to a Discord.js project.
+---
+
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+
+<Steps>
+<Step>
+### Install Discord.js
+
+Skip this if your project already has it.
+
+<Tabs items={["bun", "pnpm", "npm", "yarn"]}>
+<Tab value="bun">
+
+```bash
+bun add discord.js
+```
+
+</Tab>
+<Tab value="pnpm">
+
+```bash
+pnpm add discord.js
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npm install discord.js
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn add discord.js
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step>
+### Install @djs-commands/core
+
+<Tabs items={["bun", "pnpm", "npm", "yarn"]}>
+<Tab value="bun">
+
+```bash
+bun add @djs-commands/core
+```
+
+</Tab>
+<Tab value="pnpm">
+
+```bash
+pnpm add @djs-commands/core
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npm install @djs-commands/core
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn add @djs-commands/core
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="warn">
+v2 is published to the new `@djs-commands` npm organization. The legacy v1 package (`@d3oxy/djs-commands`) is **not** API-compatible — see the [v1 → v2 migration notes](/getting-started/your-first-command#what-changed-from-v1) once you're ready.
+</Callout>
+
+</Step>
+
+<Step>
+### TypeScript (recommended)
+
+djs-commands is designed around TypeScript inference. If you don't already have a `tsconfig.json`, the minimal one below works for Node 22+:
+
+```json title="tsconfig.json"
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true
+	}
+}
+```
+
+JavaScript also works — every example in these docs has a JS-compatible shape. Just drop the type annotations.
+
+</Step>
+</Steps>
+
+## Next
+
+Continue to [Your first command](/getting-started/your-first-command) to wire it all together.
