@@ -1,0 +1,26 @@
+{
+	"name": "moderation-drizzle",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Moderation bot example using Drizzle/Postgres for persistent state",
+	"scripts": {
+		"dev": "bun run --watch src/index.ts",
+		"start": "bun run src/index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@djs-commands/adapter-drizzle": "workspace:*",
+		"@djs-commands/core": "workspace:*",
+		"discord.js": "catalog:",
+		"drizzle-orm": "^0.36.4",
+		"pg": "^8.13.1"
+	},
+	"devDependencies": {
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"@types/pg": "^8.11.10",
+		"typescript": "catalog:"
+	}
+}

@@ -1,0 +1,62 @@
+{
+	"name": "@djs-commands/adapter-drizzle",
+	"version": "0.0.0",
+	"description": "Drizzle Storage adapter for djs-commands — Postgres-backed persistent state",
+	"author": "D3OXY <hello@deoxy.dev>",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"import": "./dist/schema.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"dev": "tsc -p tsconfig.build.json --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"peerDependencies": {
+		"@djs-commands/core": "workspace:*",
+		"drizzle-orm": "^0.36.0"
+	},
+	"devDependencies": {
+		"@djs-commands/core": "workspace:*",
+		"@djs-commands/tsconfig": "workspace:*",
+		"@types/bun": "catalog:",
+		"@types/node": "catalog:",
+		"@types/pg": "^8.11.10",
+		"drizzle-orm": "^0.36.4",
+		"pg": "^8.13.1",
+		"typescript": "catalog:"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/D3OXY/djs-commands",
+		"directory": "packages/adapter-drizzle"
+	},
+	"keywords": [
+		"discord.js",
+		"discord",
+		"drizzle",
+		"postgres",
+		"storage-adapter"
+	]
+}
