@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction, Client, PermissionsString } from "discord.js";
 import type { CommandOptions, ResolveOptions } from "./options";
+import type { PluginManifest } from "./plugin";
 import type { CanRunCommand, Validator } from "./validators";
 
 export interface CommandRunContext<S extends CommandOptions = Record<string, never>> {
@@ -31,8 +32,11 @@ export interface CommandHandlerOptions {
 	botOwners?: readonly string[];
 	validators?: readonly Validator[];
 	canRunCommand?: CanRunCommand;
+	plugins?: PluginManifest[];
 }
 
 export interface CommandHandler {
+	/** Resolves once all plugin `setup` hooks have completed; rejects if any plugin's setup throws. */
+	ready: Promise<void>;
 	destroy: () => Promise<void>;
 }

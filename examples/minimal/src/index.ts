@@ -1,23 +1,12 @@
 import { createCommandHandler, defineCommand } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
+import { echoPlugin } from "./echo-plugin";
 
 const ping = defineCommand({
 	name: "ping",
 	description: "Replies with pong",
 	run: async ({ interaction }) => {
 		await interaction.reply("pong");
-	},
-});
-
-const echo = defineCommand({
-	name: "echo",
-	description: "Echoes a message back",
-	options: {
-		message: { type: "string", description: "What to echo", required: true },
-	},
-	run: async ({ interaction, options }) => {
-		// options.message is statically typed as `string` (required)
-		await interaction.reply(options.message);
 	},
 });
 
@@ -42,14 +31,20 @@ if (!token) {
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-createCommandHandler({
+const handler = createCommandHandler({
 	client,
-	commands: [ping, echo, shutdown],
+	commands: [ping, shutdown],
+	plugins: [echoPlugin()],
 	// Comma-separated user IDs allowed to run owner-gated commands.
 	botOwners:
 		process.env.BOT_OWNERS?.split(",")
 			.map((id) => id.trim())
 			.filter(Boolean) ?? [],
+});
+
+handler.ready.catch((err) => {
+	console.error("Plugin boot failed:", err);
+	process.exit(1);
 });
 
 client.once("clientReady", (c) => {
