@@ -1,0 +1,10 @@
+// @djs-commands/adapter-prisma — paste this model into your `schema.prisma`.
+// Field names use camelCase on the Prisma side and are mapped to snake_case
+// columns so the underlying table matches the framework's API names.
+
+model GuildPrefix {
+    guildId String @id @map("guild_id")
+    prefix  String
+
+    @@map("guild_prefix")
+}
