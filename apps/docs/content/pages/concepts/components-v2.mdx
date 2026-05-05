@@ -1,12 +1,40 @@
 ---
 title: Components V2
-description: First-class JSX for Discord's new component model.
+description: First-class JSX (or function) builders for Discord's new component model.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-<Callout type="warn">
-**Coming with [Slice #61 — Components V2](https://github.com/D3OXY/djs-commands/issues/61).** This page is a placeholder; it will be filled in once that slice lands.
-</Callout>
+Discord's [Components V2](https://discord.com/developers/docs/components/reference) replaces the old "embeds + button rows" pattern with composable layout primitives. `djs-commands` ships **two ways** to build them — a JSX runtime in `@djs-commands/jsx`, and a plain-function fallback in `@djs-commands/core`. Both produce identical discord.js builder objects, so you can mix them freely.
 
-Components V2 is a first-class concern for djs-commands. The same package will ship both a JSX builder (for projects with a JSX-capable toolchain) and a function-call fallback (for plain JavaScript). Track the API design in issue [#61](https://github.com/D3OXY/djs-commands/issues/61) and the dedicated [Components V2 reference](/components-v2).
+```tsx
+import { defineCommand } from "@djs-commands/core";
+import { Button, Container, Section, TextDisplay, render } from "@djs-commands/jsx";
+import { MessageFlags } from "discord.js";
+
+export const welcome = defineCommand({
+	name: "welcome",
+	description: "Show a Components V2 welcome card",
+	run: async ({ interaction }) => {
+		await interaction.reply({
+			flags: MessageFlags.IsComponentsV2,
+			components: render(
+				<Container accentColor={0x5865f2}>
+					<TextDisplay># Welcome</TextDisplay>
+					<Section accessory={<Button style="primary" customId="welcome:next" label="Next" />}>
+						Components V2 lets you compose rich messages from layout primitives.
+					</Section>
+				</Container>
+			),
+		});
+	},
+});
+```
+
+For the full surface — every component, side-by-side JSX and function examples, modal forms, and a runnable example bot — see the dedicated reference:
+
+→ **[Components V2 reference](/components-v2)**
+
+<Callout type="info">
+The JSX runtime is opt-in. Set `jsxImportSource: "@djs-commands/jsx"` in your `tsconfig.json` and JSX in any `.tsx` file compiles to `discord.js` builders — no Babel, no SWC, no React. Plain-JS users skip JSX entirely and import `button()`, `container()`, `section()`, etc. from `@djs-commands/core`.
+</Callout>

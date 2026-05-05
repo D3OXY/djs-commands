@@ -1,6 +1,6 @@
 ---
 title: Commands
-description: Define, register, and dispatch slash commands with @djs-commands/core.
+description: Define, register, and dispatch slash and prefix commands with @djs-commands/core.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -17,8 +17,8 @@ import { defineCommand } from "@djs-commands/core";
 const ping = defineCommand({
 	name: "ping",
 	description: "Replies with pong",
-	run: async ({ interaction }) => {
-		await interaction.reply("pong");
+	run: async ({ reply }) => {
+		await reply("pong");
 	},
 });
 ```
@@ -31,33 +31,87 @@ const ping = defineCommand({
 | `description` | `string` | The 1–100-character description shown in the Discord client. |
 | `run` | `(ctx) => void \| Promise<void>` | The handler. Receives a [`CommandRunContext`](#commandruncontext). |
 
-<Callout type="warn">
-The current core slice (#52) ships only those three fields. Options, subcommands, validators, and cooldowns land in upcoming slices — track them via the [v2 roadmap](https://github.com/D3OXY/djs-commands/issues/51).
-</Callout>
+### Optional fields
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `options` | `CommandOptions` | Typed schema for slash-command options — see [Options](#options). |
+| `validators` | `Validator[]` | Custom pre-handler checks. See [Validators](/concepts/validators). |
+| `cooldown` | `CooldownConfig` | Rate limit. See [Cooldowns](/concepts/cooldowns). |
+| `ownerOnly` | `boolean` | When `true`, only IDs in `botOwners` (passed to the handler) can run it. |
+| `guildOnly` | `boolean` | When `true`, blocks DM invocations. |
+| `channels` | `string[]` | Allow-list of channel IDs the command can run in. |
+| `permissions` | `PermissionsString[]` | Discord member permissions required (e.g. `["BanMembers"]`). |
+| `roles` | `string[]` | Role IDs the invoking member must have. |
+| `legacy` | `CommandLegacyConfig` | Opt this command into legacy prefix invocation; supports aliases. |
 
 ## `CommandRunContext`
 
+`CommandRunContext` is a discriminated union over the invocation source. Both branches share a unified surface so most handlers don't need to care whether they were invoked via slash or prefix:
+
 ```ts
-interface CommandRunContext {
-	interaction: ChatInputCommandInteraction;
+type CommandRunContext = SlashRunContext | LegacyRunContext;
+
+interface BaseRunContext {
+	client: Client;
+	author: User;
+	guild: Guild | null;
+	member: GuildMember | null;
+	channel: TextBasedChannel | null;
+	channelId: string | null;
+	options: ResolveOptions<S>; // typed from your `options` schema
+	reply: (content: string | { content?: string; ephemeral?: boolean }) => Promise<unknown>;
+}
+
+type SlashRunContext = BaseRunContext & { type: "slash"; interaction: ChatInputCommandInteraction };
+type LegacyRunContext = BaseRunContext & { type: "legacy"; message: Message };
+```
+
+When you need source-specific behavior, narrow on `ctx.type`:
+
+```ts
+run: async (ctx) => {
+	if (ctx.type === "slash") {
+		await ctx.interaction.deferReply({ ephemeral: true });
+	}
+	await ctx.reply("hi");
 }
 ```
 
-Today, the context exposes the raw discord.js interaction. Future slices wrap it with:
+## Options
 
-- `validators` — pre-handler outcomes
-- `storage` — the adapter you registered for cooldowns, prefixes, etc.
-- `plugins` — extra fields contributed by plugins (typed via module augmentation)
-- helpers like `t()` for i18n, `defer()` shortcuts, and Components V2 builders
+Define typed slash-command options with the `options` field. The handler context's `options` is fully inferred from your schema — required options resolve to their type, optional ones to `T | undefined`.
 
-That augmentation surface is intentional: every concept page in this section adds something to the context.
+```ts
+defineCommand({
+	name: "ban",
+	description: "Ban a user",
+	options: {
+		target: { type: "user", description: "Who to ban", required: true },
+		reason: { type: "string", description: "Why", required: false },
+		days: {
+			type: "integer",
+			description: "Days of messages to delete",
+			choices: [0, 1, 7] as const,
+		},
+	},
+	run: async ({ options, reply }) => {
+		// options.target: User
+		// options.reason: string | undefined
+		// options.days:   0 | 1 | 7 | undefined
+		await reply(`Banning ${options.target.tag}`);
+	},
+});
+```
+
+Supported option types: `string`, `integer`, `number`, `boolean`, `user`, `channel`, `role`, `mentionable`, `attachment`. `string` and `integer` accept `choices` for enum-style narrowing.
 
 ## Registering commands
 
 `createCommandHandler` accepts a `client` and an array of commands. It does two things on your behalf:
 
-1. **Subscribes** to `interactionCreate`. When a chat-input interaction comes in, it looks up the command by `name` and calls `run`.
-2. **Registers** the command list with Discord on `clientReady`. This calls `client.application.commands.set(...)` with the names and descriptions of every command you passed in.
+1. **Subscribes** to `interactionCreate`. When a chat-input interaction comes in, it looks up the command by `name` and dispatches it through validators → cooldown gates → plugins → `run`.
+2. **Registers** the command list with Discord on `clientReady`. This calls `client.application.commands.set(...)` with the names, descriptions, and options of every command you passed in.
 
 ```ts
 import { createCommandHandler } from "@djs-commands/core";
@@ -70,34 +124,44 @@ const handler = createCommandHandler({
 	commands: [ping /*, more commands */],
 });
 
+await handler.ready;
 await client.login(process.env.DISCORD_TOKEN);
 ```
 
-The returned `handler` exposes a single method:
+The returned `handler` exposes:
 
 ```ts
-await handler.destroy();
+handler.ready;     // Promise<void> — resolves once all plugin setup hooks complete
+await handler.destroy();   // Removes listeners, awaits plugin teardown
 ```
 
-This unsubscribes the listeners. Use it in tests or when you want to swap out a handler without restarting the process. It does **not** delete the registered application commands from Discord — those persist until you explicitly clear them.
+`destroy()` does **not** delete the registered application commands from Discord — those persist until you explicitly clear them.
 
 ## Loading commands from a directory
 
-v2's core stays out of the file-system business. If you want a v1-style "drop a file in `commands/` and it just works" loader, build one yourself or wait for the official `@djs-commands/loader` plugin (slated for a later slice). A four-line loader using Bun's glob looks like:
+Pass a `commandDir` to the handler and every file's default export is registered automatically. In dev (`NODE_ENV !== "production"`) the directory is watched and edited files hot-reload without a restart.
 
 ```ts
-import { Glob } from "bun";
-
-const commands = await Promise.all(
-	Array.from(new Glob("./commands/*.ts").scanSync()).map(async (file) => (await import(file)).default)
-);
+createCommandHandler({
+	client,
+	commandDir: "./src/commands",
+});
 ```
 
-For Node, use `fs.glob` (Node 22+) or any directory-import library you like. The shape of `commands` is just `Command[]`, so anything that produces an array works.
+If you'd rather wire it up by hand, the loader functions are public:
+
+```ts
+import { loadCommandsFromDir, watchCommandsDir } from "@djs-commands/core";
+
+const commands = await loadCommandsFromDir("./src/commands");
+const watcher = watchCommandsDir("./src/commands", {
+	onCommandChange: () => { /* re-register */ },
+});
+```
 
 ## Best practices
 
-- **One command per file.** Export the `defineCommand` result as the default export so any loader can `import(file).default`.
+- **One command per file.** Export the `defineCommand` result as the default export so the autoloader can pick it up.
 - **Keep `run` thin.** Move business logic into ordinary functions you can unit-test without spinning up a Discord client.
-- **Don't share state via module scope.** When a feature wants memory across calls (cooldowns, per-guild config), reach for the Storage adapter — that's its job.
-- **Test handlers in isolation.** Construct a `ChatInputCommandInteraction` mock and call `command.run({ interaction: mock })` directly. The dispatcher is just a `Map.get` + function call.
+- **Prefer `ctx.reply`** over `ctx.interaction.reply` / `ctx.message.reply` — it works in both slash and legacy contexts.
+- **Don't share state via module scope.** When a feature wants memory across calls (cooldowns, per-guild config), reach for the [Storage adapter](/concepts/storage).

@@ -1,3 +1,11 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
+
+/*
+ * Tailwind v4 needs an explicit @source for any package whose JS uses utility
+ * classes — fumadocs-ui ships compiled JS with Tailwind classes (incl. the
+ * code-block, tabs, callout, etc styles). Without this, those classes get
+ * tree-shaken away and code blocks render unstyled (one pill per line).
+ */
+@source "../../node_modules/fumadocs-ui/dist/**/*.js";

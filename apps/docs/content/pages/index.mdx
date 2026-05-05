@@ -12,9 +12,20 @@ import { Cards, Card } from "fumadocs-ui/components/card";
 2. **Components V2 native.** First-class support for the new Discord component model, so building rich, interactive responses is the default path — not an afterthought.
 3. **Pluggable persistence.** Cooldowns, guild prefixes, and user state plug into adapters you control: in-memory for dev, your own database in production.
 
-<Callout type="warn">
-v2 is in active development. The legacy v1 package (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit). Track the v2 rollout on the [roadmap](https://github.com/D3OXY/djs-commands/issues/51).
+<Callout type="info">
+**v2.0 shipped.** Packages are live on npm under [`@djs-commands/*`](https://www.npmjs.com/org/djs-commands). The legacy v1 package (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and is no longer maintained — see the [v1 → v2 migration guide](/migration-from-v1) to upgrade.
 </Callout>
+
+## Quick start
+
+```bash
+npx create-djs-commands my-bot
+cd my-bot
+cp .env.example .env  # add DISCORD_TOKEN
+bun run dev
+```
+
+Or scaffold by hand from [Getting Started](/getting-started).
 
 ## Where to start
 

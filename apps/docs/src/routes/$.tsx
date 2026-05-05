@@ -2,8 +2,9 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { Root as PageTreeRoot } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { DocsBody, DocsPage } from "fumadocs-ui/page";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import type React from "react";
+import { mdxComponents } from "@/lib/mdx-components";
 import browserCollections from "../../.source/browser";
 
 export const Route = createFileRoute("/$")({
@@ -47,11 +48,13 @@ const clientLoader = browserCollections.docs.createClientLoader({
 	component(doc) {
 		const MDX = doc.default;
 		return (
-			<DocsBody>
-				<h1 className="fd-heading">{doc.frontmatter.title}</h1>
-				{doc.frontmatter.description && <p className="fd-paragraph -mt-2 text-fd-muted-foreground text-lg">{doc.frontmatter.description}</p>}
-				<MDX />
-			</DocsBody>
+			<DocsPage toc={doc.toc} tableOfContent={{ style: "clerk" }}>
+				<DocsTitle>{doc.frontmatter.title}</DocsTitle>
+				{doc.frontmatter.description && <DocsDescription>{doc.frontmatter.description}</DocsDescription>}
+				<DocsBody>
+					<MDX components={mdxComponents} />
+				</DocsBody>
+			</DocsPage>
 		);
 	},
 });
@@ -101,9 +104,7 @@ function Page() {
 
 	return (
 		<DocsLayoutWrapper tree={data.tree}>
-			<DocsPage>
-				<Content />
-			</DocsPage>
+			<Content />
 		</DocsLayoutWrapper>
 	);
 }
