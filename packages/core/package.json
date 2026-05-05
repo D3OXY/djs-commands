@@ -42,7 +42,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/D3OXY/djs-commands",
+		"url": "git+https://github.com/D3OXY/djs-commands.git",
 		"directory": "packages/core"
 	},
 	"keywords": [

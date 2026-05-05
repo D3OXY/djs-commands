@@ -1,4 +1,4 @@
-# @djs-commands/cli
+# create-djs-commands
 
 ## 2.0.0
 

@@ -153,23 +153,6 @@
         "ioredis": "^5.0.0",
       },
     },
-    "packages/cli": {
-      "name": "@djs-commands/cli",
-      "version": "2.0.0",
-      "bin": {
-        "create-djs-commands": "./dist/cli.js",
-      },
-      "dependencies": {
-        "@clack/prompts": "^0.11.0",
-        "picocolors": "^1.1.1",
-      },
-      "devDependencies": {
-        "@djs-commands/tsconfig": "workspace:*",
-        "@types/bun": "catalog:",
-        "@types/node": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "packages/core": {
       "name": "@djs-commands/core",
       "version": "2.0.0",
@@ -183,6 +166,23 @@
       },
       "peerDependencies": {
         "discord.js": "^14.26.0",
+      },
+    },
+    "packages/create-djs-commands": {
+      "name": "create-djs-commands",
+      "version": "2.0.0",
+      "bin": {
+        "create-djs-commands": "dist/cli.js",
+      },
+      "dependencies": {
+        "@clack/prompts": "^0.11.0",
+        "picocolors": "^1.1.1",
+      },
+      "devDependencies": {
+        "@djs-commands/tsconfig": "workspace:*",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "typescript": "catalog:",
       },
     },
     "packages/jsx": {
@@ -331,8 +331,6 @@
     "@djs-commands/adapter-prisma": ["@djs-commands/adapter-prisma@workspace:packages/adapter-prisma"],
 
     "@djs-commands/adapter-redis": ["@djs-commands/adapter-redis@workspace:packages/adapter-redis"],
-
-    "@djs-commands/cli": ["@djs-commands/cli@workspace:packages/cli"],
 
     "@djs-commands/core": ["@djs-commands/core@workspace:packages/core"],
 
@@ -907,6 +905,8 @@
     "convert-source-map": ["convert-source-map@2.0.0", "", {}, "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="],
 
     "cookie-es": ["cookie-es@3.1.1", "", {}, "sha512-UaXxwISYJPTr9hwQxMFYZ7kNhSXboMXP+Z3TRX6f1/NyaGPfuNUZOWP1pUEb75B2HjfklIYLVRfWiFZJyC6Npg=="],
+
+    "create-djs-commands": ["create-djs-commands@workspace:packages/create-djs-commands"],
 
     "cross-spawn": ["cross-spawn@7.0.6", "", { "dependencies": { "path-key": "^3.1.0", "shebang-command": "^2.0.0", "which": "^2.0.1" } }, "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="],
 

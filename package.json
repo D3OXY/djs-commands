@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/D3OXY/djs-commands"
+		"url": "git+https://github.com/D3OXY/djs-commands.git"
 	},
 	"private": true,
 	"type": "module",
@@ -45,7 +45,7 @@
 		"ci": "bun run check && bun run typecheck && bun run knip && bun run test",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
-		"release": "turbo build --filter='@djs-commands/*' && changeset publish",
+		"release": "turbo build --filter='@djs-commands/*' --filter='create-djs-commands' && changeset publish",
 		"prepare": "husky"
 	},
 	"devDependencies": {
