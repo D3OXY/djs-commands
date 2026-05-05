@@ -5,23 +5,127 @@ description: Pre-handler checks that gate command execution.
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-<Callout type="warn">
-**Coming with [Slice #54 — Validators](https://github.com/D3OXY/djs-commands/issues/54).** This page is a placeholder; it will be filled in once that slice lands.
-</Callout>
+Validators are async-friendly checks that run **before** `command.run`. They short-circuit the dispatch with a reason string when a check fails — the user sees the reason as an ephemeral reply.
 
-Validators are composable, async-friendly checks that run before `command.run`. Use them for role gates, channel restrictions, custom permission logic, and anything else that should short-circuit the call.
+## Built-in validators
 
-The shape will look roughly like:
+Several common gates live on the command object directly. The dispatcher runs them automatically; you don't have to write them as `Validator` functions.
 
 ```ts
 defineCommand({
-	name: "kick",
-	description: "Kicks a user",
-	validators: [hasRole("moderator"), inGuild()],
-	run: async ({ interaction }) => {
-		// only runs if every validator passed
+	name: "ban",
+	description: "Ban a user",
+	ownerOnly: false,
+	guildOnly: true,
+	channels: ["123456789012345678"],
+	permissions: ["BanMembers"],
+	roles: ["234567890123456789"],
+	run: async ({ reply }) => {
+		await reply("banned");
 	},
 });
 ```
 
-Subscribe to issue [#54](https://github.com/D3OXY/djs-commands/issues/54) for progress.
+| Field | Effect |
+| --- | --- |
+| `ownerOnly: true` | Only IDs in the handler's `botOwners` array can run it. |
+| `guildOnly: true` | Blocks DM invocations. |
+| `channels: string[]` | Allow-list of channel IDs (empty/unset = everywhere). |
+| `permissions: PermissionsString[]` | Required member permissions (e.g. `"BanMembers"`). |
+| `roles: string[]` | Role IDs the invoking member must have. |
+
+Each built-in returns a localized reason string if the check fails, so you don't have to write your own messaging for the common cases.
+
+## Custom validators
+
+For anything beyond the built-ins, attach a `validators` array to the command. A `Validator` is just a function that receives a `ValidatorContext` and returns a result.
+
+```ts
+import { defineCommand, type Validator } from "@djs-commands/core";
+
+const inVoiceChannel: Validator = async ({ member }) => {
+	if (member?.voice.channel) return { ok: true };
+	return { ok: false, reason: "Join a voice channel first." };
+};
+
+defineCommand({
+	name: "play",
+	description: "Play a track",
+	validators: [inVoiceChannel],
+	run: async ({ reply }) => {
+		await reply("playing");
+	},
+});
+```
+
+### `ValidatorContext`
+
+```ts
+interface ValidatorContext {
+	command: AnyCommand;          // the command being dispatched
+	botOwners: readonly string[]; // bot owners passed to createCommandHandler
+	user: User;                   // invoker
+	guild: Guild | null;          // null in DMs
+	member: GuildMember | null;
+	channelId: string;
+	source:
+		| { type: "slash"; interaction: ChatInputCommandInteraction }
+		| { type: "legacy"; message: Message };
+}
+```
+
+The context is **unified** across slash and legacy invocations — most validators don't need to look at `source`. When you do (e.g. ephemeral replies are slash-only), narrow on `source.type`.
+
+### `ValidationResult`
+
+```ts
+type ValidationResult = { ok: true } | { ok: false; reason: string };
+```
+
+`reason` is shown to the user. Keep it short and actionable.
+
+## Global validators
+
+Pass `validators` to `createCommandHandler` to run them on **every** command. Useful for cross-cutting policy like "block banned users":
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	validators: [
+		async ({ user }) => banSet.has(user.id)
+			? { ok: false, reason: "You're not allowed to use this bot." }
+			: { ok: true },
+	],
+});
+```
+
+## `canRunCommand` shorthand
+
+For a single global gate, `canRunCommand` is a slimmer signature: return `true`, `false`, or a string reason.
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	canRunCommand: ({ command, user }) => {
+		if (command.name === "admin" && !admins.has(user.id)) return "Admins only.";
+		return true;
+	},
+});
+```
+
+## Order of evaluation
+
+For each dispatch, the chain runs in this order — first failure wins:
+
+1. Built-in validators (in this order: `ownerOnly`, `guildOnly`, `channels`, `permissions`, `roles`)
+2. Handler-level `validators`
+3. Command-level `validators`
+4. Handler-level `canRunCommand`
+
+If every check returns `{ ok: true }` (or `canRunCommand` returns `true`), the dispatcher proceeds to the cooldown gate and then `command.run`.
+
+<Callout type="info">
+Validators run **before** cooldowns. A failing validator does not start a cooldown. This is intentional — you don't want a permission denial to also rate-limit the user.
+</Callout>

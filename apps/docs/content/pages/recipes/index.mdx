@@ -4,19 +4,146 @@ description: Copy-paste solutions for common bot patterns.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
+import { Cards, Card } from "fumadocs-ui/components/card";
 
-<Callout type="warn">
-**Coming with [Slice #62 — Recipes](https://github.com/D3OXY/djs-commands/issues/62).** This section is currently a placeholder.
+Recipes are small, focused, copy-paste-friendly examples. They build on the [Concepts](/concepts) pages — read those first if a snippet's `import` doesn't ring a bell.
+
+<Callout type="info">
+The runnable [`examples/`](https://github.com/D3OXY/djs-commands/tree/main/examples) directory in the repo has full bots you can clone and run. The `minimal`, `components-v2-showcase`, and `moderation-drizzle` examples each ship a working `.env.example` and `package.json`.
 </Callout>
 
-Recipes are small, focused, copy-paste-friendly examples. Each one solves a single problem end-to-end:
+## Defer a long-running command
 
-- Pagination with select menus
-- Modal-based forms
-- Role gates via validators
-- Long-running tasks with deferred replies
-- i18n / localized command names
-- Logging every command call
-- Reloading commands without restarting the process
+If your handler does work that takes more than 3 seconds, defer the reply so Discord doesn't time out the interaction.
 
-Want a specific recipe? Open an issue with the [`recipes` label](https://github.com/D3OXY/djs-commands/issues?q=label%3Arecipes) or drop a request in the [Discord support server](https://deoxy.dev/links?redirect=support).
+```ts
+defineCommand({
+	name: "report",
+	description: "Generate the weekly report",
+	run: async ({ interaction, reply }) => {
+		if (interaction) await interaction.deferReply();
+		const report = await generateReport(); // takes 8 seconds
+		await reply(report);
+	},
+});
+```
+
+## Role-gated command
+
+Use the built-in `roles` field for the simple case, or a custom `Validator` if the rule is dynamic.
+
+```ts
+defineCommand({
+	name: "kick",
+	description: "Kick a user",
+	guildOnly: true,
+	permissions: ["KickMembers"],
+	roles: ["123456789012345678"], // moderator role
+	options: { target: { type: "user", description: "Who to kick", required: true } },
+	run: async ({ options, member, reply }) => {
+		const guildMember = await member?.guild.members.fetch(options.target.id);
+		await guildMember?.kick();
+		await reply(`Kicked ${options.target.tag}`);
+	},
+});
+```
+
+## Per-user cooldown
+
+```ts
+defineCommand({
+	name: "daily",
+	description: "Claim your daily reward",
+	cooldown: { type: "perUser", duration: 24 * 60 * 60 * 1000 },
+	run: async ({ author, reply }) => {
+		await reply(`Reward claimed for ${author.tag}.`);
+	},
+});
+```
+
+For distributed cooldowns across multiple bot processes, register the [Redis cache adapter](/concepts/cooldowns#storage-backends).
+
+## Modal-based form
+
+```tsx
+import { Modal, TextInput, renderModal } from "@djs-commands/jsx";
+
+defineCommand({
+	name: "feedback",
+	description: "Send feedback",
+	run: async ({ interaction }) => {
+		await interaction.showModal(
+			renderModal(
+				<Modal title="Send feedback" customId="feedback-modal">
+					<TextInput customId="subject" label="Subject" style="short" required={true} />
+					<TextInput customId="body" label="Tell us more" style="paragraph" />
+				</Modal>
+			)
+		);
+	},
+});
+
+// Wire submission handling on the discord.js client itself:
+client.on("interactionCreate", async (i) => {
+	if (!i.isModalSubmit() || i.customId !== "feedback-modal") return;
+	const subject = i.fields.getTextInputValue("subject");
+	const body = i.fields.getTextInputValue("body");
+	// store, log, post to a channel...
+	await i.reply({ content: "Thanks!", ephemeral: true });
+});
+```
+
+## Toggling commands per guild
+
+`disabledCommands` is a built-in storage model. The dispatcher consults it automatically — you only need to expose admin commands to flip the flag.
+
+```ts
+import { defineCommand, disableCommand, enableCommand } from "@djs-commands/core";
+
+defineCommand({
+	name: "toggle",
+	description: "Enable or disable a command in this guild",
+	guildOnly: true,
+	permissions: ["ManageGuild"],
+	options: {
+		command: { type: "string", description: "Command name", required: true },
+		state: { type: "string", description: "on or off", choices: ["on", "off"] as const, required: true },
+	},
+	run: async ({ options, guild, reply }) => {
+		if (!guild) return;
+		const fn = options.state === "off" ? disableCommand : enableCommand;
+		await fn(storage, guild.id, options.command);
+		await reply(`\`${options.command}\` is now ${options.state}`);
+	},
+});
+```
+
+## Channel-locked commands
+
+Use `channels` for a static allow-list, or the dynamic `channel_locks` storage model for per-guild moderator control.
+
+```ts
+import { lockCommandToChannel } from "@djs-commands/core";
+
+await lockCommandToChannel(storage, guildId, "music-play", musicChannelId);
+// `music-play` now only runs in `musicChannelId` for this guild
+```
+
+The dispatcher consults channel locks alongside the static `channels` field.
+
+## Hot-reload commands in development
+
+Pass a `commandDir` to the handler. In dev (`NODE_ENV !== "production"`) the directory is watched and edits hot-reload without a restart.
+
+```ts
+createCommandHandler({
+	client,
+	commandDir: "./src/commands",
+});
+```
+
+To opt out, pass `dev: false`.
+
+## Want a recipe that's not here?
+
+Open an issue with the [`recipes` label](https://github.com/D3OXY/djs-commands/issues?q=label%3Arecipes) or drop a request in the [Discord support server](https://deoxy.dev/links?redirect=support).

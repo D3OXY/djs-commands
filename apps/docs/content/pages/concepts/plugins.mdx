@@ -1,12 +1,114 @@
 ---
 title: Plugins
-description: Cross-cutting hooks and lifecycle wrappers.
+description: Cross-cutting hooks, command bundles, and lifecycle wrappers.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-<Callout type="warn">
-**Coming with [Slice #57 — Plugins](https://github.com/D3OXY/djs-commands/issues/57).** This page is a placeholder; it will be filled in once that slice lands.
+Plugins let third-party packages — and your own internal bundles — ship commands and side-effects that hook into the handler's lifecycle. The plugin system is intentionally small: a manifest with three optional hooks (`commands`, `setup`, `teardown`).
+
+## Plugin manifest
+
+A plugin is a plain object you pass to `createCommandHandler`. The convention is to expose it as a factory function that returns a `PluginManifest`.
+
+```ts
+import type { PluginManifest } from "@djs-commands/core";
+
+export function loggingPlugin(opts: { level?: "info" | "debug" } = {}): PluginManifest {
+	return {
+		name: "logging",
+		setup({ client }) {
+			client.on("interactionCreate", (i) => {
+				if (i.isChatInputCommand()) {
+					console.log(`[${opts.level ?? "info"}]`, i.commandName, "by", i.user.tag);
+				}
+			});
+		},
+		teardown() {
+			// optional cleanup — runs on handler.destroy()
+		},
+	};
+}
+```
+
+Register at boot:
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	plugins: [loggingPlugin({ level: "debug" })],
+});
+```
+
+### Manifest fields
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `name` | `string` | Human-readable identifier; surfaces in error messages. |
+| `commands` | `Command[]` | Commands merged into the dispatcher at boot — same shape as the top-level `commands`. |
+| `setup` | `(ctx) => void \| Promise<void>` | Awaited at boot in registration order. **Throwing aborts handler boot.** |
+| `teardown` | `() => void \| Promise<void>` | Awaited on `handler.destroy()`. Errors are logged but don't block other teardowns. |
+
+## Bundling commands
+
+The most common pattern: a plugin ships a related set of commands plus the listeners they need.
+
+```ts
+import { defineCommand, type PluginManifest } from "@djs-commands/core";
+
+const start = defineCommand({
+	name: "music-play",
+	description: "Start playback",
+	run: async ({ reply }) => { await reply("started"); },
+});
+
+const stop = defineCommand({
+	name: "music-stop",
+	description: "Stop playback",
+	run: async ({ reply }) => { await reply("stopped"); },
+});
+
+export function musicPlugin(): PluginManifest {
+	return {
+		name: "music",
+		commands: [start, stop],
+		setup({ client }) {
+			// connect to voice gateway, etc.
+		},
+	};
+}
+```
+
+Plugin commands and top-level commands share a single namespace — duplicates throw at boot.
+
+## Lifecycle and ordering
+
+Plugins boot in array order. Each plugin's `setup` is awaited before the next runs, so plugins later in the array can rely on earlier ones having initialized.
+
+`handler.ready` resolves once **all** setup hooks have completed. If any setup throws, `handler.ready` rejects with that error and the handler does not attach event listeners.
+
+```ts
+const handler = createCommandHandler({ client, plugins: [a, b, c] });
+await handler.ready; // resolves after a.setup → b.setup → c.setup
+```
+
+On `handler.destroy()`:
+
+1. The dispatcher detaches its listeners.
+2. Each plugin's `teardown` is awaited in reverse-registration order.
+3. A failing teardown is logged but does not stop other teardowns.
+
+<Callout type="info">
+Plugins do not currently expose pre/post-dispatch hooks (e.g. wrap-every-command middleware). Today, plugins use the discord.js client directly for that. A typed dispatch-middleware surface is on the roadmap.
 </Callout>
 
-Plugins will let you wrap every command call with logging, metrics, error handling, and feature flags. They will also be how community packages (e.g., legacy message-command support) extend core. Track issue [#57](https://github.com/D3OXY/djs-commands/issues/57).
+## Sharing state
+
+The setup context is intentionally minimal — just `{ client }`. Plugins that need to expose state to commands typically:
+
+- Attach to the client as a property: `client.myState = ...`. Type via module augmentation.
+- Close over their own values and inject them into the commands they ship.
+- Use the `Storage` adapter for persistent state.
+
+Avoid module-scoped singletons in plugin code — that breaks tests that want to construct multiple handlers in the same process.

@@ -1,12 +1,135 @@
 ---
 title: Storage
-description: The pluggable persistence layer behind cooldowns, prefixes, and user state.
+description: The pluggable persistence layer behind framework features and your own commands.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
+import { Cards, Card } from "fumadocs-ui/components/card";
 
-<Callout type="warn">
-**Coming with [Slice #58 — Storage adapter interface](https://github.com/D3OXY/djs-commands/issues/58).** This page is a placeholder; it will be filled in once that slice lands.
+`@djs-commands/core` ships **without a database**. Anything that needs to remember state across restarts — guild prefixes, disabled-command lists, channel locks, your own bot's state — goes through the `Storage` adapter you register.
+
+The contract is a generic CRUD interface modeled on Better Auth's pattern: adapters implement six methods once, and the framework consumes them for every persistent feature. Adding a new model never requires changes to the adapter contract.
+
+## The `Storage` interface
+
+```ts
+interface Storage {
+	create<T>(model: string, data: T): Promise<T>;
+	findOne<T>(model: string, where: StorageWhere): Promise<T | null>;
+	findMany<T>(model: string, opts?: StorageFindOpts): Promise<T[]>;
+	update<T>(model: string, where: StorageWhere, data: Partial<T>): Promise<T>;
+	delete(model: string, where: StorageWhere): Promise<void>;
+	count(model: string, where?: StorageWhere): Promise<number>;
+}
+```
+
+Models are identified by **string names** (snake_case). The framework ships three model names you'll see in the type signatures: `guild_prefix`, `disabled_commands`, `channel_locks`.
+
+## Built-in adapters
+
+`@djs-commands/core` is database-agnostic. First-party adapters live in their own packages so you only depend on what you use.
+
+<Cards>
+	<Card title="Drizzle (Postgres)" href="https://www.npmjs.com/package/@djs-commands/adapter-drizzle" description="@djs-commands/adapter-drizzle — recommended for new projects. Schema is exported from the package." />
+	<Card title="Prisma" href="https://www.npmjs.com/package/@djs-commands/adapter-prisma" description="@djs-commands/adapter-prisma — works against any Prisma client; ships schema fragments to copy in." />
+	<Card title="Mongoose (MongoDB)" href="https://www.npmjs.com/package/@djs-commands/adapter-mongoose" description="@djs-commands/adapter-mongoose — the v1 continuity path. Mongoose models are auto-created if you don't pass your own." />
+</Cards>
+
+Walk-throughs for each are in the [Adapter Cookbook](/adapter-cookbook).
+
+## Using storage
+
+Pass an adapter at boot:
+
+```ts
+import { drizzleStorage } from "@djs-commands/adapter-drizzle";
+import { db } from "./db";
+
+createCommandHandler({
+	client,
+	commands: [...],
+	storage: drizzleStorage(db),
+});
+```
+
+The framework reads/writes its own models automatically. To use storage from your own commands, the adapter is exposed via the handler — most commands won't need it because they can use the **helper functions** below.
+
+## Framework models and helpers
+
+For each first-party model, `@djs-commands/core` exports typed read/write helpers. Use these instead of calling `storage.findOne(...)` directly — they keep the model name and column shape in one place.
+
+### Guild prefix
+
+Per-guild override for the legacy command prefix.
+
+```ts
+import { getGuildPrefix, setGuildPrefix, clearGuildPrefix } from "@djs-commands/core";
+
+const prefix = await getGuildPrefix(storage, guildId); // string | null
+await setGuildPrefix(storage, guildId, "?");
+await clearGuildPrefix(storage, guildId);
+```
+
+### Disabled commands
+
+Per-guild allow-list for commands. Useful for letting moderators turn individual commands off without redeploying.
+
+```ts
+import { isCommandDisabled, disableCommand, enableCommand } from "@djs-commands/core";
+
+if (await isCommandDisabled(storage, guildId, "music-play")) { /* ... */ }
+await disableCommand(storage, guildId, "music-play");
+await enableCommand(storage, guildId, "music-play");
+```
+
+The dispatcher consults `isCommandDisabled` automatically — you don't need to wire it into your validators.
+
+### Channel locks
+
+Restrict a command to specific channels in a guild. Empty list = no restriction.
+
+```ts
+import { getChannelLocks, lockCommandToChannel, unlockCommandFromChannel } from "@djs-commands/core";
+
+const locks = await getChannelLocks(storage, guildId, "music-play"); // string[]
+await lockCommandToChannel(storage, guildId, "music-play", channelId);
+await unlockCommandFromChannel(storage, guildId, "music-play", channelId);
+```
+
+## Using storage for your own state
+
+Storage is generic — you can register your own models with no framework changes. Pick a snake_case model name, define the row shape, and call the adapter methods directly.
+
+```ts
+const USER_SETTINGS = "user_settings";
+
+interface UserSettings {
+	user_id: string;
+	timezone: string;
+}
+
+await storage.create<UserSettings>(USER_SETTINGS, {
+	user_id: "123",
+	timezone: "America/New_York",
+});
+
+const row = await storage.findOne<UserSettings>(USER_SETTINGS, { user_id: "123" });
+```
+
+You're responsible for **migrations**: every adapter expects the underlying table/collection to exist. The Drizzle and Prisma adapters publish schema definitions you can extend.
+
+## Writing a custom adapter
+
+Implement `Storage`, then verify it against the framework's conformance suite:
+
+```ts
+import { runStorageConformance } from "@djs-commands/core";
+
+runStorageConformance("my-adapter", () => myStorageFactory());
+```
+
+The conformance suite is exported as a plain function so you can call it from any test runner. It exercises every CRUD path the framework relies on, including upserts, partial updates, and find-with-options.
+
+<Callout type="info">
+Adapter authors should **not** implement framework-specific logic. The shipped helpers (`getGuildPrefix`, etc.) call the generic CRUD methods — keep your adapter focused on the transport, and the helpers will compose on top.
 </Callout>
-
-The storage layer is a small, well-typed interface. djs-commands core ships an in-memory implementation for dev, and you bring your own for production — Postgres, Redis, MongoDB, Cloudflare KV, anything. Adapter recipes will live in the [Adapter Cookbook](/adapter-cookbook). Track issue [#58](https://github.com/D3OXY/djs-commands/issues/58).

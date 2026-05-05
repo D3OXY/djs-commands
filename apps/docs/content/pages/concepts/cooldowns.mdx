@@ -1,12 +1,93 @@
 ---
 title: Cooldowns
-description: Per-user, per-guild, per-command rate limiting.
+description: Per-user, per-guild, per-command rate limiting backed by your storage adapter.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-<Callout type="warn">
-**Coming with [Slice #56 — Cooldowns](https://github.com/D3OXY/djs-commands/issues/56).** This page is a placeholder; it will be filled in once that slice lands.
+Cooldowns rate-limit a command for an actor. The dispatcher checks the cooldown gate after validators pass — if the actor is on cooldown, the user sees a "try again in N seconds" reply and the handler is not invoked.
+
+## Configuring a cooldown
+
+Attach `cooldown` to the command. `duration` is in **milliseconds**.
+
+```ts
+defineCommand({
+	name: "vote",
+	description: "Vote on the current poll",
+	cooldown: { type: "perUser", duration: 30_000 },
+	run: async ({ reply }) => {
+		await reply("voted");
+	},
+});
+```
+
+## Cooldown types
+
+| Type | Key shape | When to use |
+| --- | --- | --- |
+| `perUser` | `cd:<cmd>:user:<userId>` | One invocation per user globally — e.g. daily reward. |
+| `perGuild` | `cd:<cmd>:guild:<guildId>` | One invocation per guild — e.g. server-wide announcement. |
+| `perUserPerGuild` | `cd:<cmd>:user:<userId>:guild:<guildId>` | One per user per server — the most common choice for moderation. |
+| `global` | `cd:<cmd>:global` | One invocation across all users and guilds — debug/owner commands. |
+
+In DMs, `guildId` falls back to the literal string `"dm"` so `perGuild` and `perUserPerGuild` keys remain stable.
+
+## Storage backends
+
+By default, cooldowns are stored **in-process** in a `Map`. That works for development and single-process bots, but loses state on restart and doesn't survive horizontal scale. Pass a `cacheAdapter` to the handler to use a shared store.
+
+```ts
+import { createCommandHandler } from "@djs-commands/core";
+import { redisCacheAdapter } from "@djs-commands/adapter-redis";
+import Redis from "ioredis";
+
+const redis = new Redis(process.env.REDIS_URL);
+
+createCommandHandler({
+	client,
+	commands: [...],
+	cacheAdapter: redisCacheAdapter(redis),
+});
+```
+
+## Writing a custom CacheAdapter
+
+The contract is three methods. `expiresAt` is an absolute UNIX millisecond timestamp; `ttlMs` is the same value expressed as a TTL hint for stores that prefer it (Redis `PX`, Memcached, etc).
+
+```ts
+interface CacheAdapter {
+	get(key: string): Promise<number | null>;
+	set(key: string, expiresAt: number, ttlMs: number): Promise<void>;
+	delete(key: string): Promise<void>;
+}
+```
+
+`get` should return `null` when the key is missing or already expired. The engine uses `expiresAt` to compute remaining time, so backends that auto-expire keys (Redis with `PX`) and backends that don't (a SQL `cooldowns` table) both work — the engine cleans up expired entries on read for the latter.
+
+<Callout type="info">
+The Redis adapter writes with `SET key expiresAt PX ttl` so Redis handles expiry server-side and you never accumulate dead keys.
 </Callout>
 
-Cooldowns will plug into the storage adapter you register, so the same code works for in-memory dev and Redis/Postgres production. Track issue [#56](https://github.com/D3OXY/djs-commands/issues/56) for progress.
+## When cooldowns start
+
+The cooldown is **started after** `command.run` returns successfully. If `run` throws, no cooldown is applied — users won't be punished for a failed invocation.
+
+If you need pre-handler cooldowns (e.g. expensive permission lookups should rate-limit even on failure), use a custom validator that records the timestamp itself.
+
+## `CooldownEngine` directly
+
+The engine is exposed for advanced use — you can construct one yourself to gate non-command flows (autocomplete handlers, button clicks, modal submits) using the same shared cache.
+
+```ts
+import { CooldownEngine } from "@djs-commands/core";
+
+const engine = new CooldownEngine(redisCacheAdapter(redis));
+
+const remaining = await engine.check(myCommand, { userId, guildId });
+if (remaining !== null) {
+	// on cooldown — `remaining` ms left
+}
+
+await engine.start(myCommand, { userId, guildId });
+```

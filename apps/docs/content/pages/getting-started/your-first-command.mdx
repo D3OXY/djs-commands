@@ -6,6 +6,8 @@ description: Define, register, and run a slash command end-to-end.
 import { Callout } from "fumadocs-ui/components/callout";
 import { Step, Steps } from "fumadocs-ui/components/steps";
 
+The fastest path to a running bot is `npx create-djs-commands` — it scaffolds the directory layout, `tsconfig.json`, and `.env.example` for you. This page walks through the same setup by hand so you understand each piece.
+
 <Steps>
 <Step>
 ### Define a command
@@ -15,27 +17,27 @@ A command is just a plain object you build with `defineCommand`. The function is
 ```ts title="src/commands/ping.ts"
 import { defineCommand } from "@djs-commands/core";
 
-export const ping = defineCommand({
+export default defineCommand({
 	name: "ping",
 	description: "Replies with pong",
-	run: async ({ interaction }) => {
-		await interaction.reply("pong");
+	run: async ({ reply }) => {
+		await reply("pong");
 	},
 });
 ```
 
-The handler receives a `CommandRunContext` — for now, that's just the underlying `ChatInputCommandInteraction` from discord.js. Future slices add validators, plugins, and storage to that context.
+The handler receives a [`CommandRunContext`](/concepts/commands#commandruncontext) with a unified `reply()` (works for both slash and legacy invocations), the invoking `author`, the `guild`, `member`, and typed `options`.
 </Step>
 
 <Step>
 ### Wire up a Client
 
-Pass your commands to `createCommandHandler` along with a discord.js `Client`. The handler subscribes to `interactionCreate` and dispatches matching slash commands to the right `run` function. On `clientReady`, it registers the command list with Discord.
+Pass your commands to `createCommandHandler` along with a discord.js `Client`. The handler subscribes to `interactionCreate` and dispatches matching slash commands. On `clientReady`, it registers the command list with Discord.
 
 ```ts title="src/index.ts"
 import { createCommandHandler } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
-import { ping } from "./commands/ping";
+import ping from "./commands/ping";
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -45,10 +47,12 @@ if (!token) {
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-createCommandHandler({
+const handler = createCommandHandler({
 	client,
 	commands: [ping],
 });
+
+await handler.ready;
 
 client.once("clientReady", (c) => {
 	console.log(`Logged in as ${c.user.tag}`);
@@ -56,6 +60,17 @@ client.once("clientReady", (c) => {
 
 await client.login(token);
 ```
+
+Or skip the manual import and let the framework load the directory for you:
+
+```ts
+createCommandHandler({
+	client,
+	commandDir: "./src/commands",
+});
+```
+
+In dev (`NODE_ENV !== "production"`) the directory is watched and edited files hot-reload without a restart.
 </Step>
 
 <Step>
@@ -73,19 +88,15 @@ The first time you run a freshly registered command, Discord may take a minute t
 </Step>
 </Steps>
 
-## What changed from v1?
+## Next steps
 
-If you're coming from the legacy `@d3oxy/djs-commands` package, here's the short version:
+- **Add typed options** — see [Commands → Options](/concepts/commands#options).
+- **Gate execution** with role/permission/channel checks — see [Validators](/concepts/validators).
+- **Rate-limit** with built-in cooldowns — see [Cooldowns](/concepts/cooldowns).
+- **Persist state** (prefixes, disabled commands, your own data) — see [Storage](/concepts/storage).
+- **Build rich replies** with Components V2 — see [Components V2](/components-v2).
+- **Extend the handler** with a plugin — see [Plugins](/concepts/plugins).
 
-- **Commands are objects, not files.** v1 read a `commandDir` from disk; v2 takes an array. You bring your own loader (or skip it entirely and import directly).
-- **No more `legacyCommands` toggle.** v2 is slash-first. Message commands are coming back as an opt-in plugin in a later slice.
-- **No more global state.** The handler returned by `createCommandHandler` exposes `destroy()` so you can tear down cleanly in tests.
-- **MongoDB is gone from core.** Persistence (cooldowns, prefixes, user state) is now plugin-shaped — bring your own adapter. See [Concepts → storage](/concepts) once that slice ships.
+## Coming from v1?
 
-The v1 package will keep working at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit). It will not receive feature updates.
-
-## Next
-
-- Read [Concepts → commands](/concepts/commands) for the deep dive on `defineCommand`.
-- Browse [Recipes](/recipes) for ready-made patterns.
-- Join the [Discord support server](https://deoxy.dev/links?redirect=support).
+If you're upgrading from `@d3oxy/djs-commands`, the [Migration from v1](/migration-from-v1) guide walks through every API that moved or was dropped, with side-by-side examples.
