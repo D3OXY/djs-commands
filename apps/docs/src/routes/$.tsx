@@ -1,9 +1,11 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import type { Root as PageTreeRoot } from "fumadocs-core/page-tree";
+import type { Node as PageTreeNode, Root as PageTreeRoot } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle, PageLastUpdate, ViewOptionsPopover } from "fumadocs-ui/layouts/docs/page";
+import * as Icons from "lucide-react";
 import type React from "react";
+import { createElement, useMemo } from "react";
 import { mdxComponents } from "@/lib/mdx-components";
 import browserCollections from "../../.source/browser";
 
@@ -137,13 +139,33 @@ function DocsLayoutWrapper({ children, tree }: DocsLayoutWrapperProps) {
 	);
 }
 
+/*
+ * Walk the serialized tree and replace each string icon (e.g. "Rocket") with
+ * a real lucide-react element. Icons stay as strings on the wire — see
+ * lib/source.ts for the rationale. Tree shape is `Root | Folder | Item |
+ * Separator`; only Folder has children.
+ */
+function reviveTreeIcons<T extends PageTreeRoot | PageTreeNode>(node: T): T {
+	const next = { ...node } as T & { icon?: React.ReactNode; children?: PageTreeNode[] };
+	if (typeof next.icon === "string") {
+		const Icon = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[next.icon];
+		if (Icon) next.icon = createElement(Icon);
+		else next.icon = undefined;
+	}
+	if (Array.isArray(next.children)) {
+		next.children = next.children.map((child) => reviveTreeIcons(child));
+	}
+	return next;
+}
+
 function Page() {
 	const data = Route.useLoaderData();
 	const Content = clientLoader.getComponent(data.path);
 	const githubUrl = `https://github.com/${REPO}/blob/${REPO_BRANCH}/${CONTENT_PATH}/${data.path}`;
+	const tree = useMemo(() => reviveTreeIcons(data.tree), [data.tree]);
 
 	return (
-		<DocsLayoutWrapper tree={data.tree}>
+		<DocsLayoutWrapper tree={tree}>
 			<Content githubUrl={githubUrl} />
 		</DocsLayoutWrapper>
 	);
