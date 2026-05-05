@@ -1,4 +1,5 @@
 {
 	"title": "Recipes",
+	"icon": "ChefHat",
 	"pages": ["index"]
 }
