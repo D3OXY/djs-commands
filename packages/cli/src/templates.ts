@@ -6,11 +6,11 @@ interface FileContent {
 }
 
 const DEPS = {
-	core: "^0.0.0",
-	jsx: "^0.0.0",
-	adapterDrizzle: "^0.0.0",
-	adapterPrisma: "^0.0.0",
-	adapterMongoose: "^0.0.0",
+	core: "^2.0.0",
+	jsx: "^2.0.0",
+	adapterDrizzle: "^2.0.0",
+	adapterPrisma: "^2.0.0",
+	adapterMongoose: "^2.0.0",
 	discordJs: "^14.26.0",
 	drizzleOrm: "^0.36.4",
 	pg: "^8.13.1",
