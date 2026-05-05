@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/docs/public/og-default.png" alt="djs-commands — Modern Discord.js command handler" />
+</p>
+
 # djs-commands
 
 > Modern command handler for Discord.js — TypeScript-first, Components V2 native, with pluggable persistence.
