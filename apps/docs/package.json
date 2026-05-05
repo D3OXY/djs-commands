@@ -6,10 +6,11 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "fumadocs-mdx && vite build",
-		"dev": "vite dev",
+		"build": "bun run scripts/generate-llms-txt.ts && fumadocs-mdx && vite build",
+		"dev": "bun run scripts/generate-llms-txt.ts && vite dev",
 		"start": "node .output/server/index.mjs",
-		"typecheck": "fumadocs-mdx && tsc --noEmit"
+		"typecheck": "fumadocs-mdx && tsc --noEmit",
+		"generate:llms": "bun run scripts/generate-llms-txt.ts"
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.0",
