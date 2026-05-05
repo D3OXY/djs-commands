@@ -15,7 +15,8 @@ jobs:
             # GITHUB_TOKEN: changesets/action commits version-bump PRs and pushes tags
             contents: write
             pull-requests: write
-            # OIDC token for npm provenance attestation
+            # OIDC token used by npm Trusted Publishers + provenance attestation.
+            # No NPM_TOKEN secret required — see RELEASING.md.
             id-token: write
         steps:
             - uses: actions/checkout@v4
@@ -44,13 +45,11 @@ jobs:
                   # triggers this workflow again, hits the publish branch below.
                   version: bun run version-packages
                   # When versions in package.json are ahead of npm: publish.
+                  # The npm CLI auto-detects OIDC from the Actions environment
+                  # via Trusted Publishers; provenance is attached automatically.
                   publish: bun run release
                   # Friendlier commit messages on the auto-PR.
                   commit: "chore: release"
                   title: "chore: release"
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-                  # Tells `npm publish` (called via `changeset publish`) to attach
-                  # an SLSA provenance attestation. Requires id-token: write above.
-                  NPM_CONFIG_PROVENANCE: "true"
