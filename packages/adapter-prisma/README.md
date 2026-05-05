@@ -1,38 +1,62 @@
 # @djs-commands/adapter-prisma
 
-Prisma `Storage` adapter for djs-commands. Persists framework state (currently per-guild legacy prefix overrides; more models in slice #62) using a Prisma Client you've already generated for your own app.
+Prisma `Storage` adapter for [`@djs-commands/core`](https://www.npmjs.com/package/@djs-commands/core).
+
+Persists the framework's three built-in models — **guild prefixes**, **disabled commands**, and **channel locks** — using a Prisma Client you've already generated for your own app.
+
+📘 **Full walk-through: https://djscommands.deoxy.dev/adapter-cookbook#prisma**
 
 ## Install
 
 ```bash
 bun add @djs-commands/core @djs-commands/adapter-prisma @prisma/client
-bun add -D prisma
+bun add -d prisma
 ```
 
 ## Usage
 
-1. Add the framework's model to your `schema.prisma`. You can either copy-paste the fragment below or import the string from the package:
+1. Add the framework's models to your `schema.prisma`. Copy the fragment below, or import the schema strings:
 
    ```prisma
    model GuildPrefix {
-       guildId String @id @map("guild_id")
-       prefix  String
+     guildId String @id @map("guild_id")
+     prefix  String
 
-       @@map("guild_prefix")
+     @@map("guild_prefix")
+   }
+
+   model DisabledCommand {
+     guildId     String @map("guild_id")
+     commandName String @map("command_name")
+
+     @@id([guildId, commandName])
+     @@map("disabled_commands")
+   }
+
+   model ChannelLock {
+     guildId     String @map("guild_id")
+     commandName String @map("command_name")
+     channelId   String @map("channel_id")
+
+     @@id([guildId, commandName, channelId])
+     @@map("channel_locks")
    }
    ```
 
    Programmatic option (e.g. for codegen / docs):
 
    ```ts
-   import { GUILD_PREFIX_PRISMA_MODEL } from "@djs-commands/adapter-prisma";
-   console.log(GUILD_PREFIX_PRISMA_MODEL);
+   import {
+     GUILD_PREFIX_PRISMA_MODEL,
+     DISABLED_COMMANDS_PRISMA_MODEL,
+     CHANNEL_LOCKS_PRISMA_MODEL,
+   } from "@djs-commands/adapter-prisma";
    ```
 
-2. Run a migration so the table exists:
+2. Run a migration so the tables exist:
 
    ```bash
-   bunx prisma migrate dev --name add_djs_commands_guild_prefix
+   bunx prisma migrate dev --name add_djs_commands
    bunx prisma generate
    ```
 
@@ -45,22 +69,24 @@ bun add -D prisma
    const prisma = new PrismaClient();
 
    createCommandHandler({
-       client,
-       storage: prismaStorage(prisma),
-       legacy: { enabled: true, defaultPrefix: "!" },
-       // ...
+     client,
+     commands: [/* ... */],
+     storage: prismaStorage(prisma),
    });
    ```
 
-## Bring-your-own-delegate
+The dispatcher reads/writes `guild_prefix`, `disabled_commands`, and `channel_locks` automatically — you don't write any code for the framework models.
 
-If you've renamed the model in your schema, or want to share a delegate with other code, pass it explicitly:
+## Bring-your-own-delegates
+
+If you've renamed the models in your schema, pass the delegates explicitly:
 
 ```ts
-import { GuildPrefixModel } from "@djs-commands/core";
 import { prismaStorage } from "@djs-commands/adapter-prisma";
 
-prismaStorage(prisma, { delegates: { [GuildPrefixModel]: prisma.myCustomModel } });
+prismaStorage(prisma, {
+  delegates: { guildPrefix: prisma.myCustomModel },
+});
 ```
 
 ## Local development
@@ -73,4 +99,8 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres bunx prisma mi
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres bun test
 ```
 
-The integration test suite skips cleanly if `DATABASE_URL` is unset, `@prisma/client` hasn't been generated, or Postgres is unreachable.
+The integration test suite skips cleanly if `DATABASE_URL` is unset, `@prisma/client` hasn't been generated, or Postgres is unreachable — CI without Postgres will not fail.
+
+## License
+
+[MIT](https://github.com/D3OXY/djs-commands/blob/main/LICENSE) · Issues + discussions on [GitHub](https://github.com/D3OXY/djs-commands).
