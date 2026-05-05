@@ -1,0 +1,71 @@
+---
+title: Migrating from v1
+description: A guide for upgrading bots from @d3oxy/djs-commands to @djs-commands/core
+---
+
+# Migrating from v1
+
+If you're coming from `@d3oxy/djs-commands` (v1), this guide walks you through every API that moved, renamed, or was dropped in v2.
+
+## TL;DR
+
+```bash
+# 1. Remove the old package
+bun remove @d3oxy/djs-commands
+
+# 2. Install v2 packages
+bun add @djs-commands/core discord.js
+# Optional based on your stack:
+bun add @djs-commands/adapter-mongoose mongoose  # if you used mongoUri in v1
+bun add @djs-commands/jsx                        # for Components V2
+```
+
+The big change: a single `CommandHandler` class became a function-based API with composable storage adapters. Mongoose is no longer baked in — pick `@djs-commands/adapter-drizzle`, `@djs-commands/adapter-prisma`, or `@djs-commands/adapter-mongoose` (the v1 continuity path).
+
+## Side-by-side
+
+```ts
+// v1
+import CommandHandler from "@d3oxy/djs-commands";
+new CommandHandler({
+    client,
+    mongoUri: process.env.MONGO_URI,
+    commandDir: path.join(__dirname, "commands"),
+    featuresDir: path.join(__dirname, "features"),
+    defaultPrefix: "!",
+    botOwners: ["123456789012345678"],
+    events: { dir: path.join(__dirname, "events") },
+});
+```
+
+```ts
+// v2
+import { createCommandHandler } from "@djs-commands/core";
+import { mongooseStorage } from "@djs-commands/adapter-mongoose";
+import { fileURLToPath } from "node:url";
+import mongoose from "mongoose";
+
+const connection = mongoose.createConnection(process.env.MONGO_URI!);
+
+createCommandHandler({
+    client,
+    storage: mongooseStorage(connection),
+    commandDir: fileURLToPath(new URL("./commands", import.meta.url)),
+    eventDir: fileURLToPath(new URL("./events", import.meta.url)),
+    legacy: { enabled: true, defaultPrefix: "!" },
+    botOwners: ["123456789012345678"],
+});
+```
+
+## What's in this section
+
+- [Handler options](./handler) — every `CommandHandler` option mapped to v2
+- [Command files](./commands) — `CommandType`, `callback(usage)` → unified `defineCommand`
+- [Validators](./validators) — `requiredPermissions` / `requiredRoles` / `ownerOnly` / `guildOnly` / `channelOnly`
+- [Persistence](./persistence) — Mongoose schemas → Storage adapters
+- [Events and plugins](./events-and-plugins) — `events.dir` and FeaturesHandler → `eventDir` + `plugins`
+- [Dropped features](./dropped-features) — what didn't make the cut
+
+## Why the rewrite
+
+v1 was unmaintained since late 2023. Discord shipped Components V2, polls, voice messages, user-installable apps, and ~18 months of API surface that v1 couldn't reach. v2 is built on `discord.js@^14.26`, ships first-class Components V2 via `@djs-commands/jsx`, drops the Mongoose lock-in, and is structured for the upcoming discord.js v15. v1 stays on npm at `@d3oxy/djs-commands@1.4.x` for bots that aren't ready to upgrade — it just won't get new features.
