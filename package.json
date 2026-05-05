@@ -34,9 +34,9 @@
 	},
 	"scripts": {
 		"build": "turbo build",
-		"build:docs": "bun run --cwd apps/docs build:docs",
+		"build:docs": "turbo build --filter=docs",
 		"dev": "turbo dev",
-		"dev:docs": "bun run --cwd apps/docs dev:docs",
+		"dev:docs": "turbo dev --filter=docs",
 		"typecheck": "turbo typecheck",
 		"check": "biome check",
 		"check:write": "biome check --write",

@@ -21,13 +21,13 @@ v1 shipped 8 commands automatically: `prefix`, `slashcommand list/delete`, `togg
 
 **Why dropped**: every bot has different opinions about how admin UI should look. Shipping these as defaults forced users to either accept them or fight to disable them.
 
-**Replacement**: each helper is now a one-liner you can call from your own admin command. See [Persistence](./persistence) — `setGuildPrefix`, `disableCommand`, `lockCommandToChannel`, etc.
+**Replacement**: each helper is now a one-liner you can call from your own admin command. See [Persistence](/migration-from-v1/persistence) — `setGuildPrefix`, `disableCommand`, `lockCommandToChannel`, etc.
 
 ## FeaturesHandler
 
 v1's `featuresDir` walked a directory and called `require(file)(commandHandler, client)` for each entry. It worked but was bundle-hostile (uses dynamic `require()`) and listener leaks were common.
 
-**Why dropped**: the [plugin system](./events-and-plugins#plugins-replacing-featureshandler) is a strict superset — same dynamic-loading capability, plus lifecycle hooks, type safety, and cleaner unmounting on `destroy()`.
+**Why dropped**: the [plugin system](/migration-from-v1/events-and-plugins#plugins-replacing-featureshandler) is a strict superset — same dynamic-loading capability, plus lifecycle hooks, type safety, and cleaner unmounting on `destroy()`.
 
 **Replacement**: factory functions returning `PluginManifest`, registered via the `plugins: [...]` option.
 
