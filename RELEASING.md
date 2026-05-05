@@ -14,12 +14,9 @@ This repo ships v2.x of `@djs-commands/*` packages via [Changesets](https://gith
 
 ## Initial v2.0.0 launch
 
-The first release is bootstrapped:
+The first release is bootstrapped without changesets — all 7 publishable `package.json` files are pinned at `2.0.0` and `CHANGELOG.md` files are pre-seeded with the launch entry. Changesets only manages versions from `2.0.1` onward.
 
-- All `@djs-commands/*` package.jsons are pinned at `2.0.0`
-- A single `v2-launch.md` changeset declares it `major` for every package
-- Once that PR merges, the Release workflow opens a version PR which consumes the changeset and prepares CHANGELOGs
-- Merging the version PR publishes 2.0.0 to npm
+The first publish must be manual (Path A below) because **Trusted Publishers can only be configured for packages that already exist on npm**. After the first manual publish, configure the trusted publishers, and every subsequent release flows through the workflow.
 
 ### One-time setup before the first publish
 
@@ -27,15 +24,18 @@ The first release is bootstrapped:
 
 #### Path A — manual first publish, then switch to OIDC
 
-1. Locally, log in with `npm login` as a user with publish access to the `@djs-commands` org.
-2. Build and publish 2.0.0 from your machine:
+1. Verify access: `npm whoami` and `npm org ls @djs-commands`. Run `npm login` if needed.
+2. Build all 7 packages:
    ```bash
    bun install --frozen-lockfile
    bun run build --filter='@djs-commands/*'
-   cd packages/core && npm publish --access public --provenance=false && cd -
-   # …repeat for jsx, cli, adapter-drizzle, adapter-prisma, adapter-mongoose, adapter-redis
    ```
-3. For each newly-published package, configure the trusted publisher on npmjs.com:
+3. Publish all 7 from the repo root in one shot — `changeset publish` is idempotent and resolves dependency order automatically:
+   ```bash
+   bun changeset publish
+   ```
+   This walks the `@djs-commands/*` packages and publishes each one whose `package.json` version is ahead of npm. You'll be prompted for your 2FA OTP per package (or once with `--otp=<code>`). These manual publishes will NOT have provenance — that comes from CI only.
+4. For each newly-published package, configure the trusted publisher on npmjs.com:
    - Go to `https://www.npmjs.com/package/@djs-commands/<name>/access`
    - Under "Trusted publishers", click **Add publisher**
    - Provider: **GitHub Actions**
@@ -43,11 +43,11 @@ The first release is bootstrapped:
    - Repository: `djs-commands`
    - Workflow filename: `release.yml`
    - Environment: leave blank (we don't gate on a deploy environment)
-4. After step 3 is done for all 7 packages, every subsequent release flows through the workflow with no token config needed.
+5. After step 4 is done for all 7 packages, every subsequent release flows through the workflow with provenance attestation attached.
 
 #### Path B — pre-register trusted publishers (if your npm org admin supports unpublished package reservations)
 
-Some org admins can pre-register trusted publishers for unpublished package names. If yours can, configure each `@djs-commands/<name>` ahead of the first publish using the same fields above, then skip Path A's step 1-2 entirely and let the workflow do the first publish via OIDC.
+Some org admins can pre-register trusted publishers for unpublished package names. If yours can, configure each `@djs-commands/<name>` ahead of the first publish using the same fields above, then let the workflow do the first publish via OIDC by pushing an empty commit to main.
 
 ## What the workflow expects
 

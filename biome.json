@@ -13,6 +13,8 @@
 			"!**/CHANGELOG.md",
 			"!**/.source",
 			"!**/.output",
+			"!**/.vercel",
+			"!**/.nitro",
 			"!**/.tanstack",
 			"!**/routeTree.gen.ts",
 			"!apps/docs/source.generated.ts"

@@ -1,5 +1,7 @@
 node_modules
 .output
+.vercel
+.nitro
 .vinxi
 .tanstack
 dist
