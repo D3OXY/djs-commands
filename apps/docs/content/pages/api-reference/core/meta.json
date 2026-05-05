@@ -1,0 +1,19 @@
+{
+	"title": "@djs-commands/core",
+	"icon": "Package",
+	"pages": [
+		"index",
+		"define-command",
+		"command-handler",
+		"options",
+		"validators",
+		"cooldowns",
+		"plugins",
+		"storage",
+		"events",
+		"fs-loader",
+		"legacy-parser",
+		"context",
+		"components-v2-functions"
+	]
+}

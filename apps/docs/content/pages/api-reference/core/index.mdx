@@ -1,0 +1,29 @@
+---
+title: Overview
+description: Reference for every public export of @djs-commands/core.
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+`@djs-commands/core` is the only required package — it ships the dispatcher, command definition, validators, cooldowns, plugins, storage contract, fs-autoloader, and the function-form Components V2 builders.
+
+```bash
+bun add @djs-commands/core discord.js
+```
+
+## Symbols by topic
+
+<Cards>
+	<Card title="defineCommand" href="/api-reference/core/define-command" description="Command, AnyCommand, CommandRunContext, SlashRunContext, LegacyRunContext, CommandRun, CommandLegacyConfig" />
+	<Card title="createCommandHandler" href="/api-reference/core/command-handler" description="CommandHandler, CommandHandlerOptions, HandlerLegacyConfig" />
+	<Card title="Options" href="/api-reference/core/options" description="Every CommandOption type, ResolveOption, ResolveOptions" />
+	<Card title="Validators" href="/api-reference/core/validators" description="Validator, ValidatorContext, ValidationResult, ValidatorSource, CanRunCommand" />
+	<Card title="Cooldowns" href="/api-reference/core/cooldowns" description="CooldownConfig, CooldownType, CooldownActor, CacheAdapter" />
+	<Card title="Plugins" href="/api-reference/core/plugins" description="PluginManifest, PluginSetupContext" />
+	<Card title="Storage" href="/api-reference/core/storage" description="Storage, StorageWhere, StorageFindOpts, runStorageConformance, framework models + helpers" />
+	<Card title="Events" href="/api-reference/core/events" description="defineEvent, EventDefinition" />
+	<Card title="fs-loader" href="/api-reference/core/fs-loader" description="loadCommandsFromDir, loadEventsFromDir, watchCommandsDir" />
+	<Card title="Legacy parser" href="/api-reference/core/legacy-parser" description="parseLegacyArgs, LegacyParseResult" />
+	<Card title="Context normalizers" href="/api-reference/core/context" description="normalizeSlashContext, normalizeLegacyContext" />
+	<Card title="Components V2 (functions)" href="/api-reference/core/components-v2-functions" description="container, section, button, modal, …" />
+</Cards>

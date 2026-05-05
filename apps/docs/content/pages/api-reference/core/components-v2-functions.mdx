@@ -1,0 +1,236 @@
+---
+title: Components V2 (function API)
+description: Function-form builders for Discord Components V2 — no JSX required.
+---
+
+The function API is a JSX-free way to build Components V2 messages. Every function returns a real discord.js builder, so the output is identical to [`@djs-commands/jsx`](/components-v2)'s `render()`. Mix the two freely.
+
+```ts
+import { actionRow, button, container, section, textDisplay } from "@djs-commands/core";
+
+const components = [
+	container({
+		accentColor: 0x5865f2,
+		children: [
+			textDisplay("# Welcome"),
+			section({
+				accessory: button({ style: "primary", customId: "next", label: "Next" }),
+				text: "Components V2 lets you compose rich messages from layout primitives.",
+			}),
+		],
+	}),
+];
+```
+
+## Display components
+
+### `container(options?)`
+
+```ts
+function container(options?: ContainerOptions): ContainerBuilder;
+
+interface ContainerOptions {
+	accentColor?: number | readonly [number, number, number];
+	spoiler?: boolean;
+	id?: number;
+	children?: readonly ContainerChild[];
+}
+
+type ContainerChild =
+	| TextDisplayBuilder
+	| SectionBuilder
+	| MediaGalleryBuilder
+	| SeparatorBuilder
+	| FileBuilder
+	| ActionRowBuilder<MessageActionRowComponentBuilder>;
+```
+
+Top-level layout primitive. Pass `accentColor` as a hex int or RGB tuple; optionally mark the container `spoiler`.
+
+### `section(options)`
+
+```ts
+function section(options: SectionOptions): SectionBuilder;
+
+interface SectionOptions {
+	text: string | readonly string[];
+	accessory: ButtonBuilder | ThumbnailBuilder;
+	id?: number;
+}
+```
+
+Text + accessory layout. The accessory renders to the right; pass a button or thumbnail.
+
+### `textDisplay(content, options?)`
+
+```ts
+function textDisplay(content: string, options?: { id?: number }): TextDisplayBuilder;
+```
+
+Markdown text. Supports headings, lists, links, code spans — anything Discord's V2 markdown allows.
+
+### `mediaGallery(options)`
+
+```ts
+function mediaGallery(options: MediaGalleryOptions): MediaGalleryBuilder;
+
+interface MediaGalleryOptions {
+	items: readonly APIMediaGalleryItem[];
+	id?: number;
+}
+```
+
+Image carousel. Each item is `{ media: { url }, description?, spoiler? }`.
+
+### `separator(options?)`
+
+```ts
+function separator(options?: SeparatorOptions): SeparatorBuilder;
+
+interface SeparatorOptions {
+	divider?: boolean;
+	spacing?: SeparatorSpacingSize;
+	id?: number;
+}
+```
+
+Visual divider between sections. `divider: true` draws a line; `spacing` controls vertical gap.
+
+### `file(options)`
+
+```ts
+function file(options: FileOptions): FileBuilder;
+
+interface FileOptions {
+	url: string;
+	spoiler?: boolean;
+	id?: number;
+}
+```
+
+Embed a file by URL.
+
+### `thumbnail(options)`
+
+```ts
+function thumbnail(options: ThumbnailOptions): ThumbnailBuilder;
+
+interface ThumbnailOptions {
+	url: string;
+	description?: string;
+	spoiler?: boolean;
+	id?: number;
+}
+```
+
+Small image used as a section accessory.
+
+## Form components
+
+### `button(options)`
+
+```ts
+function button(options: ButtonOptions): ButtonBuilder;
+
+type ButtonStyleName = "primary" | "secondary" | "success" | "danger" | "link" | "premium";
+
+type ButtonOptions =
+	| InteractiveButtonOptions   // primary / secondary / success / danger
+	| LinkButtonOptions          // link
+	| PremiumButtonOptions;      // premium
+```
+
+| Style | Required fields |
+| --- | --- |
+| `primary` / `secondary` / `success` / `danger` | `customId`, `label` (and/or `emoji`), optional `disabled` |
+| `link` | `url`, `label` (and/or `emoji`) |
+| `premium` | `skuId` |
+
+```ts
+button({ style: "primary", customId: "ok", label: "OK" });
+button({ style: "link", url: "https://example.com", label: "Docs" });
+```
+
+### `actionRow(options)`
+
+```ts
+function actionRow(options: ActionRowOptions): ActionRowBuilder<MessageActionRowComponentBuilder>;
+
+interface ActionRowOptions {
+	children: readonly MessageActionRowComponentBuilder[];
+	id?: number;
+}
+```
+
+Container for buttons (or string-select-menus from discord.js — same row constraints).
+
+### `modal(options)`
+
+```ts
+function modal(options: ModalOptions): ModalBuilder;
+
+interface ModalOptions {
+	customId: string;
+	title: string;
+	fields: readonly (LabelBuilder | TextInputBuilder)[];
+}
+```
+
+Top-level modal builder. Use with `interaction.showModal(modal(...))`.
+
+### `textInput(options)`
+
+```ts
+function textInput(options: TextInputOptions): TextInputBuilder;
+
+type TextInputStyleName = "short" | "paragraph";
+
+interface TextInputOptions {
+	customId: string;
+	label: string;
+	style?: TextInputStyleName;
+	placeholder?: string;
+	required?: boolean;
+	value?: string;
+	minLength?: number;
+	maxLength?: number;
+}
+```
+
+Single-line (`short`) or multi-line (`paragraph`) text input field.
+
+### `radioGroup(options)`
+
+```ts
+function radioGroup(options: RadioGroupOptions): LabelBuilder;
+
+interface RadioGroupOptions {
+	customId: string;
+	label: string;
+	required?: boolean;
+	options: readonly APIRadioGroupOption[];
+}
+```
+
+Single-choice modal field. Each option is `{ label, value, description?, emoji? }`.
+
+### `checkboxGroup(options)`
+
+```ts
+function checkboxGroup(options: CheckboxGroupOptions): LabelBuilder;
+
+interface CheckboxGroupOptions {
+	customId: string;
+	label: string;
+	required?: boolean;
+	minSelections?: number;
+	maxSelections?: number;
+	options: readonly APICheckboxGroupOption[];
+}
+```
+
+Multi-choice modal field with optional min/max selection bounds.
+
+## Re-exports for convenience
+
+The builder classes from discord.js (`ContainerBuilder`, `ButtonBuilder`, etc.) are not re-exported — import them from `discord.js` directly when you need them. The function API is purely additive on top.

@@ -1,0 +1,177 @@
+---
+title: Options
+description: Typed slash-command options and the inferred ResolveOptions mapped type.
+---
+
+`CommandOptions` is the schema for `command.options`. Each field's runtime type is inferred via `ResolveOptions<S>` so your `run` handler is fully typed.
+
+```ts
+defineCommand({
+	name: "ban",
+	description: "Ban a user",
+	options: {
+		target: { type: "user", description: "Who to ban", required: true },
+		reason: { type: "string", description: "Why" },
+		days:   { type: "integer", description: "Days of messages to delete", choices: [0, 1, 7] as const },
+	},
+	run: async ({ options }) => {
+		options.target;  // User
+		options.reason;  // string | undefined
+		options.days;    // 0 | 1 | 7 | undefined
+	},
+});
+```
+
+## `CommandOptions`
+
+```ts
+type CommandOptions = Record<string, CommandOption>;
+```
+
+A record of `CommandOption`s keyed by option name.
+
+## `CommandOption`
+
+```ts
+type CommandOption =
+	| StringOption
+	| IntegerOption
+	| NumberOption
+	| BooleanOption
+	| UserOption
+	| ChannelOption
+	| RoleOption
+	| MentionableOption
+	| AttachmentOption;
+```
+
+Discriminated union over the nine supported option types.
+
+## `StringOption`
+
+```ts
+interface StringOption {
+	type: "string";
+	description: string;
+	required?: boolean;
+	choices?: readonly string[];
+}
+```
+
+Resolves to `string` (or one of `choices` as a literal union when present).
+
+## `IntegerOption`
+
+```ts
+interface IntegerOption {
+	type: "integer";
+	description: string;
+	required?: boolean;
+	choices?: readonly number[];
+}
+```
+
+Resolves to `number` (or a literal-number union when `choices` is given).
+
+## `NumberOption`
+
+```ts
+interface NumberOption {
+	type: "number";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `number`. (Discord's "Number" option type — float-friendly.)
+
+## `BooleanOption`
+
+```ts
+interface BooleanOption {
+	type: "boolean";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `boolean`.
+
+## `UserOption`
+
+```ts
+interface UserOption {
+	type: "user";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `User`.
+
+## `ChannelOption`
+
+```ts
+interface ChannelOption {
+	type: "channel";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `GuildBasedChannel`.
+
+## `RoleOption`
+
+```ts
+interface RoleOption {
+	type: "role";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `Role`.
+
+## `MentionableOption`
+
+```ts
+interface MentionableOption {
+	type: "mentionable";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `User | GuildMember | Role`.
+
+## `AttachmentOption`
+
+```ts
+interface AttachmentOption {
+	type: "attachment";
+	description: string;
+	required?: boolean;
+}
+```
+
+Resolves to `Attachment`. In legacy mode, this consumes `message.attachments.first()`.
+
+## `ResolveOption<O>`
+
+```ts
+type ResolveOption<O extends CommandOption> =
+	O extends { required: true } ? ResolveValue<O> : ResolveValue<O> | undefined;
+```
+
+Per-option mapped type — produces the runtime type for a single `CommandOption`. Adds `| undefined` for optional fields.
+
+## `ResolveOptions<S>`
+
+```ts
+type ResolveOptions<S extends CommandOptions> = {
+	[K in keyof S]: ResolveOption<S[K]>;
+};
+```
+
+Schema-wide mapped type — used by `CommandRunContext<S>`'s `options` field.

@@ -1,0 +1,57 @@
+---
+title: Legacy parser
+description: parseLegacyArgs and LegacyParseResult — turn a message into typed options.
+---
+
+The legacy parser converts `message.content` (already stripped of the prefix and command name) into a typed `options` object that matches a slash-command schema. The dispatcher uses it internally for legacy invocations; expose it directly only if you're rolling a custom prefix dispatcher.
+
+## `parseLegacyArgs(tokens, schema, message)`
+
+```ts
+function parseLegacyArgs<S extends CommandOptions>(
+	tokens: string[],
+	schema: S | undefined,
+	message: Message,
+): LegacyParseResult<S>;
+```
+
+| Argument | Notes |
+| --- | --- |
+| `tokens` | Whitespace-split arguments (the bot has already stripped the prefix and command name). |
+| `schema` | The command's `options` schema — same shape used in `defineCommand`. `undefined` produces an empty result. |
+| `message` | Used for resolving mentions (`<@id>`, `<#id>`, `<@&id>`) and for `attachment` options (which read `message.attachments.first()`). |
+
+```ts
+import { parseLegacyArgs } from "@djs-commands/core";
+
+const result = parseLegacyArgs(
+	["123456789012345678", "spam"],
+	{
+		target: { type: "user", description: "Who to ban", required: true },
+		reason: { type: "string", description: "Why" },
+	},
+	message,
+);
+
+if (result.ok) {
+	result.options.target;  // User
+	result.options.reason;  // "spam"
+}
+```
+
+### Special behavior
+
+- **Last-string-takes-rest.** If the last option in the schema is `string`, it consumes all remaining tokens joined by spaces. So `!echo hello world` works for `{ message: { type: "string" } }`.
+- **Attachments don't consume tokens.** They read `message.attachments.first()` and leave the cursor untouched.
+- **Mention forms accepted:** `<@id>`, `<@!id>`, `<#id>`, `<@&id>`, plus raw 17–20-digit IDs.
+- **Booleans accept** `true|yes|y|1|on` / `false|no|n|0|off` (case-insensitive).
+
+## `LegacyParseResult<S>`
+
+```ts
+type LegacyParseResult<S extends CommandOptions> =
+	| { ok: true; options: ResolveOptions<S> }
+	| { ok: false; error: string };
+```
+
+`error` is a short, user-facing string suitable for replying back to the message author.
