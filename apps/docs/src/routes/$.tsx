@@ -2,10 +2,14 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { Root as PageTreeRoot } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle, PageLastUpdate, ViewOptionsPopover } from "fumadocs-ui/layouts/docs/page";
 import type React from "react";
 import { mdxComponents } from "@/lib/mdx-components";
 import browserCollections from "../../.source/browser";
+
+const REPO = "D3OXY/djs-commands";
+const REPO_BRANCH = "main";
+const CONTENT_PATH = "apps/docs/content/pages";
 
 export const Route = createFileRoute("/$")({
 	component: Page,
@@ -43,17 +47,26 @@ const getPageTree = createServerFn({
 	return source.pageTree;
 });
 
-const clientLoader = browserCollections.docs.createClientLoader({
+interface DocClientProps {
+	githubUrl: string;
+}
+
+const clientLoader = browserCollections.docs.createClientLoader<DocClientProps>({
 	id: "docs",
-	component(doc) {
+	component(doc, { githubUrl }) {
 		const MDX = doc.default;
+		const lastModified = (doc as { lastModified?: Date | string }).lastModified;
+		const lastModifiedDate = lastModified ? new Date(lastModified) : undefined;
+
 		return (
-			<DocsPage toc={doc.toc} tableOfContent={{ style: "clerk" }}>
+			<DocsPage toc={doc.toc} tableOfContent={{ style: "clerk" }} footer={{ enabled: true }}>
 				<DocsTitle>{doc.frontmatter.title}</DocsTitle>
 				{doc.frontmatter.description && <DocsDescription>{doc.frontmatter.description}</DocsDescription>}
 				<DocsBody>
 					<MDX components={mdxComponents} />
+					{lastModifiedDate && <PageLastUpdate date={lastModifiedDate} />}
 				</DocsBody>
+				<ViewOptionsPopover githubUrl={githubUrl} />
 			</DocsPage>
 		);
 	},
@@ -99,12 +112,12 @@ function DocsLayoutWrapper({ children, tree }: DocsLayoutWrapperProps) {
 
 function Page() {
 	const data = Route.useLoaderData();
-	// fumadocs types getComponent as FC<undefined>; cast needed to render as no-props component
-	const Content = clientLoader.getComponent(data.path) as unknown as React.ComponentType;
+	const Content = clientLoader.getComponent(data.path);
+	const githubUrl = `https://github.com/${REPO}/blob/${REPO_BRANCH}/${CONTENT_PATH}/${data.path}`;
 
 	return (
 		<DocsLayoutWrapper tree={data.tree}>
-			<Content />
+			<Content githubUrl={githubUrl} />
 		</DocsLayoutWrapper>
 	);
 }
