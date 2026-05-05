@@ -1,0 +1,103 @@
+---
+title: Renderers
+description: render, renderModal, Fragment — turn JSX trees into discord.js builders.
+---
+
+## `render(tree)`
+
+```ts
+function render(tree: TopLevelNode | DjsxNode | readonly DjsxNode[]): ComponentBuilderArray;
+```
+
+Compiles a JSX tree into the array of discord.js component builders that `interaction.reply` accepts when `flags: MessageFlags.IsComponentsV2` is set.
+
+```tsx
+import { Container, Section, TextDisplay, render } from "@djs-commands/jsx";
+import { MessageFlags } from "discord.js";
+
+await interaction.reply({
+	flags: MessageFlags.IsComponentsV2,
+	components: render(
+		<Container>
+			<TextDisplay># Hello</TextDisplay>
+		</Container>
+	),
+});
+```
+
+You may pass:
+- A single `<Container>` / `<ActionRow>` / `<TextDisplay>` etc. (any top-level component).
+- An array of top-level components (e.g. multiple containers in one reply).
+- A `<Fragment>` wrapping multiple top-level components.
+
+## `renderModal(modalNode)`
+
+```ts
+function renderModal(modal: ModalNode | DjsxNode): ModalBuilder;
+```
+
+Compiles a `<Modal>` JSX tree into a `ModalBuilder` ready to pass to `interaction.showModal`.
+
+```tsx
+import { Modal, TextInput, renderModal } from "@djs-commands/jsx";
+
+await interaction.showModal(
+	renderModal(
+		<Modal title="Send feedback" customId="feedback-modal">
+			<TextInput customId="subject" label="Subject" style="short" required={true} />
+			<TextInput customId="body" label="Tell us more" style="paragraph" />
+		</Modal>
+	)
+);
+```
+
+The argument can be either a `<Modal>` element directly, or any `DjsxNode` that resolves to one.
+
+## `ComponentBuilderArray`
+
+```ts
+type ComponentBuilderArray = (
+	| ContainerBuilder
+	| ActionRowBuilder<MessageActionRowComponentBuilder>
+	| TextDisplayBuilder
+	| SectionBuilder
+	| MediaGalleryBuilder
+	| SeparatorBuilder
+	| FileBuilder
+)[];
+```
+
+Return type of `render()`. Matches the `components: ...` array shape that discord.js accepts when sending Components V2 messages.
+
+## `Fragment`
+
+```ts
+const Fragment: (props: { children?: DjsxNode | readonly DjsxNode[] }) => DjsxNode;
+```
+
+JSX fragment helper — group multiple children without wrapping them in another component. Same role as React's `<>...</>`.
+
+```tsx
+render(
+	<>
+		<Container><TextDisplay># Container 1</TextDisplay></Container>
+		<Container><TextDisplay># Container 2</TextDisplay></Container>
+	</>
+);
+```
+
+## `DjsxNode`
+
+```ts
+type DjsxNode = /* opaque internal IR */;
+```
+
+Internal node type produced by every JSX component in this package. You don't typically reference it directly — accept it as `children` if you write a wrapping component:
+
+```tsx
+import type { DjsxNode } from "@djs-commands/jsx";
+
+function MyContainer({ children }: { children: DjsxNode | readonly DjsxNode[] }) {
+	return <Container accentColor={0x5865f2}>{children}</Container>;
+}
+```

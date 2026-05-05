@@ -1,0 +1,89 @@
+---
+title: adapter-drizzle
+description: Drizzle/Postgres Storage adapter — drizzleStorage and schema exports.
+---
+
+```bash
+bun add @djs-commands/core @djs-commands/adapter-drizzle drizzle-orm pg
+```
+
+For setup (migrations, drizzle.config, etc.) see [Adapter Cookbook → Drizzle](/adapter-cookbook#drizzle-postgres).
+
+## `drizzleStorage(db, options?)`
+
+```ts
+function drizzleStorage(
+	db: NodePgDatabase,
+	options?: DrizzleStorageOptions,
+): Storage;
+```
+
+Returns a [`Storage`](/api-reference/core/storage) implementation backed by Drizzle. Pass to `createCommandHandler` as `storage`.
+
+```ts
+import { drizzleStorage } from "@djs-commands/adapter-drizzle";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle(pool);
+
+createCommandHandler({
+	client,
+	commands: [...],
+	storage: drizzleStorage(db),
+});
+```
+
+The dispatcher reads/writes `guild_prefix`, `disabled_commands`, and `channel_locks` automatically — you don't write any code for the framework models, just make sure the tables exist.
+
+## `DrizzleStorageOptions`
+
+```ts
+interface DrizzleStorageOptions {
+	tables?: Partial<{
+		guildPrefix: typeof guildPrefix;
+		disabledCommands: typeof disabledCommands;
+		channelLocks: typeof channelLocks;
+	}>;
+}
+```
+
+Override one or more table objects (rename columns, add fields, share with your app's schema):
+
+```ts
+import { drizzleStorage } from "@djs-commands/adapter-drizzle";
+import { myGuildPrefixTable } from "./schema";
+
+drizzleStorage(db, {
+	tables: { guildPrefix: myGuildPrefixTable },
+});
+```
+
+## Schema exports
+
+```ts
+import {
+	guildPrefix,
+	disabledCommands,
+	channelLocks,
+} from "@djs-commands/adapter-drizzle/schema";
+```
+
+The three built-in Drizzle table objects. Re-export from your own schema file so `drizzle-kit` picks them up:
+
+```ts title="src/db/schema.ts"
+export { channelLocks, disabledCommands, guildPrefix } from "@djs-commands/adapter-drizzle/schema";
+```
+
+## Row types
+
+```ts
+import type {
+	GuildPrefixRow,
+	DisabledCommandRow,
+	ChannelLockRow,
+} from "@djs-commands/adapter-drizzle";
+```
+
+Re-exports of the framework's row types — same shapes used by [Storage helpers](/api-reference/core/storage#guildprefix-helpers) like `getGuildPrefix`.

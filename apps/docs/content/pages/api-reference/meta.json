@@ -1,5 +1,5 @@
 {
 	"title": "API Reference",
 	"icon": "Code",
-	"pages": ["index", "core"]
+	"pages": ["index", "core", "jsx", "adapters"]
 }

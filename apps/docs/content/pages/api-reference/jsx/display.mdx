@@ -1,0 +1,129 @@
+---
+title: Display components
+description: Container, Section, TextDisplay, MediaGallery, Separator, File, Thumbnail.
+---
+
+Display components are the layout primitives of a Components V2 message. Use them inside `render()` to produce the `components: …` array.
+
+## `<Container>`
+
+```tsx
+interface ContainerProps {
+	accentColor?: number | readonly [number, number, number];
+	spoiler?: boolean;
+	id?: number;
+	children?: DjsxNode | readonly DjsxNode[];
+}
+```
+
+Top-level layout primitive. Children may be `<Section>`, `<TextDisplay>`, `<MediaGallery>`, `<Separator>`, `<File>`, or `<ActionRow>`.
+
+```tsx
+<Container accentColor={0x5865f2}>
+	<TextDisplay># Welcome</TextDisplay>
+</Container>
+```
+
+## `<Section>`
+
+```tsx
+interface SectionProps {
+	accessory: DjsxNode;       // typically <Button> or <Thumbnail>
+	id?: number;
+	children?: DjsxNode | readonly DjsxNode[];   // text content
+}
+```
+
+Renders text on the left and an accessory (button or thumbnail) on the right.
+
+```tsx
+<Section accessory={<Button style="primary" customId="ok" label="OK" />}>
+	Click OK to continue.
+</Section>
+```
+
+## `<TextDisplay>`
+
+```tsx
+interface TextDisplayProps {
+	id?: number;
+	children?: string | readonly string[];
+}
+```
+
+Markdown text. Supports headings, lists, links, code spans — anything Discord's V2 markdown allows.
+
+```tsx
+<TextDisplay># Title{"\n\n"}Some **bold** text.</TextDisplay>
+```
+
+## `<MediaGallery>`
+
+```tsx
+interface MediaGalleryProps {
+	id?: number;
+	items: readonly { url: string; description?: string; spoiler?: boolean }[];
+}
+```
+
+Image carousel. Each item is `{ url, description?, spoiler? }`.
+
+```tsx
+<MediaGallery
+	items={[
+		{ url: "https://example.com/a.png" },
+		{ url: "https://example.com/b.png", description: "Caption", spoiler: true },
+	]}
+/>
+```
+
+## `<Separator>`
+
+```tsx
+interface SeparatorProps {
+	divider?: boolean;
+	spacing?: "small" | "large";
+	id?: number;
+}
+```
+
+Visual divider between sections. `divider: true` draws a line; `spacing` controls vertical gap.
+
+```tsx
+<Separator divider={true} spacing="large" />
+```
+
+## `<File>`
+
+```tsx
+interface FileProps {
+	url: string;
+	spoiler?: boolean;
+	id?: number;
+}
+```
+
+Embed a file by URL.
+
+```tsx
+<File url="https://example.com/document.pdf" />
+```
+
+## `<Thumbnail>`
+
+```tsx
+interface ThumbnailProps {
+	url: string;
+	description?: string;
+	spoiler?: boolean;
+	id?: number;
+}
+```
+
+Small image used as a section accessory. Pair with `<Section>`.
+
+```tsx
+<Section accessory={<Thumbnail url="https://example.com/avatar.png" description="Avatar" />}>
+	Profile information…
+</Section>
+```

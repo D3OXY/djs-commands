@@ -1,0 +1,64 @@
+---
+title: adapter-redis
+description: Redis-backed CacheAdapter for distributed cooldowns.
+---
+
+```bash
+bun add @djs-commands/core @djs-commands/adapter-redis ioredis
+```
+
+The Redis adapter is **not** a `Storage` — it's a [`CacheAdapter`](/api-reference/core/cooldowns#cacheadapter) for cooldowns. Use it alongside one of the storage adapters.
+
+For setup walk-through see [Adapter Cookbook → Redis](/adapter-cookbook#redis-cache-adapter-not-storage).
+
+## `redisCacheAdapter(redis, options?)`
+
+```ts
+function redisCacheAdapter(
+	redis: Redis,
+	options?: RedisCacheAdapterOptions,
+): CacheAdapter;
+```
+
+Returns a `CacheAdapter` backed by an `ioredis` client. Pass to `createCommandHandler` as `cacheAdapter`.
+
+```ts
+import { redisCacheAdapter } from "@djs-commands/adapter-redis";
+import Redis from "ioredis";
+
+const redis = new Redis(process.env.REDIS_URL!);
+
+createCommandHandler({
+	client,
+	commands: [...],
+	cacheAdapter: redisCacheAdapter(redis),
+});
+```
+
+The adapter writes with `SET key value PX <ttl>` so Redis handles expiry server-side and you never accumulate dead keys.
+
+## `RedisCacheAdapterOptions`
+
+```ts
+interface RedisCacheAdapterOptions {
+	keyPrefix?: string;  // default: "djs-commands:"
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `keyPrefix` | Prepended to every key the adapter reads or writes. Use to isolate multiple bots sharing one Redis. Default `"djs-commands:"`. |
+
+```ts
+redisCacheAdapter(redis, { keyPrefix: "moderation-bot:" });
+```
+
+## Redis commands used
+
+| `CacheAdapter` method | Redis command |
+| --- | --- |
+| `set` | `SET <prefix><key> <expiresAt> PX <ttlMs>` |
+| `get` | `GET <prefix><key>` then parse to number |
+| `delete` | `DEL <prefix><key>` |
+
+`get` returns `null` for missing keys, non-numeric values, or timestamps in the past — defensive against clock skew.

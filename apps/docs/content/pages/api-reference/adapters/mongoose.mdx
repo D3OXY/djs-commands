@@ -1,0 +1,92 @@
+---
+title: adapter-mongoose
+description: Mongoose/MongoDB Storage adapter — the v1 continuity path.
+---
+
+```bash
+bun add @djs-commands/core @djs-commands/adapter-mongoose mongoose
+```
+
+For setup walk-through see [Adapter Cookbook → Mongoose](/adapter-cookbook#mongoose-mongodb). This is the continuity path for v1 (`@d3oxy/djs-commands`) users — v1 was Mongo-first.
+
+## `mongooseStorage(connection, options?)`
+
+```ts
+function mongooseStorage(
+	connection: mongoose.Connection,
+	options?: MongooseStorageOptions,
+): Storage;
+```
+
+Returns a [`Storage`](/api-reference/core/storage) backed by Mongoose. Pass a `Connection` (not `mongoose` itself) so the adapter can register models on it.
+
+```ts
+import mongoose from "mongoose";
+import { mongooseStorage } from "@djs-commands/adapter-mongoose";
+
+const connection = mongoose.createConnection(process.env.MONGO_URL!);
+await connection.asPromise();
+
+createCommandHandler({
+	client,
+	commands: [...],
+	storage: mongooseStorage(connection),
+});
+```
+
+The adapter lazy-creates the framework models on the connection the first time each is needed. Mongoose caches models by name on the connection, so re-instantiating the storage with the same connection is cheap.
+
+## `MongooseStorageOptions`
+
+```ts
+interface MongooseStorageOptions {
+	models?: {
+		guildPrefix?: Model<GuildPrefixDoc>;
+		disabledCommand?: Model<DisabledCommandDoc>;
+		channelLock?: Model<ChannelLockDoc>;
+	};
+}
+```
+
+If you've already registered compatible models on the connection (e.g. to share with other code), pass them explicitly:
+
+```ts
+import {
+	createGuildPrefixModel,
+	mongooseStorage,
+} from "@djs-commands/adapter-mongoose";
+
+const guildPrefix = createGuildPrefixModel(connection);
+
+mongooseStorage(connection, {
+	models: { guildPrefix },
+});
+```
+
+## Model factories
+
+```ts
+function createGuildPrefixModel(connection: Connection, name?: string): Model<GuildPrefixDoc>;
+function createDisabledCommandModel(connection: Connection, name?: string): Model<DisabledCommandDoc>;
+function createChannelLockModel(connection: Connection, name?: string): Model<ChannelLockDoc>;
+```
+
+Construct the framework's models on a connection. `name` is optional and overrides the default model name (useful if you need multiple instances). Each factory deduplicates — calling it twice on the same connection returns the cached model.
+
+```ts
+import { createGuildPrefixModel } from "@djs-commands/adapter-mongoose";
+
+const guildPrefix = createGuildPrefixModel(connection);
+```
+
+## Doc types
+
+```ts
+import type {
+	GuildPrefixDoc,
+	DisabledCommandDoc,
+	ChannelLockDoc,
+} from "@djs-commands/adapter-mongoose";
+```
+
+Plain interfaces matching the framework row shapes — useful when typing custom Mongoose schemas.
