@@ -3,6 +3,11 @@ import lastModified from "fumadocs-mdx/plugins/last-modified";
 
 export const docs = defineDocs({
 	dir: "content/pages",
+	docs: {
+		// `_markdown` export on each compiled doc — used by /llms-full.txt to
+		// emit a clean markdown corpus without re-reading the source files.
+		postprocess: { includeProcessedMarkdown: true },
+	},
 });
 
 export default defineConfig({
