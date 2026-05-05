@@ -1,0 +1,142 @@
+---
+title: Storage
+description: Storage CRUD interface, framework models, helpers, and the conformance suite.
+---
+
+See [Concepts → Storage](/concepts/storage) for the narrative.
+
+## `Storage`
+
+```ts
+interface Storage {
+	create<T>(model: string, data: T): Promise<T>;
+	findOne<T>(model: string, where: StorageWhere): Promise<T | null>;
+	findMany<T>(model: string, opts?: StorageFindOpts): Promise<T[]>;
+	update<T>(model: string, where: StorageWhere, data: Partial<T>): Promise<T>;
+	delete(model: string, where: StorageWhere): Promise<void>;
+	count(model: string, where?: StorageWhere): Promise<number>;
+}
+```
+
+Generic CRUD contract that adapters implement once and the framework consumes for every persistent feature. `create<T>` should return the persisted row (use `RETURNING` or re-fetch).
+
+## `StorageWhere`
+
+```ts
+type StorageWhere = Record<string, string | number | null>;
+```
+
+Equality-only filter. Implementations should treat `null` as `IS NULL` (or the document equivalent).
+
+## `StorageFindOpts`
+
+```ts
+interface StorageFindOpts {
+	where?: StorageWhere;
+	limit?: number;
+	offset?: number;
+	orderBy?: { field: string; direction: "asc" | "desc" };
+}
+```
+
+Pagination + ordering options for `findMany`.
+
+## `runStorageConformance(name, factory)`
+
+```ts
+function runStorageConformance(
+	name: string,
+	factory: () => Storage | Promise<Storage>,
+): void;
+```
+
+Shared test suite that exercises every CRUD path the framework relies on. Call from any `bun test` (or compatible) file:
+
+```ts
+import { runStorageConformance } from "@djs-commands/core";
+
+runStorageConformance("my-adapter", () => myStorageFactory());
+```
+
+Pass it and your adapter will work for every shipped feature, including upserts, partial updates, and find-with-options.
+
+## Framework models
+
+The framework reads/writes three built-in models. All adapters ship schemas for them out of the box.
+
+### `GuildPrefixModel` / `GuildPrefixRow`
+
+```ts
+const GuildPrefixModel = "guild_prefix";
+
+interface GuildPrefixRow {
+	guild_id: string;
+	prefix: string;
+}
+```
+
+### `DisabledCommandsModel` / `DisabledCommandRow`
+
+```ts
+const DisabledCommandsModel = "disabled_commands";
+
+interface DisabledCommandRow {
+	guild_id: string;
+	command_name: string;
+}
+```
+
+### `ChannelLocksModel` / `ChannelLockRow`
+
+```ts
+const ChannelLocksModel = "channel_locks";
+
+interface ChannelLockRow {
+	guild_id: string;
+	command_name: string;
+	channel_id: string;
+}
+```
+
+## GuildPrefix helpers
+
+```ts
+function getGuildPrefix(storage: Storage, guildId: string): Promise<string | null>;
+function setGuildPrefix(storage: Storage, guildId: string, prefix: string): Promise<void>;
+function clearGuildPrefix(storage: Storage, guildId: string): Promise<void>;
+```
+
+Read / upsert / delete a guild's prefix override.
+
+```ts
+import { getGuildPrefix, setGuildPrefix } from "@djs-commands/core";
+
+const prefix = (await getGuildPrefix(storage, guildId)) ?? "!";
+await setGuildPrefix(storage, guildId, "?");
+```
+
+## DisabledCommands helpers
+
+```ts
+function isCommandDisabled(storage: Storage, guildId: string, commandName: string): Promise<boolean>;
+function disableCommand(storage: Storage, guildId: string, commandName: string): Promise<void>;
+function enableCommand(storage: Storage, guildId: string, commandName: string): Promise<void>;
+```
+
+The dispatcher consults `isCommandDisabled` automatically — you don't wire it into your validators.
+
+## ChannelLocks helpers
+
+```ts
+function getChannelLocks(storage: Storage, guildId: string, commandName: string): Promise<string[]>;
+function lockCommandToChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void>;
+function unlockCommandFromChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void>;
+```
+
+Empty list = no restriction. Non-empty = command runs only in those channels for that guild.
+
+```ts
+import { lockCommandToChannel } from "@djs-commands/core";
+
+await lockCommandToChannel(storage, guildId, "music-play", musicChannelId);
+```

@@ -1,158 +1,24 @@
 ---
 title: API Reference
-description: Public surface area of the @djs-commands/* packages.
+description: Public surface area of every @djs-commands/* package, symbol by symbol.
 ---
 
 import { Cards, Card } from "fumadocs-ui/components/card";
 
-This page lists every public symbol the framework exports. Each link jumps to the concept page that explains it in context — start there for examples and trade-offs.
+The reference docs cover **every public export** from every published package, with TypeScript signatures and a one-shot example for each. If you're new, start with [Concepts](/concepts) for the narrative.
 
 <Cards>
-	<Card title="Concepts" href="/concepts" description="The narrative documentation. Start here if you're new." />
-	<Card title="Components V2" href="/components-v2" description="Full JSX + function reference for the layout/form primitives." />
-	<Card title="Adapter Cookbook" href="/adapter-cookbook" description="Soup-to-nuts guides for each first-party adapter." />
+	<Card title="@djs-commands/core" href="/api-reference/core" description="Dispatcher, defineCommand, validators, cooldowns, plugins, storage, fs-autoloader, components-v2 functions" />
 </Cards>
 
-## `@djs-commands/core`
+## Companion-package references
 
-### Commands
+JSX runtime and storage adapters each ship from their own packages. Their reference pages live alongside their concept walk-throughs:
 
-| Export | Kind | Page |
-| --- | --- | --- |
-| `defineCommand` | function | [Commands](/concepts/commands#definecommand) |
-| `Command` | type | [Commands](/concepts/commands#definecommand) |
-| `AnyCommand` | type | [Commands](/concepts/commands#definecommand) |
-| `CommandRunContext` | type | [Commands](/concepts/commands#commandruncontext) |
-| `SlashRunContext` | type | [Commands](/concepts/commands#commandruncontext) |
-| `LegacyRunContext` | type | [Commands](/concepts/commands#commandruncontext) |
-| `CommandRun` | type | [Commands](/concepts/commands#commandruncontext) |
-| `CommandLegacyConfig` | type | [Commands](/concepts/commands) |
+- **[`@djs-commands/jsx`](/components-v2)** — JSX runtime + Components V2 component set.
+- **[`@djs-commands/adapter-drizzle`](/adapter-cookbook#drizzle-postgres)** — Drizzle/Postgres `Storage`.
+- **[`@djs-commands/adapter-prisma`](/adapter-cookbook#prisma)** — Prisma `Storage`.
+- **[`@djs-commands/adapter-mongoose`](/adapter-cookbook#mongoose-mongodb)** — Mongoose `Storage`.
+- **[`@djs-commands/adapter-redis`](/adapter-cookbook#redis-cache-adapter-not-storage)** — Redis `CacheAdapter` for distributed cooldowns.
 
-### Options
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `CommandOption` / `CommandOptions` | type | [Commands → Options](/concepts/commands#options) |
-| `StringOption`, `IntegerOption`, `NumberOption`, `BooleanOption`, `UserOption`, `ChannelOption`, `RoleOption`, `MentionableOption`, `AttachmentOption` | type | [Commands → Options](/concepts/commands#options) |
-| `ResolveOption` / `ResolveOptions` | type | [Commands → Options](/concepts/commands#options) |
-
-### Handler
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `createCommandHandler` | function | [Commands → Registering](/concepts/commands#registering-commands) |
-| `CommandHandler` | type | [Commands](/concepts/commands#registering-commands) |
-| `CommandHandlerOptions` | type | [Commands](/concepts/commands#registering-commands) |
-| `HandlerLegacyConfig` | type | [Commands](/concepts/commands) |
-
-### Validators
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `Validator` | type | [Validators](/concepts/validators#custom-validators) |
-| `ValidatorContext` | type | [Validators](/concepts/validators#validatorcontext) |
-| `ValidationResult` | type | [Validators](/concepts/validators#validationresult) |
-| `ValidatorSource` | type | [Validators](/concepts/validators#validatorcontext) |
-| `CanRunCommand` | type | [Validators](/concepts/validators#canruncommand-shorthand) |
-
-### Cooldowns
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `CooldownConfig` | type | [Cooldowns](/concepts/cooldowns#configuring-a-cooldown) |
-| `CooldownType` | type | [Cooldowns → Types](/concepts/cooldowns#cooldown-types) |
-| `CooldownActor` | type | [Cooldowns](/concepts/cooldowns#cooldownengine-directly) |
-| `CacheAdapter` | type | [Cooldowns](/concepts/cooldowns#writing-a-custom-cacheadapter) |
-
-### Plugins
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `PluginManifest` | type | [Plugins](/concepts/plugins#plugin-manifest) |
-| `PluginSetupContext` | type | [Plugins](/concepts/plugins#manifest-fields) |
-
-### Storage
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `Storage` | type | [Storage](/concepts/storage#the-storage-interface) |
-| `StorageWhere` / `StorageFindOpts` | type | [Storage](/concepts/storage#the-storage-interface) |
-| `runStorageConformance` | function | [Storage → Custom adapter](/concepts/storage#writing-a-custom-adapter) |
-| `GuildPrefixModel` / `GuildPrefixRow` | const / type | [Storage → Helpers](/concepts/storage#guild-prefix) |
-| `getGuildPrefix` / `setGuildPrefix` / `clearGuildPrefix` | function | [Storage → Helpers](/concepts/storage#guild-prefix) |
-| `DisabledCommandsModel` / `DisabledCommandRow` | const / type | [Storage → Helpers](/concepts/storage#disabled-commands) |
-| `isCommandDisabled` / `disableCommand` / `enableCommand` | function | [Storage → Helpers](/concepts/storage#disabled-commands) |
-| `ChannelLocksModel` / `ChannelLockRow` | const / type | [Storage → Helpers](/concepts/storage#channel-locks) |
-| `getChannelLocks` / `lockCommandToChannel` / `unlockCommandFromChannel` | function | [Storage → Helpers](/concepts/storage#channel-locks) |
-
-### Filesystem loader
-
-| Export | Kind | Page |
-| --- | --- | --- |
-| `loadCommandsFromDir` | function | [Commands → Loading](/concepts/commands#loading-commands-from-a-directory) |
-| `loadEventsFromDir` | function | [Commands → Loading](/concepts/commands#loading-commands-from-a-directory) |
-| `watchCommandsDir` | function | [Commands → Loading](/concepts/commands#loading-commands-from-a-directory) |
-
-### Events
-
-| Export | Kind | Description |
-| --- | --- | --- |
-| `defineEvent` | function | Define a discord.js event handler with full type-safety. |
-| `EventDefinition` | type | The shape `defineEvent` returns. |
-
-### Components V2 (function API)
-
-| Export | Returns |
-| --- | --- |
-| `container` | `ContainerBuilder` |
-| `section` | `SectionBuilder` |
-| `textDisplay` | `TextDisplayBuilder` |
-| `mediaGallery` | `MediaGalleryBuilder` |
-| `separator` | `SeparatorBuilder` |
-| `file` | `FileBuilder` |
-| `thumbnail` | `ThumbnailBuilder` |
-| `button` | `ButtonBuilder` |
-| `actionRow` | `ActionRowBuilder` |
-| `modal` | `ModalBuilder` |
-| `textInput` | `TextInputBuilder` |
-| `radioGroup` / `checkboxGroup` | `LabelBuilder` |
-
-Each takes an `*Options` object — see [Components V2](/components-v2) for full signatures and examples.
-
-### Legacy parser
-
-| Export | Description |
-| --- | --- |
-| `parseLegacyArgs` | Parse a legacy message into a typed argument object using a command's `options` schema. |
-| `LegacyParseResult` | Discriminated union of `{ ok: true; values }` / `{ ok: false; reason }`. |
-
-### Context normalizers
-
-| Export | Description |
-| --- | --- |
-| `normalizeSlashContext` | Build a `SlashRunContext` from a discord.js interaction. |
-| `normalizeLegacyContext` | Build a `LegacyRunContext` from a discord.js message. |
-
-## `@djs-commands/jsx`
-
-| Export | Kind | Description |
-| --- | --- | --- |
-| `render` | function | Compile a JSX tree into discord.js component builders. |
-| `renderModal` | function | Compile a `<Modal>` JSX tree into a `ModalBuilder`. |
-| `Container`, `Section`, `TextDisplay`, `MediaGallery`, `Separator`, `File`, `Thumbnail` | component | Display primitives. |
-| `ActionRow`, `Button`, `TextInput`, `RadioGroup`, `CheckboxGroup`, `Modal` | component | Form primitives. |
-| `Fragment` | component | Group children without nesting. |
-| `*Props`, `ButtonStyleName`, `TextInputStyleName`, `DjsxNode` | type | TypeScript helpers. |
-
-JSX runtime entry points: `@djs-commands/jsx/jsx-runtime` and `@djs-commands/jsx/jsx-dev-runtime` — set `jsxImportSource: "@djs-commands/jsx"` in your tsconfig.
-
-## Adapters
-
-| Package | Factory | Notes |
-| --- | --- | --- |
-| `@djs-commands/adapter-drizzle` | `drizzleStorage(db, options?)` | Postgres via Drizzle. Schema exported from `./schema`. |
-| `@djs-commands/adapter-prisma` | `prismaStorage(prisma, options?)` | Generic Prisma client; ships schema fragments to copy in. |
-| `@djs-commands/adapter-mongoose` | `mongooseStorage(connection, options?)` | Auto-creates Mongoose models if you don't pass your own. |
-| `@djs-commands/adapter-redis` | `redisCacheAdapter(redis, options?)` | TTL-native `CacheAdapter` for distributed cooldowns. |
-
-See [Adapter Cookbook](/adapter-cookbook) for a walk-through per adapter.
+Standalone reference sections for these are tracked in [issue #104](https://github.com/D3OXY/djs-commands/issues/104).

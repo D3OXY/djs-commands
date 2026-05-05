@@ -1,0 +1,134 @@
+---
+title: defineCommand
+description: Command type, run context, and the identity helper for command definitions.
+---
+
+## `defineCommand(command)`
+
+```ts
+function defineCommand<S extends CommandOptions>(command: Command<S>): Command<S>;
+```
+
+Identity function — returns its argument unchanged. Exists purely for IDE autocomplete and structural validation; at runtime it's the same as the inline object.
+
+```ts
+import { defineCommand } from "@djs-commands/core";
+
+const ping = defineCommand({
+	name: "ping",
+	description: "Replies with pong",
+	run: async ({ reply }) => {
+		await reply("pong");
+	},
+});
+```
+
+## `Command<S>`
+
+```ts
+interface Command<S extends CommandOptions = Record<string, never>> {
+	name: string;
+	description: string;
+	options?: S;
+	run: CommandRun<S>;
+	ownerOnly?: boolean;
+	guildOnly?: boolean;
+	channels?: readonly string[];
+	permissions?: readonly PermissionsString[];
+	roles?: readonly string[];
+	validators?: readonly Validator[];
+	cooldown?: CooldownConfig;
+	legacy?: CommandLegacyConfig;
+}
+```
+
+The full shape of a command definition. See [Concepts → Commands](/concepts/commands) for what each field does.
+
+## `AnyCommand`
+
+```ts
+type AnyCommand = Command<any>;
+```
+
+Erased-generic alias — used in heterogeneous arrays and registries where the option schema varies between commands.
+
+## `CommandRun<S>`
+
+```ts
+type CommandRun<S extends CommandOptions = Record<string, never>> =
+	(ctx: CommandRunContext<S>) => void | Promise<void>;
+```
+
+The handler signature. Receives a [`CommandRunContext`](#commandruncontext).
+
+## `CommandRunContext<S>`
+
+```ts
+type CommandRunContext<S extends CommandOptions = Record<string, never>> =
+	| SlashRunContext<S>
+	| LegacyRunContext<S>;
+
+interface BaseRunContext<S> {
+	client: Client;
+	author: User;
+	guild: Guild | null;
+	member: GuildMember | null;
+	channel: TextBasedChannel | null;
+	channelId: string | null;
+	options: ResolveOptions<S>;
+	reply: (content: string | { content?: string; ephemeral?: boolean }) => Promise<unknown>;
+}
+```
+
+Discriminated union over invocation source.
+
+## `SlashRunContext<S>`
+
+```ts
+type SlashRunContext<S> = BaseRunContext<S> & {
+	type: "slash";
+	interaction: ChatInputCommandInteraction;
+};
+```
+
+The slash-command branch — `interaction` is the raw discord.js interaction.
+
+## `LegacyRunContext<S>`
+
+```ts
+type LegacyRunContext<S> = BaseRunContext<S> & {
+	type: "legacy";
+	message: Message;
+};
+```
+
+The legacy-prefix branch — `message` is the raw discord.js message.
+
+```ts
+run: async (ctx) => {
+	if (ctx.type === "slash") {
+		await ctx.interaction.deferReply({ ephemeral: true });
+	}
+	await ctx.reply("hi");
+}
+```
+
+## `CommandLegacyConfig`
+
+```ts
+interface CommandLegacyConfig {
+	enabled?: boolean;
+	aliases?: readonly string[];
+}
+```
+
+Per-command legacy-mode opt-in. `enabled` defaults to `true` when the handler-level legacy switch is on. `aliases` are alternative invocation names.
+
+```ts
+defineCommand({
+	name: "ping",
+	description: "Replies with pong",
+	legacy: { enabled: true, aliases: ["p", "pong"] },
+	run: async ({ reply }) => { await reply("pong"); },
+});
+```

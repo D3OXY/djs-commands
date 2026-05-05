@@ -1,0 +1,93 @@
+---
+title: Validators
+description: Pre-handler gate types — Validator, ValidatorContext, ValidationResult, CanRunCommand.
+---
+
+See [Concepts → Validators](/concepts/validators) for the narrative.
+
+## `Validator`
+
+```ts
+type Validator =
+	(ctx: ValidatorContext) => ValidationResult | Promise<ValidationResult>;
+```
+
+A predicate that runs before `command.run`. Returning `{ ok: false }` short-circuits the dispatch.
+
+```ts
+import type { Validator } from "@djs-commands/core";
+
+const inVoiceChannel: Validator = async ({ member }) => {
+	if (member?.voice.channel) return { ok: true };
+	return { ok: false, reason: "Join a voice channel first." };
+};
+```
+
+## `ValidatorContext`
+
+```ts
+interface ValidatorContext {
+	command: AnyCommand;
+	botOwners: readonly string[];
+	user: User;
+	guild: Guild | null;
+	member: GuildMember | null;
+	channelId: string;
+	source: ValidatorSource;
+}
+```
+
+Unified shape across slash and legacy invocations. Most validators don't need to look at `source`; narrow on `source.type` only when the check needs the raw interaction or message.
+
+## `ValidatorSource`
+
+```ts
+type ValidatorSource =
+	| { type: "slash"; interaction: ChatInputCommandInteraction }
+	| { type: "legacy"; message: Message };
+```
+
+Discriminated reference to the original event payload.
+
+## `ValidationResult`
+
+```ts
+type ValidationResult = { ok: true } | { ok: false; reason: string };
+```
+
+`reason` is shown to the user as the rejection text. Keep it short and actionable.
+
+## `CanRunCommand`
+
+```ts
+type CanRunCommand =
+	(ctx: ValidatorContext) => boolean | string | Promise<boolean | string>;
+```
+
+Slimmer single-callback gate, passed to `createCommandHandler` as the `canRunCommand` option:
+
+- Return `true` → allow.
+- Return `false` → reject with the default reason.
+- Return a string → reject with that reason.
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	canRunCommand: ({ command, user }) => {
+		if (command.name === "admin" && !admins.has(user.id)) return "Admins only.";
+		return true;
+	},
+});
+```
+
+## Order of evaluation
+
+The dispatcher runs validators in this order — first failure wins:
+
+1. Built-ins (`ownerOnly` → `guildOnly` → `channels` → `permissions` → `roles`)
+2. Handler-level `validators`
+3. Command-level `validators`
+4. Handler-level `canRunCommand`
+
+Cooldowns are checked **after** all validators pass. A failing validator never starts a cooldown.

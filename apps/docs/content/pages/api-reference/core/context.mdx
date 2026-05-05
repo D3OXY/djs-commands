@@ -1,0 +1,61 @@
+---
+title: Context normalizers
+description: Build a CommandRunContext from raw discord.js objects.
+---
+
+The dispatcher uses these internally to turn an incoming `ChatInputCommandInteraction` or `Message` into the unified `CommandRunContext`. They're exported for tests, custom dispatchers, and bridge plugins.
+
+## `normalizeSlashContext(interaction, command, options?)`
+
+```ts
+function normalizeSlashContext<S extends CommandOptions>(
+	interaction: ChatInputCommandInteraction,
+	command: Command<S>,
+	options: ResolveOptions<S>,
+): SlashRunContext<S>;
+```
+
+Builds a `SlashRunContext` from a discord.js interaction.
+
+```ts
+import { extractOptions, normalizeSlashContext } from "@djs-commands/core";
+
+const opts = extractOptions(interaction, ping.options);
+const ctx = normalizeSlashContext(interaction, ping, opts);
+
+await ping.run(ctx);
+```
+
+`reply(...)` on the returned context delegates to `interaction.reply` / `interaction.followUp` as appropriate.
+
+## `normalizeLegacyContext(message, command, options)`
+
+```ts
+function normalizeLegacyContext<S extends CommandOptions>(
+	message: Message,
+	command: Command<S>,
+	options: ResolveOptions<S>,
+): LegacyRunContext<S>;
+```
+
+Builds a `LegacyRunContext` from a discord.js message.
+
+```ts
+import { normalizeLegacyContext, parseLegacyArgs } from "@djs-commands/core";
+
+const parsed = parseLegacyArgs(tokens, ping.options, message);
+if (!parsed.ok) return message.reply(parsed.error);
+
+const ctx = normalizeLegacyContext(message, ping, parsed.options);
+await ping.run(ctx);
+```
+
+`reply(...)` on the returned context delegates to `message.reply`.
+
+## When to use these directly
+
+- Writing unit tests that bypass the dispatcher.
+- Building a bridge plugin (e.g. forwarding from another transport into a `Command`).
+- Custom dispatch flows where you've decided to handle the gating logic yourself.
+
+For everyday command-handling, you don't need to touch these — `createCommandHandler` calls them for you.

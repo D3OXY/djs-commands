@@ -1,0 +1,59 @@
+---
+title: Plugins
+description: PluginManifest and PluginSetupContext for cross-cutting hooks.
+---
+
+See [Concepts → Plugins](/concepts/plugins) for the narrative.
+
+## `PluginManifest`
+
+```ts
+interface PluginManifest {
+	name: string;
+	commands?: AnyCommand[];
+	setup?: (ctx: PluginSetupContext) => void | Promise<void>;
+	teardown?: () => void | Promise<void>;
+}
+```
+
+A plain object passed to `createCommandHandler`'s `plugins` array. Convention is to expose it as a factory function so consumers can configure it.
+
+```ts
+import type { PluginManifest } from "@djs-commands/core";
+
+export function loggingPlugin(opts: { level?: "info" | "debug" } = {}): PluginManifest {
+	return {
+		name: "logging",
+		setup({ client }) {
+			client.on("interactionCreate", (i) => {
+				if (i.isChatInputCommand()) {
+					console.log(`[${opts.level ?? "info"}]`, i.commandName, "by", i.user.tag);
+				}
+			});
+		},
+	};
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `name` | Human-readable identifier; surfaces in error messages. |
+| `commands` | Commands merged into the dispatcher at boot — same shape as the top-level `commands`. Duplicate names throw at boot. |
+| `setup` | Awaited at boot in registration order. **Throwing aborts handler boot** (`handler.ready` rejects). |
+| `teardown` | Awaited on `handler.destroy()` in reverse-registration order. Errors are logged but don't block other teardowns. |
+
+## `PluginSetupContext`
+
+```ts
+interface PluginSetupContext {
+	client: Client;
+}
+```
+
+Intentionally minimal. Plugins that need to expose state to commands typically:
+
+- Attach to the client as a property: `client.myState = ...`. Type via module augmentation.
+- Close over their own values and inject them into the commands they ship.
+- Use the `Storage` adapter for persistent state.
+
+Avoid module-scoped singletons in plugin code — that breaks tests that want to construct multiple handlers in the same process.

@@ -1,0 +1,66 @@
+---
+title: fs-loader
+description: loadCommandsFromDir, loadEventsFromDir, watchCommandsDir.
+---
+
+The fs-loader walks a directory recursively, dynamically imports each file, and treats valid default exports as `Command`s or `EventDefinition`s. The `commandDir` / `eventDir` options on `createCommandHandler` use these functions internally; you can also call them directly if you need the loaded array.
+
+## `loadCommandsFromDir(dir)`
+
+```ts
+function loadCommandsFromDir(dir: string): Promise<AnyCommand[]>;
+```
+
+Walks `dir` recursively, imports each `.ts` / `.js` / `.mts` / `.mjs` file's default export, and returns the ones that look like `Command` objects (have `name`, `description`, and `run`).
+
+```ts
+import { loadCommandsFromDir } from "@djs-commands/core";
+
+const commands = await loadCommandsFromDir("./src/commands");
+// → AnyCommand[]
+```
+
+Files that fail to import or whose default export isn't command-shaped are logged and skipped — they don't abort the load.
+
+## `loadEventsFromDir(dir)`
+
+```ts
+function loadEventsFromDir(dir: string): Promise<EventDefinition[]>;
+```
+
+Same shape as `loadCommandsFromDir`, for event files (`{ event, handler }`).
+
+```ts
+import { loadEventsFromDir } from "@djs-commands/core";
+
+const events = await loadEventsFromDir("./src/events");
+```
+
+## `watchCommandsDir(dir, options)`
+
+```ts
+function watchCommandsDir(
+	dir: string,
+	options: { onCommandChange: (changed: { added: AnyCommand[]; removed: string[] }) => void },
+): { stop: () => void };
+```
+
+Hot-reloads commands on file changes. Returns a handle with `stop()` to detach the watcher.
+
+The handler uses this internally when `dev` is `true` (or `NODE_ENV !== "production"`). Use it directly if you want the same behavior outside of `createCommandHandler`.
+
+```ts
+import { watchCommandsDir } from "@djs-commands/core";
+
+const watcher = watchCommandsDir("./src/commands", {
+	onCommandChange: ({ added, removed }) => {
+		for (const c of added) console.log("loaded", c.name);
+		for (const name of removed) console.log("unloaded", name);
+	},
+});
+
+// later
+watcher.stop();
+```
+
+Renames are surfaced as `removed` followed by `added`. The watcher uses cache-busting `import` URLs (`?v=<timestamp>`) so re-imports pick up edits without restarting the process.

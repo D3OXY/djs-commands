@@ -1,0 +1,101 @@
+---
+title: createCommandHandler
+description: Wire commands, validators, cooldowns, plugins, and storage into a discord.js client.
+---
+
+## `createCommandHandler(options)`
+
+```ts
+function createCommandHandler(options: CommandHandlerOptions): CommandHandler;
+```
+
+Subscribes the dispatcher to your discord.js `Client` and registers commands with Discord on `clientReady`. Returns a small handle for lifecycle management.
+
+```ts
+import { createCommandHandler } from "@djs-commands/core";
+import { Client, GatewayIntentBits } from "discord.js";
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+const handler = createCommandHandler({
+	client,
+	commands: [ping, help],
+	commandDir: "./src/commands",
+	storage: drizzleStorage(db),
+	cacheAdapter: redisCacheAdapter(redis),
+});
+
+await handler.ready;
+await client.login(process.env.DISCORD_TOKEN);
+```
+
+## `CommandHandlerOptions`
+
+```ts
+interface CommandHandlerOptions {
+	client: Client;
+	commands?: AnyCommand[];
+	commandDir?: string;
+	eventDir?: string;
+	dev?: boolean;
+	botOwners?: readonly string[];
+	validators?: readonly Validator[];
+	canRunCommand?: CanRunCommand;
+	plugins?: PluginManifest[];
+	cacheAdapter?: CacheAdapter;
+	legacy?: HandlerLegacyConfig;
+	storage?: Storage;
+}
+```
+
+| Field | Purpose |
+| --- | --- |
+| `client` | discord.js `Client` instance — required. |
+| `commands` | Inline list of commands to dispatch. |
+| `commandDir` | Directory to recursively load commands from. Default exports must look like `Command`s. |
+| `eventDir` | Directory to recursively load `EventDefinition`s from. |
+| `dev` | When `true` (or `NODE_ENV !== "production"`), the command dir is watched and edited files hot-reload. |
+| `botOwners` | IDs that pass the built-in `ownerOnly` check. |
+| `validators` | Global validators run on every command. |
+| `canRunCommand` | Slimmer single-callback gate — return `true` / `false` / a reason string. |
+| `plugins` | Plugin manifests merged at boot. |
+| `cacheAdapter` | TTL-native cache for cooldowns. Without it, cooldowns are in-memory. |
+| `legacy` | Master switch + default prefix for legacy invocation. |
+| `storage` | Persistence adapter for guild prefixes, disabled commands, channel locks, and your own models. |
+
+## `CommandHandler`
+
+```ts
+interface CommandHandler {
+	ready: Promise<void>;
+	destroy: () => Promise<void>;
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `ready` | Resolves once all plugin `setup` hooks complete. Rejects if any setup throws (the handler then doesn't attach listeners). |
+| `destroy` | Detaches all listeners, awaits each plugin's `teardown` in reverse-registration order, stops the fs watcher. Errors during teardown are logged but don't block other teardowns. Does **not** delete registered application commands from Discord. |
+
+```ts
+await handler.destroy();
+```
+
+## `HandlerLegacyConfig`
+
+```ts
+interface HandlerLegacyConfig {
+	enabled: boolean;
+	defaultPrefix: string;
+}
+```
+
+Master switch + fallback prefix for legacy mode. Per-guild prefix overrides come from the storage adapter (`guild_prefix` model — see [Storage](/api-reference/core/storage#guildprefix-helpers)).
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	legacy: { enabled: true, defaultPrefix: "!" },
+});
+```

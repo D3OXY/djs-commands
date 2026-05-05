@@ -1,0 +1,94 @@
+---
+title: Cooldowns
+description: CooldownConfig, CooldownType, CooldownActor, and the CacheAdapter contract.
+---
+
+See [Concepts → Cooldowns](/concepts/cooldowns) for the narrative.
+
+## `CooldownConfig`
+
+```ts
+interface CooldownConfig {
+	type: CooldownType;
+	/** Duration in milliseconds */
+	duration: number;
+}
+```
+
+Attach to a command via the `cooldown` field.
+
+```ts
+defineCommand({
+	name: "vote",
+	description: "Vote on the current poll",
+	cooldown: { type: "perUser", duration: 30_000 },
+	run: async ({ reply }) => { await reply("voted"); },
+});
+```
+
+## `CooldownType`
+
+```ts
+type CooldownType = "perUser" | "perGuild" | "perUserPerGuild" | "global";
+```
+
+| Type | Key shape |
+| --- | --- |
+| `perUser` | `cd:<cmd>:user:<userId>` |
+| `perGuild` | `cd:<cmd>:guild:<guildId>` |
+| `perUserPerGuild` | `cd:<cmd>:user:<userId>:guild:<guildId>` |
+| `global` | `cd:<cmd>:global` |
+
+In DMs, `<guildId>` is the literal `"dm"` so `perGuild` and `perUserPerGuild` keys remain stable.
+
+## `CooldownActor`
+
+```ts
+interface CooldownActor {
+	userId: string;
+	guildId: string | null;
+}
+```
+
+Identifies a single rate-limit subject. The dispatcher derives this automatically; you only construct it yourself if you're using `CooldownEngine` directly to gate non-command flows.
+
+## `CacheAdapter`
+
+```ts
+interface CacheAdapter {
+	get(key: string): Promise<number | null>;
+	set(key: string, expiresAt: number, ttlMs: number): Promise<void>;
+	delete(key: string): Promise<void>;
+}
+```
+
+TTL-native KV contract for distributed cooldowns. `expiresAt` is an absolute UNIX millisecond timestamp; `ttlMs` is the same value as a TTL hint for stores that prefer it (Redis `PX`, Memcached, etc).
+
+`get` should return `null` when the key is missing or already expired. Backends that auto-expire keys (Redis with `PX`) and backends that don't (a SQL `cooldowns` table) both work — the engine cleans up expired entries on read for the latter.
+
+`@djs-commands/adapter-redis` implements this contract — see [Adapter Cookbook → Redis](/adapter-cookbook#redis-cache-adapter-not-storage).
+
+## `CooldownEngine`
+
+```ts
+class CooldownEngine {
+	constructor(cache?: CacheAdapter);
+	check(command: AnyCommand, actor: CooldownActor): Promise<number | null>;
+	start(command: AnyCommand, actor: CooldownActor): Promise<void>;
+}
+```
+
+Construct one yourself to gate non-command flows (autocomplete handlers, button clicks, modal submits) using the same shared cache.
+
+```ts
+import { CooldownEngine } from "@djs-commands/core";
+
+const engine = new CooldownEngine(redisCacheAdapter(redis));
+
+const remaining = await engine.check(myCommand, { userId, guildId });
+if (remaining !== null) {
+	// on cooldown — `remaining` ms left
+}
+
+await engine.start(myCommand, { userId, guildId });
+```

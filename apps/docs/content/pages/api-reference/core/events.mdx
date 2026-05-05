@@ -1,0 +1,61 @@
+---
+title: Events
+description: defineEvent and EventDefinition for typed discord.js event handlers.
+---
+
+## `defineEvent(definition)`
+
+```ts
+function defineEvent<E extends keyof ClientEvents>(
+	def: EventDefinition<E>,
+): EventDefinition<E>;
+```
+
+Identity helper — same role as `defineCommand`. Returns the argument unchanged but lets TypeScript infer the event payload.
+
+```ts
+import { defineEvent } from "@djs-commands/core";
+import { Events } from "discord.js";
+
+export default defineEvent({
+	event: Events.GuildMemberAdd,
+	handler: async (member) => {
+		// `member` is fully typed as GuildMember
+		await member.send("Welcome!");
+	},
+});
+```
+
+Drop event files into the `eventDir` you pass to `createCommandHandler` and they're auto-registered:
+
+```ts
+createCommandHandler({
+	client,
+	commands: [...],
+	eventDir: "./src/events",
+});
+```
+
+## `EventDefinition<E>`
+
+```ts
+interface EventDefinition<E extends keyof ClientEvents = keyof ClientEvents> {
+	event: E;
+	once?: boolean;
+	handler: (...args: ClientEvents[E]) => void | Promise<void>;
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `event` | A `keyof ClientEvents` — use the `Events.*` enum from discord.js for v15 readiness. |
+| `once` | When `true`, the handler is registered with `client.once` instead of `client.on`. |
+| `handler` | Called with whatever payload discord.js fires for the event — fully typed via `ClientEvents[E]`. |
+
+```ts
+defineEvent({
+	event: Events.ClientReady,
+	once: true,
+	handler: (c) => console.log(`Logged in as ${c.user.tag}`),
+});
+```
