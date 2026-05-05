@@ -5,7 +5,7 @@ description: First-class JSX (or function) builders for Discord's new component 
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-Discord's [Components V2](https://discord.com/developers/docs/components/reference) replaces the old "embeds + button rows" pattern with composable layout primitives. `djs-commands` ships **two ways** to build them — a JSX runtime in `@djs-commands/jsx`, and a plain-function fallback in `@djs-commands/core`. Both produce identical discord.js builder objects, so you can mix them freely.
+Discord's [Components V2](https://discord.com/developers/docs/components/reference) replaces the old "embeds + button rows" pattern with composable layout primitives. DJS Commands ships **two ways** to build them — a JSX runtime in `@djs-commands/jsx`, and a plain-function fallback in `@djs-commands/core`. Both produce identical discord.js builder objects, so you can mix them freely.
 
 ```tsx
 import { defineCommand } from "@djs-commands/core";

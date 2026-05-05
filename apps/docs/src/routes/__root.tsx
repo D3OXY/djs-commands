@@ -8,7 +8,7 @@ export const Route = createRootRoute({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "djs-commands" },
+			{ title: "DJS Commands" },
 			{
 				name: "description",
 				content: "Modern Discord.js command handler — TypeScript-first, Components V2 native, with pluggable persistence.",
@@ -16,7 +16,7 @@ export const Route = createRootRoute({
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
-			{ rel: "icon", href: "/favicon.ico" },
+			{ rel: "icon", type: "image/png", href: "/favicon.png" },
 		],
 	}),
 	component: RootComponent,
