@@ -7,6 +7,7 @@ import type React from "react";
 import { mdxComponents } from "@/lib/mdx-components";
 import browserCollections from "../../.source/browser";
 
+const SITE_URL = "https://djscommands.deoxy.dev";
 const REPO = "D3OXY/djs-commands";
 const REPO_BRANCH = "main";
 const CONTENT_PATH = "apps/docs/content/pages";
@@ -18,6 +19,32 @@ export const Route = createFileRoute("/$")({
 		const [data, tree] = await Promise.all([getPageData({ data: slugs }), getPageTree()]);
 		await clientLoader.preload(data.path);
 		return { ...data, tree };
+	},
+	head: ({ loaderData }) => {
+		if (!loaderData) return {};
+		const fullTitle = `${loaderData.title} · djs-commands`;
+		const description = loaderData.description ?? "Modern Discord.js command handler — TypeScript-first, Components V2 native, with pluggable persistence.";
+		const canonical = `${SITE_URL}${loaderData.url}`;
+		const ogImage = `${SITE_URL}/og-default.png`;
+		return {
+			meta: [
+				{ title: fullTitle },
+				{ name: "description", content: description },
+				// Open Graph
+				{ property: "og:title", content: fullTitle },
+				{ property: "og:description", content: description },
+				{ property: "og:url", content: canonical },
+				{ property: "og:type", content: "article" },
+				{ property: "og:site_name", content: "djs-commands" },
+				{ property: "og:image", content: ogImage },
+				// Twitter / X
+				{ name: "twitter:card", content: "summary_large_image" },
+				{ name: "twitter:title", content: fullTitle },
+				{ name: "twitter:description", content: description },
+				{ name: "twitter:image", content: ogImage },
+			],
+			links: [{ rel: "canonical", href: canonical }],
+		};
 	},
 });
 
