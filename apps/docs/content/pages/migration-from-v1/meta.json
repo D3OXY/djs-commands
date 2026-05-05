@@ -1,4 +1,5 @@
 {
 	"title": "Migration from v1",
+	"icon": "ArrowRightLeft",
 	"pages": ["index", "handler", "commands", "validators", "persistence", "events-and-plugins", "dropped-features"]
 }

@@ -29,7 +29,15 @@ function RootComponent() {
 				<HeadContent />
 			</head>
 			<body>
-				<RootProvider theme={{ defaultTheme: "dark" }}>
+				<RootProvider
+					theme={{ defaultTheme: "dark" }}
+					search={{
+						options: {
+							type: "fetch",
+							api: "/api/search",
+						},
+					}}
+				>
 					<Outlet />
 				</RootProvider>
 				<Scripts />
