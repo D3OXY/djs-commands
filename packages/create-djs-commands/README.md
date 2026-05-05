@@ -1,4 +1,4 @@
-# @djs-commands/cli
+# create-djs-commands
 
 Scaffolding CLI for djs-commands v2.
 

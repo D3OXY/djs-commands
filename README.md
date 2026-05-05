@@ -23,7 +23,7 @@ Or scaffold by hand from the [Getting Started guide](https://djscommands.deoxy.d
 |---|---|
 | [`@djs-commands/core`](./packages/core) | Command dispatcher, definitions, validators, plugins, fs-autoloader |
 | [`@djs-commands/jsx`](./packages/jsx) | Components V2 JSX runtime (opt-in) |
-| [`@djs-commands/cli`](./packages/cli) | `create-djs-commands` scaffolding tool |
+| [`create-djs-commands`](./packages/create-djs-commands) | `npx create-djs-commands` scaffolding tool |
 | [`@djs-commands/adapter-drizzle`](./packages/adapter-drizzle) | Drizzle/Postgres `Storage` adapter |
 | [`@djs-commands/adapter-prisma`](./packages/adapter-prisma) | Prisma `Storage` adapter |
 | [`@djs-commands/adapter-mongoose`](./packages/adapter-mongoose) | Mongoose `Storage` adapter (v1 continuity path) |

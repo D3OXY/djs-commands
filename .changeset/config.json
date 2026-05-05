@@ -7,7 +7,7 @@
 		[
 			"@djs-commands/core",
 			"@djs-commands/jsx",
-			"@djs-commands/cli",
+			"create-djs-commands",
 			"@djs-commands/adapter-drizzle",
 			"@djs-commands/adapter-prisma",
 			"@djs-commands/adapter-mongoose",

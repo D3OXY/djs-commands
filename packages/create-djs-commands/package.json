@@ -1,5 +1,5 @@
 {
-	"name": "@djs-commands/cli",
+	"name": "create-djs-commands",
 	"version": "2.0.0",
 	"description": "Scaffolding CLI for djs-commands — `npx create-djs-commands`",
 	"author": "D3OXY <hello@deoxy.dev>",
@@ -8,7 +8,7 @@
 	"main": "./dist/cli.js",
 	"types": "./dist/cli.d.ts",
 	"bin": {
-		"create-djs-commands": "./dist/cli.js"
+		"create-djs-commands": "dist/cli.js"
 	},
 	"files": [
 		"dist",
@@ -39,8 +39,8 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/D3OXY/djs-commands",
-		"directory": "packages/cli"
+		"url": "git+https://github.com/D3OXY/djs-commands.git",
+		"directory": "packages/create-djs-commands"
 	},
 	"keywords": [
 		"discord.js",

@@ -20,7 +20,7 @@
 		"packages/adapter-mongoose": {
 			"entry": ["src/index.ts", "src/models.ts", "src/**/*.test.ts"]
 		},
-		"packages/cli": {
+		"packages/create-djs-commands": {
 			"entry": ["src/cli.ts", "src/**/*.test.ts"]
 		},
 		"packages/tsconfig": {},
