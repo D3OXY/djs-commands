@@ -24,7 +24,7 @@ export const Route = createFileRoute("/$")({
 	},
 	head: ({ loaderData }) => {
 		if (!loaderData) return {};
-		const fullTitle = `${loaderData.title} · djs-commands`;
+		const fullTitle = `${loaderData.title} · DJS Commands`;
 		const description = loaderData.description ?? "Modern Discord.js command handler — TypeScript-first, Components V2 native, with pluggable persistence.";
 		const canonical = `${SITE_URL}${loaderData.url}`;
 		const ogImage = `${SITE_URL}/og-default.png`;
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/$")({
 				{ property: "og:description", content: description },
 				{ property: "og:url", content: canonical },
 				{ property: "og:type", content: "article" },
-				{ property: "og:site_name", content: "djs-commands" },
+				{ property: "og:site_name", content: "DJS Commands" },
 				{ property: "og:image", content: ogImage },
 				// Twitter / X
 				{ name: "twitter:card", content: "summary_large_image" },
@@ -113,7 +113,8 @@ function DocsLayoutWrapper({ children, tree }: DocsLayoutWrapperProps) {
 			nav={{
 				title: (
 					<div className="flex items-center gap-2.5">
-						<span className="font-semibold text-[0.95rem] tracking-tight">djs-commands</span>
+						<img src="/logo.png" alt="" aria-hidden="true" className="size-6 rounded-md" />
+						<span className="font-semibold text-[0.95rem] tracking-tight">DJS Commands</span>
 						<span className="font-medium text-fd-muted-foreground text-xs opacity-60">v2 docs</span>
 					</div>
 				),
@@ -128,7 +129,7 @@ function DocsLayoutWrapper({ children, tree }: DocsLayoutWrapperProps) {
 					external: true,
 				},
 				{
-					text: "npm",
+					text: "NPM",
 					url: "https://www.npmjs.com/org/djs-commands",
 					external: true,
 				},

@@ -1,10 +1,23 @@
 <p align="center">
-  <img src="apps/docs/public/og-default.png" alt="djs-commands — Modern Discord.js command handler" />
+  <img src="apps/docs/public/logo.png" alt="DJS Commands logo" width="120" height="120" />
 </p>
 
-# djs-commands
+<h1 align="center">DJS Commands</h1>
 
-> Modern command handler for Discord.js — TypeScript-first, Components V2 native, with pluggable persistence.
+<p align="center">
+  <strong>Modern command handler for Discord.js — TypeScript-first, Components V2 native, with pluggable persistence.</strong>
+</p>
+
+<p align="center">
+  <a href="https://djscommands.deoxy.dev">Docs</a> ·
+  <a href="https://djscommands.deoxy.dev/getting-started">Quick start</a> ·
+  <a href="https://djscommands.deoxy.dev/migration-from-v1">v1 → v2 migration</a> ·
+  <a href="https://www.npmjs.com/org/djs-commands">NPM</a>
+</p>
+
+<p align="center">
+  <img src="apps/docs/public/og-default.png" alt="DJS Commands — overview banner" />
+</p>
 
 ## Coming from v1 (`@d3oxy/djs-commands`)?
 

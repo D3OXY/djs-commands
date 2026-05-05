@@ -1,47 +1,346 @@
 ---
-title: djs-commands
+title: DJS Commands
 description: Modern Discord.js command handler — TypeScript-first, Components V2 native, with pluggable persistence.
+full: true
 ---
 
-import { Callout } from "fumadocs-ui/components/callout";
-import { Cards, Card } from "fumadocs-ui/components/card";
+import { ArrowRight, ArrowUpRight, Boxes, Database, Eye, FileCode, Layers, Plug, Rocket, ShieldCheck, Sparkles, Timer, Zap } from "lucide-react";
 
-`djs-commands` is a modern command framework for [Discord.js](https://discordjs.dev/) built around three ideas:
+<div className="not-prose relative -mt-8">
 
-1. **TypeScript-first.** Commands are plain objects with strongly-typed handlers. No magic decorators, no runtime reflection.
-2. **Components V2 native.** First-class support for the new Discord component model, so building rich, interactive responses is the default path — not an afterthought.
-3. **Pluggable persistence.** Cooldowns, guild prefixes, and user state plug into adapters you control: in-memory for dev, your own database in production.
+{/* ── HERO ───────────────────────────────────────────────────────── */}
+<section className="relative isolate overflow-hidden -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 pt-16 sm:pt-24 lg:pt-28 pb-16 sm:pb-20 lg:pb-28">
+	<div
+		aria-hidden="true"
+		className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,rgb(255_255_255_/_7%)_1px,transparent_0)] [background-size:28px_28px] [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_75%)]"
+	/>
+	<div
+		aria-hidden="true"
+		className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 -z-10 size-[640px] rounded-full opacity-[0.18] blur-3xl bg-[radial-gradient(circle_at_center,#5865F2_0%,transparent_60%)]"
+	/>
 
-<Callout type="info">
-**v2.0 shipped.** Packages are live on npm under [`@djs-commands/*`](https://www.npmjs.com/org/djs-commands). The legacy v1 package (`@d3oxy/djs-commands`) is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and is no longer maintained — see the [v1 → v2 migration guide](/migration-from-v1) to upgrade.
-</Callout>
+	<div className="relative max-w-4xl mx-auto text-center">
+		<img
+			src="/logo.png"
+			alt=""
+			aria-hidden="true"
+			width={112}
+			height={112}
+			className="mx-auto mb-8 size-24 sm:size-28 rounded-2xl ring-1 ring-white/10 shadow-[0_20px_70px_-15px_rgb(88_101_242_/_50%)]"
+		/>
 
-## Quick start
+		<div className="inline-flex items-center gap-2 mb-7 px-3 py-1 rounded-full border border-white/10 bg-white/[0.03] text-[11px] font-mono tracking-wider uppercase text-fd-muted-foreground">
+			<span className="relative flex size-1.5">
+				<span className="absolute inline-flex size-full rounded-full bg-[#67E8F9] opacity-60 animate-ping" />
+				<span className="relative inline-flex size-1.5 rounded-full bg-[#67E8F9]" />
+			</span>
+			v2.0 · live on NPM
+		</div>
 
-```bash
-npx create-djs-commands my-bot
-cd my-bot
-cp .env.example .env  # add DISCORD_TOKEN
-bun run dev
+		<h1 className="text-[2.5rem] sm:text-6xl lg:text-7xl xl:text-[5.5rem] font-black tracking-[-0.04em] leading-[0.95] mb-7 text-fd-foreground">
+			Build Discord bots<br />
+			<span className="bg-gradient-to-br from-[#67E8F9] via-[#5865F2] to-[#7C3AED] bg-clip-text text-transparent">
+				you'll actually ship.
+			</span>
+		</h1>
+
+		<p className="text-base sm:text-lg lg:text-xl text-fd-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+			A modern command handler for Discord.js — strongly typed, Components V2 native, with pluggable persistence. No magic decorators, no runtime reflection.
+		</p>
+
+		<div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-14">
+			<a
+				href="/getting-started"
+				className="group relative inline-flex items-center justify-center gap-2 px-6 h-12 w-full sm:w-auto rounded-lg bg-[#5865F2] text-white font-semibold text-[15px] shadow-lg shadow-[#5865F2]/25 transition-all hover:shadow-xl hover:shadow-[#5865F2]/40 hover:-translate-y-px active:translate-y-0 active:shadow-md"
+			>
+				Get started
+				<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+			</a>
+			<a
+				href="https://github.com/D3OXY/djs-commands"
+				className="group inline-flex items-center justify-center gap-2 px-6 h-12 w-full sm:w-auto rounded-lg border border-white/10 bg-white/[0.03] text-fd-foreground font-semibold text-[15px] transition hover:bg-white/[0.06] hover:border-white/20"
+			>
+				<svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55 0-.27-.01-1.18-.02-2.13-3.2.69-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.92-.26 1.9-.39 2.88-.39.98 0 1.96.13 2.88.39 2.18-1.49 3.14-1.18 3.14-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.66.8.55C20.71 21.39 24 17.08 24 12c0-6.35-5.15-11.5-11.5-11.5z" /></svg>
+				Star on GitHub
+				<ArrowUpRight className="size-3.5 opacity-50 transition-opacity group-hover:opacity-100" />
+			</a>
+		</div>
+
+		<div className="max-w-lg mx-auto">
+			<div className="group relative rounded-xl border border-white/10 bg-black/30 backdrop-blur-sm overflow-hidden shadow-[0_25px_60px_-20px_rgb(0_0_0_/_70%)]">
+				<div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-white/10 bg-white/[0.02]">
+					<span className="size-2.5 rounded-full bg-red-500/60" />
+					<span className="size-2.5 rounded-full bg-yellow-500/60" />
+					<span className="size-2.5 rounded-full bg-green-500/60" />
+					<span className="ml-3 text-[11px] font-mono text-fd-muted-foreground/60">~/projects</span>
+				</div>
+				<div className="px-5 py-4 font-mono text-[13px] sm:text-sm text-left tabular-nums">
+					<span className="text-fd-muted-foreground/60 select-none">$ </span>
+					<span className="text-fd-foreground">npx </span>
+					<span className="text-[#5865F2]">create-djs-commands</span>
+					<span className="text-fd-foreground"> </span>
+					<span className="text-[#67E8F9]">my-bot</span>
+					<span className="ml-1 inline-block w-2 h-4 bg-fd-foreground/60 align-middle animate-pulse" />
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+{/* ── BUILT-FOR STRIP ────────────────────────────────────────────── */}
+<section className="-mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-10 border-y border-white/[0.06]">
+	<div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-x-8 sm:gap-x-12 gap-y-3 text-xs sm:text-sm text-fd-muted-foreground/70">
+		<span className="font-mono uppercase tracking-[0.2em] text-[10px] sm:text-[11px] text-fd-muted-foreground/50">Built for</span>
+		<span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-[#5865F2]" /> Discord.js v14.26+</span>
+		<span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-[#67E8F9]" /> TypeScript 5.9+</span>
+		<span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-[#7C3AED]" /> Node 22+ / Bun 1.2+</span>
+		<span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-fd-muted-foreground/50" /> Components V2</span>
+	</div>
+</section>
+
+{/* ── FEATURES ───────────────────────────────────────────────────── */}
+<section className="relative -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-20 sm:py-28">
+	<div className="max-w-6xl mx-auto">
+		<div className="max-w-2xl mb-14">
+			<p className="text-[11px] uppercase tracking-[0.25em] text-[#5865F2]/80 mb-4 font-mono">— Framework</p>
+			<h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] leading-[1.05]">
+				Everything you need.<br />
+				<span className="text-fd-muted-foreground/70">Nothing you don't.</span>
+			</h2>
+		</div>
+
+		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.06] rounded-2xl overflow-hidden border border-white/10">
+			<FeatureCard
+				icon={<FileCode className="size-5" strokeWidth={1.75} />}
+				accent="#5865F2"
+				title="TypeScript-first"
+				body="Plain objects, full inference. defineCommand returns its argument unchanged — autocomplete is real, decorators are extinct."
+				href="/concepts/commands"
+			/>
+			<FeatureCard
+				icon={<Layers className="size-5" strokeWidth={1.75} />}
+				accent="#7C3AED"
+				title="Components V2 native"
+				body="JSX runtime + plain-function fallback. Containers, sections, modals, action rows — both APIs return identical builders."
+				href="/components-v2"
+			/>
+			<FeatureCard
+				icon={<ShieldCheck className="size-5" strokeWidth={1.75} />}
+				accent="#67E8F9"
+				title="Validators that compose"
+				body="Built-in role / permission / channel gates plus your own async predicates. First failure wins, with a typed reason."
+				href="/concepts/validators"
+			/>
+			<FeatureCard
+				icon={<Timer className="size-5" strokeWidth={1.75} />}
+				accent="#5865F2"
+				title="Distributed cooldowns"
+				body="Per-user, per-guild, per-user-per-guild, global. Pluggable CacheAdapter — Redis for sharded bots, in-memory for dev."
+				href="/concepts/cooldowns"
+			/>
+			<FeatureCard
+				icon={<Database className="size-5" strokeWidth={1.75} />}
+				accent="#7C3AED"
+				title="Bring your own DB"
+				body="Drizzle, Prisma, Mongoose — first-party adapters for the Storage contract. Or write six methods and ship your own."
+				href="/concepts/storage"
+			/>
+			<FeatureCard
+				icon={<Plug className="size-5" strokeWidth={1.75} />}
+				accent="#67E8F9"
+				title="Plugins, not magic"
+				body="setup / teardown lifecycle, command bundles, no global state. Plugins add what you need — nothing you don't."
+				href="/concepts/plugins"
+			/>
+		</div>
+	</div>
+</section>
+
+{/* ── CODE EXAMPLE ───────────────────────────────────────────────── */}
+<section className="relative -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-20 sm:py-28 border-t border-white/[0.06]">
+	<div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-12 lg:gap-16 items-center">
+		<div>
+			<p className="text-[11px] uppercase tracking-[0.25em] text-[#67E8F9]/90 mb-4 font-mono">— defineCommand</p>
+			<h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-black tracking-[-0.03em] leading-[1.05] mb-6">
+				Plain objects.<br />
+				<span className="text-fd-muted-foreground/70">Strongly typed.</span>
+			</h2>
+			<p className="text-base sm:text-lg text-fd-muted-foreground leading-relaxed mb-8">
+				Define a slash command as a plain object. Options are inferred. The handler context unifies slash and legacy invocations behind a single <code className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[0.85em] font-mono text-[#67E8F9]">reply()</code>.
+			</p>
+			<a href="/concepts/commands" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[#5865F2] hover:text-[#7C3AED] transition-colors">
+				Read the deep dive
+				<ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+			</a>
+		</div>
+
+		<div className="relative">
+			<div
+				aria-hidden="true"
+				className="absolute -inset-px -z-10 rounded-[14px] bg-gradient-to-br from-[#5865F2]/20 via-[#7C3AED]/10 to-[#67E8F9]/20 blur-sm opacity-60"
+			/>
+
+```ts title="src/commands/ban.ts"
+import { defineCommand } from "@djs-commands/core";
+
+export default defineCommand({
+	name: "ban",
+	description: "Ban a user from this server",
+	guildOnly: true,
+	permissions: ["BanMembers"],
+	cooldown: { type: "perGuild", duration: 10_000 },
+	options: {
+		target: { type: "user", description: "Who to ban", required: true },
+		reason: { type: "string", description: "Why" },
+		days: {
+			type: "integer",
+			description: "Days of messages to delete",
+			choices: [0, 1, 7] as const,
+		},
+	},
+	run: async ({ options, reply }) => {
+		// options.target → User
+		// options.reason → string | undefined
+		// options.days   → 0 | 1 | 7 | undefined
+		await reply(`Banning ${options.target.tag}…`);
+	},
+});
 ```
 
-Or scaffold by hand from [Getting Started](/getting-started).
+		</div>
+	</div>
+</section>
 
-## Where to start
+{/* ── ADAPTERS ───────────────────────────────────────────────────── */}
+<section className="relative -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-20 sm:py-28 border-t border-white/[0.06]">
+	<div className="max-w-6xl mx-auto">
+		<div className="max-w-2xl mb-12">
+			<p className="text-[11px] uppercase tracking-[0.25em] text-[#7C3AED]/90 mb-4 font-mono">— Adapters</p>
+			<h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] leading-[1.05] mb-5">
+				Pluggable persistence.
+			</h2>
+			<p className="text-base sm:text-lg text-fd-muted-foreground leading-relaxed">
+				Six CRUD methods. The framework reads / writes guild prefixes, disabled commands, and channel locks through the <code className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[0.85em] font-mono">Storage</code> contract — pick a first-party adapter or write your own.
+			</p>
+		</div>
 
-<Cards>
-	<Card title="Getting Started" href="/getting-started" description="Install the package, write your first command, and get a bot online in under five minutes." />
-	<Card title="Concepts" href="/concepts" description="The mental model: commands, validators, cooldowns, plugins, storage, Components V2." />
-	<Card title="API Reference" href="/api-reference" description="The full surface area of `@djs-commands/core` and friends — generated from the source." />
-	<Card title="Recipes" href="/recipes" description="Copy-paste solutions for common bot patterns: pagination, modals, role gates, and more." />
-</Cards>
+		<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+			<AdapterCard tag="SQL" name="Drizzle" sub="Postgres" href="/adapter-cookbook#drizzle-postgres" accent="#5865F2" />
+			<AdapterCard tag="ORM" name="Prisma" sub="Postgres / MySQL" href="/adapter-cookbook#prisma" accent="#67E8F9" />
+			<AdapterCard tag="DOC" name="Mongoose" sub="MongoDB · v1 path" href="/adapter-cookbook#mongoose-mongodb" accent="#7C3AED" />
+			<AdapterCard tag="KV" name="Redis" sub="Cooldown cache" href="/adapter-cookbook#redis-cache-adapter-not-storage" accent="#5865F2" />
+		</div>
 
-## Coming from v1?
+		<a href="/concepts/storage#writing-a-custom-adapter" className="group inline-flex items-center gap-1.5 mt-8 text-sm font-semibold text-fd-muted-foreground hover:text-fd-foreground transition-colors">
+			Or write your own — six methods
+			<ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+		</a>
+	</div>
+</section>
 
-If you have a bot built on `@d3oxy/djs-commands`, the [Migration from v1](/migration-from-v1) guide walks you through every API that moved or was dropped, with side-by-side examples.
+{/* ── COMING FROM V1 ─────────────────────────────────────────────── */}
+<section className="relative -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-16 sm:py-20 border-t border-white/[0.06]">
+	<div className="max-w-4xl mx-auto">
+		<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent p-8 sm:p-10">
+			<div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-center">
+				<div>
+					<p className="text-[11px] uppercase tracking-[0.25em] text-fd-muted-foreground/60 mb-3 font-mono">— v1 → v2</p>
+					<h3 className="text-2xl sm:text-3xl font-black tracking-[-0.02em] mb-3">
+						Coming from <code className="font-mono text-[0.85em] text-[#7C3AED]">@d3oxy/djs-commands</code>?
+					</h3>
+					<p className="text-base text-fd-muted-foreground leading-relaxed max-w-xl">
+						Every v1 API has a v2 equivalent. The migration guide walks through every option that moved or was dropped — with side-by-side examples.
+					</p>
+				</div>
+				<a
+					href="/migration-from-v1"
+					className="group inline-flex items-center justify-center gap-2 px-5 h-11 rounded-lg border border-white/15 bg-white/[0.04] text-fd-foreground font-semibold text-sm transition hover:bg-white/[0.08] hover:border-white/25 whitespace-nowrap"
+				>
+					Migration guide
+					<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+				</a>
+			</div>
+		</div>
+	</div>
+</section>
 
-## Useful links
+{/* ── FINAL CTA ──────────────────────────────────────────────────── */}
+<section className="relative -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16 py-20 sm:py-28 overflow-hidden">
+	<div
+		aria-hidden="true"
+		className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
+	/>
 
-- [GitHub](https://github.com/D3OXY/djs-commands) — source, issues, discussions
-- [npm org](https://www.npmjs.com/org/djs-commands) — `@djs-commands/*` packages
-- [Discord support](https://deoxy.dev/links?redirect=support) — get help from the maintainers and community
+	<div className="relative max-w-3xl mx-auto text-center">
+		<Sparkles className="size-6 mx-auto mb-6 text-[#67E8F9]" strokeWidth={1.5} />
+		<h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-[-0.04em] leading-[0.95] mb-5">
+			Ready to ship?
+		</h2>
+		<p className="text-base sm:text-lg text-fd-muted-foreground mb-10 max-w-xl mx-auto">
+			One command, one minute. The CLI scaffolds the directory layout, tsconfig, env file, and a working <code className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-[0.9em] font-mono text-[#67E8F9]">/ping</code>.
+		</p>
+
+		<div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+			<a
+				href="/getting-started"
+				className="group relative inline-flex items-center justify-center gap-2 px-7 h-12 w-full sm:w-auto rounded-lg bg-fd-foreground text-fd-background font-semibold text-[15px] transition-all hover:bg-fd-foreground/90 hover:-translate-y-px"
+			>
+				Read the docs
+				<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+			</a>
+			<a
+				href="https://deoxy.dev/links?redirect=support"
+				className="group inline-flex items-center justify-center gap-2 px-7 h-12 w-full sm:w-auto rounded-lg border border-white/10 bg-white/[0.03] text-fd-foreground font-semibold text-[15px] transition hover:bg-white/[0.06] hover:border-white/20"
+			>
+				Join Discord
+				<ArrowUpRight className="size-3.5 opacity-60 transition-opacity group-hover:opacity-100" />
+			</a>
+		</div>
+
+		<div className="mt-12 flex items-center justify-center gap-6 text-xs text-fd-muted-foreground/60 font-mono">
+			<a href="https://github.com/D3OXY/djs-commands" className="hover:text-fd-foreground transition-colors">GITHUB</a>
+			<span className="size-1 rounded-full bg-fd-muted-foreground/30" />
+			<a href="https://www.npmjs.com/org/djs-commands" className="hover:text-fd-foreground transition-colors">NPM</a>
+			<span className="size-1 rounded-full bg-fd-muted-foreground/30" />
+			<a href="/llms-full.txt" className="hover:text-fd-foreground transition-colors">LLMS.TXT</a>
+		</div>
+	</div>
+</section>
+
+</div>
+
+export const FeatureCard = ({ icon, title, body, href, accent }) => (
+	<a
+		href={href}
+		className="group relative bg-fd-card hover:bg-fd-card/60 transition-colors p-6 sm:p-8 flex flex-col"
+	>
+		<div className="flex items-center justify-between mb-5">
+			<div
+				className="size-10 rounded-lg border flex items-center justify-center transition-colors"
+				style={{ background: `${accent}12`, borderColor: `${accent}33`, color: accent }}
+			>
+				{icon}
+			</div>
+			<ArrowUpRight className="size-4 text-fd-muted-foreground/40 transition-all group-hover:text-fd-foreground group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+		</div>
+		<h3 className="text-base sm:text-[17px] font-semibold tracking-tight mb-2 text-fd-foreground">{title}</h3>
+		<p className="text-sm text-fd-muted-foreground leading-relaxed">{body}</p>
+	</a>
+);
+
+export const AdapterCard = ({ tag, name, sub, href, accent }) => (
+	<a
+		href={href}
+		className="group relative rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 transition-all p-5 flex flex-col"
+	>
+		<span
+			className="text-[10px] font-mono uppercase tracking-[0.2em] mb-3"
+			style={{ color: accent }}
+		>
+			{tag}
+		</span>
+		<span className="text-lg font-semibold tracking-tight text-fd-foreground mb-0.5">{name}</span>
+		<span className="text-xs text-fd-muted-foreground">{sub}</span>
+		<ArrowUpRight className="absolute top-5 right-5 size-3.5 text-fd-muted-foreground/40 transition-all group-hover:text-fd-foreground group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+	</a>
+);
