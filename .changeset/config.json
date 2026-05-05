@@ -3,9 +3,19 @@
 	"changelog": "@changesets/cli/changelog",
 	"commit": false,
 	"fixed": [],
-	"linked": [],
+	"linked": [
+		[
+			"@djs-commands/core",
+			"@djs-commands/jsx",
+			"@djs-commands/cli",
+			"@djs-commands/adapter-drizzle",
+			"@djs-commands/adapter-prisma",
+			"@djs-commands/adapter-mongoose",
+			"@djs-commands/adapter-redis"
+		]
+	],
 	"access": "public",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": []
+	"ignore": ["minimal", "components-v2-showcase", "moderation-drizzle", "docs"]
 }

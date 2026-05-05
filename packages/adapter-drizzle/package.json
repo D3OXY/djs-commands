@@ -1,6 +1,6 @@
 {
 	"name": "@djs-commands/adapter-drizzle",
-	"version": "0.0.0",
+	"version": "2.0.0",
 	"description": "Drizzle Storage adapter for djs-commands — Postgres-backed persistent state",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",

@@ -43,6 +43,9 @@
 		"knip": "knip",
 		"test": "turbo test",
 		"ci": "bun run check && bun run typecheck && bun run knip && bun run test",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "turbo build --filter='@djs-commands/*' && changeset publish",
 		"prepare": "husky"
 	},
 	"devDependencies": {

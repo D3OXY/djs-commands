@@ -1,0 +1,56 @@
+name: Release
+
+on:
+    push:
+        branches: [main]
+
+concurrency:
+    group: release-${{ github.ref }}
+
+jobs:
+    release:
+        name: Release
+        runs-on: ubuntu-latest
+        permissions:
+            # GITHUB_TOKEN: changesets/action commits version-bump PRs and pushes tags
+            contents: write
+            pull-requests: write
+            # OIDC token for npm provenance attestation
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  # Changesets needs full history to detect changeset files
+                  fetch-depth: 0
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  registry-url: "https://registry.npmjs.org"
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Create Release Pull Request or Publish to npm
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                  # When changesets exist on main: opens a "Version Packages" PR
+                  # bumping versions + writing CHANGELOGs. Merging that PR
+                  # triggers this workflow again, hits the publish branch below.
+                  version: bun run version-packages
+                  # When versions in package.json are ahead of npm: publish.
+                  publish: bun run release
+                  # Friendlier commit messages on the auto-PR.
+                  commit: "chore: release"
+                  title: "chore: release"
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # Tells `npm publish` (called via `changeset publish`) to attach
+                  # an SLSA provenance attestation. Requires id-token: write above.
+                  NPM_CONFIG_PROVENANCE: "true"

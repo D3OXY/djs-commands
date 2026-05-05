@@ -1,6 +1,6 @@
 {
 	"name": "@djs-commands/adapter-mongoose",
-	"version": "0.0.0",
+	"version": "2.0.0",
 	"description": "Mongoose Storage adapter for djs-commands — MongoDB-backed persistent state",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",
