@@ -1,0 +1,5 @@
+{
+	"title": "@djs-commands/jsx",
+	"icon": "Sparkles",
+	"pages": ["index", "render", "display", "forms"]
+}

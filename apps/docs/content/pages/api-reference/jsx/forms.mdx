@@ -1,0 +1,166 @@
+---
+title: Form components
+description: ActionRow, Button, Modal, TextInput, RadioGroup, CheckboxGroup.
+---
+
+Form components are the interactive primitives — buttons in messages, fields in modals.
+
+## `<ActionRow>`
+
+```tsx
+interface ActionRowProps {
+	id?: number;
+	children?: DjsxNode | readonly DjsxNode[];
+}
+```
+
+Container for buttons (or string-select-menus from discord.js — same row constraints).
+
+```tsx
+<ActionRow>
+	<Button style="primary" customId="ok" label="OK" />
+	<Button style="danger" customId="cancel" label="Cancel" />
+</ActionRow>
+```
+
+## `<Button>`
+
+```tsx
+type ButtonStyleName = "primary" | "secondary" | "success" | "danger" | "link" | "premium";
+
+type ButtonProps =
+	| InteractiveButtonProps   // primary / secondary / success / danger
+	| LinkButtonProps          // link
+	| PremiumButtonProps;      // premium
+```
+
+Discriminated union over the three button "shapes". TypeScript narrows the required props once you set `style`.
+
+| Style | Required props |
+| --- | --- |
+| `primary` / `secondary` / `success` / `danger` | `customId`, `label` (and/or `emoji`), optional `disabled` |
+| `link` | `url`, `label` (and/or `emoji`) |
+| `premium` | `skuId` |
+
+```tsx
+<Button style="primary" customId="ok" label="OK" />
+<Button style="link" url="https://example.com" label="Docs" />
+<Button style="premium" skuId="123456789012345678" />
+```
+
+## `<Modal>`
+
+```tsx
+interface ModalProps {
+	customId: string;
+	title: string;
+	children?: DjsxNode | readonly DjsxNode[];
+}
+```
+
+Top-level modal element. Use with `renderModal()` and `interaction.showModal`. Accepts `<TextInput>`, `<RadioGroup>`, or `<CheckboxGroup>` as children.
+
+```tsx
+await interaction.showModal(
+	renderModal(
+		<Modal title="Send feedback" customId="feedback-modal">
+			<TextInput customId="subject" label="Subject" />
+		</Modal>
+	)
+);
+```
+
+## `<TextInput>`
+
+```tsx
+type TextInputStyleName = "short" | "paragraph";
+
+interface TextInputProps {
+	customId: string;
+	label: string;
+	style?: TextInputStyleName;
+	placeholder?: string;
+	required?: boolean;
+	value?: string;
+	minLength?: number;
+	maxLength?: number;
+}
+```
+
+Single-line (`short`, default) or multi-line (`paragraph`) text input field.
+
+```tsx
+<TextInput
+	customId="bio"
+	label="Bio"
+	style="paragraph"
+	placeholder="Tell us about yourself"
+	required={true}
+	maxLength={500}
+/>
+```
+
+## `<RadioGroup>`
+
+```tsx
+interface RadioGroupProps {
+	customId: string;
+	label: string;
+	required?: boolean;
+	options: readonly {
+		label: string;
+		value: string;
+		description?: string;
+		emoji?: { name?: string; id?: string; animated?: boolean };
+	}[];
+}
+```
+
+Single-choice modal field.
+
+```tsx
+<RadioGroup
+	customId="size"
+	label="T-shirt size"
+	required={true}
+	options={[
+		{ label: "Small", value: "s" },
+		{ label: "Medium", value: "m" },
+		{ label: "Large", value: "l" },
+	]}
+/>
+```
+
+## `<CheckboxGroup>`
+
+```tsx
+interface CheckboxGroupProps {
+	customId: string;
+	label: string;
+	required?: boolean;
+	minSelections?: number;
+	maxSelections?: number;
+	options: readonly {
+		label: string;
+		value: string;
+		description?: string;
+		emoji?: { name?: string; id?: string; animated?: boolean };
+	}[];
+}
+```
+
+Multi-choice modal field with optional min/max selection bounds.
+
+```tsx
+<CheckboxGroup
+	customId="topics"
+	label="Topics you're interested in"
+	minSelections={1}
+	maxSelections={3}
+	options={[
+		{ label: "TypeScript", value: "ts" },
+		{ label: "React", value: "react" },
+		{ label: "Node.js", value: "node" },
+	]}
+/>
+```

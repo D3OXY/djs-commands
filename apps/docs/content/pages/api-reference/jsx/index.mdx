@@ -1,0 +1,48 @@
+---
+title: Overview
+description: JSX runtime + Components V2 component set for Discord.js bots.
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+`@djs-commands/jsx` is an opt-in JSX runtime that compiles JSX trees into discord.js component builders for [Components V2](https://discord.com/developers/docs/components/reference). Output is identical to the function-form API in [`@djs-commands/core`](/api-reference/core/components-v2-functions) — mix the two freely.
+
+```bash
+bun add @djs-commands/jsx
+```
+
+```json title="tsconfig.json"
+{
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"jsxImportSource": "@djs-commands/jsx"
+	}
+}
+```
+
+No Babel, no SWC, no React. The TypeScript compiler (and Bun's transpiler) emits `import { jsx } from "@djs-commands/jsx/jsx-runtime"` automatically.
+
+```tsx
+import { Container, Section, TextDisplay, Button, render } from "@djs-commands/jsx";
+import { MessageFlags } from "discord.js";
+
+await interaction.reply({
+	flags: MessageFlags.IsComponentsV2,
+	components: render(
+		<Container accentColor={0x5865f2}>
+			<TextDisplay># Welcome</TextDisplay>
+			<Section accessory={<Button style="primary" customId="ok" label="OK" />}>
+				Click the button to continue.
+			</Section>
+		</Container>
+	),
+});
+```
+
+## Symbols by topic
+
+<Cards>
+	<Card title="render / renderModal" href="/api-reference/jsx/render" description="Compile JSX trees to discord.js builders, plus the Fragment helper." />
+	<Card title="Display components" href="/api-reference/jsx/display" description="Container, Section, TextDisplay, MediaGallery, Separator, File, Thumbnail." />
+	<Card title="Form components" href="/api-reference/jsx/forms" description="ActionRow, Button, Modal, TextInput, RadioGroup, CheckboxGroup." />
+</Cards>
