@@ -1,6 +1,6 @@
 # Releasing
 
-This repo ships v2.x of `@djs-commands/*` packages via [Changesets](https://github.com/changesets/changesets) + GitHub Actions.
+This repo ships v2.x of `@djs-commands/*` packages via [Changesets](https://github.com/changesets/changesets) + GitHub Actions, authenticating to npm via [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (OIDC). No long-lived `NPM_TOKEN` secret is required.
 
 ## Day-to-day flow
 
@@ -10,27 +10,54 @@ This repo ships v2.x of `@djs-commands/*` packages via [Changesets](https://gith
    - Bumps versions in every affected `package.json`
    - Writes/updates `CHANGELOG.md` for each package
    - Removes the consumed changesets
-4. Merging that release PR triggers the workflow again. This time it sees package versions are ahead of npm and runs `bun run release` — `turbo build` followed by `changeset publish` with `NPM_CONFIG_PROVENANCE=true` for SLSA attestation.
+4. Merging that release PR triggers the workflow again. This time it sees package versions are ahead of npm and runs `bun run release` — `turbo build --filter='@djs-commands/*'` followed by `changeset publish`. The npm CLI auto-detects OIDC and publishes with attached provenance.
 
 ## Initial v2.0.0 launch
 
 The first release is bootstrapped:
 
-- All `@djs-commands/*` package.jsons are pinned at `2.0.0` in this branch
+- All `@djs-commands/*` package.jsons are pinned at `2.0.0`
 - A single `v2-launch.md` changeset declares it `major` for every package
-- Once this PR merges, the Release workflow opens the version PR which consumes that changeset and prepares CHANGELOGs
+- Once that PR merges, the Release workflow opens a version PR which consumes the changeset and prepares CHANGELOGs
 - Merging the version PR publishes 2.0.0 to npm
 
 ### One-time setup before the first publish
 
-The maintainer needs to configure two repository secrets:
+**Trusted Publisher configuration must be done per-package on npm** before the first OIDC-authenticated publish (each package can have only one trusted publisher; there's no org-level setting per [npm docs](https://docs.npmjs.com/trusted-publishers)). Two paths:
 
-| Secret | Description |
-|---|---|
-| `NPM_TOKEN` | An npm "Automation" token with publish access to the `@djs-commands` org. Generate at <https://www.npmjs.com/settings/~/tokens>. |
-| (built-in) `GITHUB_TOKEN` | Provided by Actions. The release job needs `contents: write`, `pull-requests: write`, `id-token: write` — already declared in `.github/workflows/release.yml`. |
+#### Path A — manual first publish, then switch to OIDC
 
-For provenance to work, the npm package owners must have 2FA enabled and the npm org must allow OIDC publishing from GitHub Actions (default for new orgs).
+1. Locally, log in with `npm login` as a user with publish access to the `@djs-commands` org.
+2. Build and publish 2.0.0 from your machine:
+   ```bash
+   bun install --frozen-lockfile
+   bun run build --filter='@djs-commands/*'
+   cd packages/core && npm publish --access public --provenance=false && cd -
+   # …repeat for jsx, cli, adapter-drizzle, adapter-prisma, adapter-mongoose, adapter-redis
+   ```
+3. For each newly-published package, configure the trusted publisher on npmjs.com:
+   - Go to `https://www.npmjs.com/package/@djs-commands/<name>/access`
+   - Under "Trusted publishers", click **Add publisher**
+   - Provider: **GitHub Actions**
+   - Owner: `D3OXY`
+   - Repository: `djs-commands`
+   - Workflow filename: `release.yml`
+   - Environment: leave blank (we don't gate on a deploy environment)
+4. After step 3 is done for all 7 packages, every subsequent release flows through the workflow with no token config needed.
+
+#### Path B — pre-register trusted publishers (if your npm org admin supports unpublished package reservations)
+
+Some org admins can pre-register trusted publishers for unpublished package names. If yours can, configure each `@djs-commands/<name>` ahead of the first publish using the same fields above, then skip Path A's step 1-2 entirely and let the workflow do the first publish via OIDC.
+
+## What the workflow expects
+
+- **Permissions** (declared in `.github/workflows/release.yml`):
+  - `contents: write` — for changesets to push the `Version Packages` PR
+  - `pull-requests: write` — same
+  - `id-token: write` — **required** for OIDC; npm verifies this token against the trusted publisher config
+- **No secrets** beyond the built-in `GITHUB_TOKEN`. Specifically:
+  - No `NPM_TOKEN` (replaced by Trusted Publishers)
+  - No `NPM_CONFIG_PROVENANCE=true` (provenance is automatic with OIDC)
 
 ## Manual publish (escape hatch)
 
@@ -39,10 +66,10 @@ If GitHub Actions is unavailable or the workflow needs to be bypassed:
 ```bash
 bun install --frozen-lockfile
 bun run build --filter='@djs-commands/*'
-NPM_CONFIG_PROVENANCE=true bun changeset publish
+bun changeset publish
 ```
 
-You'll need to be logged in via `npm login` and have publish access to `@djs-commands`. Note that provenance only attaches when run from CI with OIDC — local publishes will succeed but without the attestation.
+You'll need to be logged in via `npm login` and have publish access. Note that provenance only attaches when published via Trusted Publishers from CI — local publishes succeed but without the attestation.
 
 ## v1 sunset
 
