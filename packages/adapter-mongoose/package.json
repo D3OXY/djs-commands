@@ -36,7 +36,7 @@
 		"@djs-commands/tsconfig": "workspace:*",
 		"@types/bun": "catalog:",
 		"@types/node": "catalog:",
-		"mongoose": "^8.8.3",
+		"mongoose": "^9.6.2",
 		"typescript": "catalog:"
 	},
 	"publishConfig": {
