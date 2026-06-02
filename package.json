@@ -52,7 +52,7 @@
 		"@biomejs/biome": "2.2.2",
 		"@changesets/cli": "^2.27.0",
 		"husky": "^9.1.7",
-		"knip": "^5.71.0",
+		"knip": "^6.15.0",
 		"turbo": "^2.7.2",
 		"typescript": "^5.9.3"
 	}
