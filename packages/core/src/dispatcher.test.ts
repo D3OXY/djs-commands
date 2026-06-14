@@ -323,8 +323,13 @@ test("storage gate: fails closed when channel lock lookup fails", async () => {
 	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: false, channelLocks: true } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
+	const interaction = guildInteraction("ping");
 
-	await dispatcher.dispatch(guildInteraction("ping"));
+	await dispatcher.dispatch(interaction);
 
 	expect(run).toHaveBeenCalledTimes(0);
+	expect(interaction.reply).toHaveBeenCalledWith({
+		content: "Command availability checks are temporarily unavailable.",
+		flags: 64,
+	});
 });
