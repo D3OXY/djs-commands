@@ -44,6 +44,15 @@ export class Dispatcher {
 		}
 	}
 
+	unregister(name: string): void {
+		const command = this.commands.get(name);
+		if (!command) return;
+		this.commands.delete(name);
+		for (const [alias, aliasedCommand] of this.aliases) {
+			if (aliasedCommand === command) this.aliases.delete(alias);
+		}
+	}
+
 	async dispatch(interaction: ChatInputCommandInteraction): Promise<void> {
 		const command = this.commands.get(interaction.commandName);
 		if (!command) return;

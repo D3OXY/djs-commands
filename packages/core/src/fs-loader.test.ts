@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadCommandsFromDir, loadEventsFromDir } from "./fs-loader";
+import { loadCommandEntriesFromDir, loadCommandsFromDir, loadEventsFromDir } from "./fs-loader";
 
 let dir: string;
 
@@ -58,6 +58,15 @@ test("loadCommandsFromDir picks up files whose default export is a Command", asy
 
 	const names = commands.map((c) => c.name).sort();
 	expect(names).toEqual(["echo", "ping"]);
+});
+
+test("loadCommandEntriesFromDir includes source file paths", async () => {
+	const file = join(dir, "ping.ts");
+	await writeFile(file, PING_SOURCE);
+
+	const entries = await loadCommandEntriesFromDir(dir);
+
+	expect(entries).toEqual([{ file, command: expect.objectContaining({ name: "ping" }) }]);
 });
 
 test("loadCommandsFromDir walks subdirectories recursively", async () => {

@@ -34,7 +34,8 @@ export { normalizeLegacyContext, normalizeSlashContext } from "./context";
 export type { CacheAdapter, CooldownActor, CooldownConfig, CooldownType } from "./cooldowns";
 export { defineCommand } from "./define-command";
 export { defineEvent, type EventDefinition } from "./define-event";
-export { loadCommandsFromDir, loadEventsFromDir, watchCommandsDir } from "./fs-loader";
+export type { CommandFileEntry } from "./fs-loader";
+export { loadCommandEntriesFromDir, loadCommandsFromDir, loadEventsFromDir, watchCommandsDir } from "./fs-loader";
 export { createCommandHandler } from "./handler";
 export type { LegacyParseResult } from "./legacy-parser";
 export { parseLegacyArgs } from "./legacy-parser";
@@ -54,6 +55,16 @@ export type {
 	UserOption,
 } from "./options";
 export type { PluginManifest, PluginSetupContext } from "./plugin";
+export type {
+	CommandGuildRegistrationConfig,
+	CommandRegistrationConfig,
+	HandlerRegistrationConfig,
+	RegistrationGuildScopeConfig,
+	RegistrationPlan,
+	RegistrationPlanOperation,
+	RegistrationScopeConfig,
+	RegistrationScopeMode,
+} from "./registration";
 export {
 	assertRequiredStorageFields,
 	type ChannelLockRow,

@@ -62,6 +62,17 @@ test("registering a command with the same name overwrites the previous one", asy
 	expect(second).toHaveBeenCalledTimes(1);
 });
 
+test("unregister removes a command from dispatch", async () => {
+	const dispatcher = new Dispatcher();
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	dispatcher.unregister("ping");
+	await dispatcher.dispatch(fakeInteraction("ping"));
+
+	expect(run).toHaveBeenCalledTimes(0);
+});
+
 test("dispatch extracts options from the interaction and passes them via ctx.options", async () => {
 	const dispatcher = new Dispatcher();
 	const run = mock(async (_ctx: unknown) => {});

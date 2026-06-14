@@ -2,6 +2,7 @@ import type { ChatInputCommandInteraction, Client, Guild, GuildMember, Message, 
 import type { CacheAdapter, CooldownConfig } from "./cooldowns";
 import type { CommandOptions, ResolveOptions } from "./options";
 import type { PluginManifest } from "./plugin";
+import type { CommandRegistrationConfig, HandlerRegistrationConfig } from "./registration";
 import type { Storage } from "./storage";
 import type { CanRunCommand, Validator } from "./validators";
 
@@ -50,6 +51,8 @@ export interface Command<S extends CommandOptions = Record<string, never>> {
 	validators?: readonly Validator[];
 	cooldown?: CooldownConfig;
 	legacy?: CommandLegacyConfig;
+	/** Controls whether this command is included in handler-managed Discord registration scopes. */
+	registration?: CommandRegistrationConfig;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous command list erases the schema generic
@@ -84,6 +87,8 @@ export interface CommandHandlerOptions {
 	validators?: readonly Validator[];
 	canRunCommand?: CanRunCommand;
 	plugins?: PluginManifest[];
+	/** Discord application command registration plan. Defaults to syncing global commands. Pass false to disable. */
+	registration?: HandlerRegistrationConfig;
 	cacheAdapter?: CacheAdapter;
 	legacy?: HandlerLegacyConfig;
 	/** Persistent storage adapter for enabled framework features. */

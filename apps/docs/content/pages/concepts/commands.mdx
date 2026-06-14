@@ -111,7 +111,7 @@ Supported option types: `string`, `integer`, `number`, `boolean`, `user`, `chann
 `createCommandHandler` accepts a `client` and an array of commands. It does two things on your behalf:
 
 1. **Subscribes** to `interactionCreate`. When a chat-input interaction comes in, it looks up the command by `name` and dispatches it through validators → cooldown gates → plugins → `run`.
-2. **Registers** the command list with Discord on `clientReady`. This calls `client.application.commands.set(...)` with the names, descriptions, and options of every command you passed in.
+2. **Registers** the command list with Discord on `clientReady`. By default this syncs global application commands with the names, descriptions, and options of every loaded command.
 
 ```ts
 import { createCommandHandler } from "@djs-commands/core";
@@ -136,6 +136,34 @@ await handler.destroy();   // Removes listeners, awaits plugin teardown
 ```
 
 `destroy()` does **not** delete the registered application commands from Discord — those persist until you explicitly clear them.
+
+### Registration scopes
+
+Discord has separate global and guild application command scopes. The handler owns only the scopes you configure:
+
+```ts
+createCommandHandler({
+	client,
+	commands: [ping],
+	registration: {
+		global: "clear",
+		guilds: [{ id: "123456789012345678", mode: "sync" }],
+	},
+});
+```
+
+Use `sync` to overwrite a scope with the current command list, `clear` to overwrite it with no commands, and `ignore` to leave it untouched. `sync` and `clear` are destructive inside that scope. Commands persist in Discord until overwritten or cleared; stopping the bot does not remove them.
+
+Commands can opt out globally, target specific guilds, or skip framework auto-registration entirely while still loading for runtime dispatch:
+
+```ts
+defineCommand({
+	name: "admin",
+	description: "Guild-only admin command",
+	registration: { global: false, guilds: ["123456789012345678"] },
+	run: async () => {},
+});
+```
 
 ## Loading commands from a directory
 

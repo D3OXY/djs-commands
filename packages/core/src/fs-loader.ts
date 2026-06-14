@@ -1,4 +1,4 @@
-import { type FSWatcher, watch } from "node:fs";
+import { existsSync, type FSWatcher, watch } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -11,6 +11,11 @@ interface DirEntry {
 	name: string;
 	isDirectory(): boolean;
 	isFile(): boolean;
+}
+
+export interface CommandFileEntry {
+	file: string;
+	command: AnyCommand;
 }
 
 async function* walk(dir: string): AsyncIterable<string> {
@@ -50,13 +55,18 @@ async function importModule(file: string, cacheBust?: number): Promise<unknown> 
 }
 
 export async function loadCommandsFromDir(dir: string): Promise<AnyCommand[]> {
+	const entries = await loadCommandEntriesFromDir(dir);
+	return entries.map((entry) => entry.command);
+}
+
+export async function loadCommandEntriesFromDir(dir: string): Promise<CommandFileEntry[]> {
 	const absolute = resolve(dir);
-	const commands: AnyCommand[] = [];
+	const entries: CommandFileEntry[] = [];
 	for await (const file of walk(absolute)) {
 		const candidate = await importModule(file);
-		if (isCommand(candidate)) commands.push(candidate);
+		if (isCommand(candidate)) entries.push({ file, command: candidate });
 	}
-	return commands;
+	return entries;
 }
 
 export async function loadEventsFromDir(dir: string): Promise<EventDefinition[]> {
@@ -87,6 +97,10 @@ export function watchCommandsDir(dir: string, options: { onCommandChange?: (file
 			if (!filename) return;
 			if (!SOURCE_EXTS.has(extname(filename))) return;
 			const file = join(absolute, filename);
+			if (!existsSync(file)) {
+				options.onCommandChange?.(file, null);
+				return;
+			}
 			importModule(file, Date.now())
 				.then((candidate) => {
 					if (isCommand(candidate)) {

@@ -43,6 +43,7 @@ interface CommandHandlerOptions {
 	validators?: readonly Validator[];
 	canRunCommand?: CanRunCommand;
 	plugins?: PluginManifest[];
+	registration?: HandlerRegistrationConfig;
 	cacheAdapter?: CacheAdapter;
 	legacy?: HandlerLegacyConfig;
 	storage?: Storage;
@@ -61,10 +62,56 @@ interface CommandHandlerOptions {
 | `validators` | Global validators run on every command. |
 | `canRunCommand` | Slimmer single-callback gate — return `true` / `false` / a reason string. |
 | `plugins` | Plugin manifests merged at boot. |
+| `registration` | Discord application command scopes the handler owns. Defaults to global sync; pass `false` to disable framework registration. |
 | `cacheAdapter` | TTL-native cache for cooldowns. Without it, cooldowns are in-memory. |
 | `legacy` | Master switch + default prefix for legacy invocation. |
 | `storage` | Persistence adapter for enabled framework storage features. |
 | `storageFeatures` | Opt into storage-backed framework features. `guildPrefixes` defaults to `legacy.enabled`; `disabledCommands` and `channelLocks` default to `false`. |
+
+## `HandlerRegistrationConfig`
+
+```ts
+type HandlerRegistrationConfig =
+	| false
+	| {
+			enabled?: boolean;
+			global?: "sync" | "clear" | "ignore" | { mode: "sync" | "clear" | "ignore" };
+			guilds?: readonly (string | { id: string; mode?: "sync" | "clear" | "ignore" })[];
+	  };
+```
+
+When `registration` is omitted, the handler syncs global commands. When you pass an object, only listed scopes are managed; omitted scopes are ignored.
+
+`sync` overwrites that Discord scope with the current command list. `clear` overwrites it with an empty list. Both are destructive for that configured scope, and Discord commands persist until overwritten or cleared. Stopping your bot does not delete commands.
+
+```ts
+createCommandHandler({
+	client,
+	commandDir: "./src/commands",
+	registration: {
+		global: "clear",
+		guilds: [{ id: "123456789012345678", mode: "sync" }],
+	},
+});
+```
+
+Per-command overrides:
+
+```ts
+defineCommand({
+	name: "admin",
+	description: "Guild-only admin command",
+	registration: { global: false, guilds: ["123456789012345678"] },
+	run: async () => {},
+});
+
+defineCommand({
+	name: "runtime-only",
+	description: "Loaded for dispatch, not auto-registered",
+	registration: false,
+	run: async () => {},
+});
+```
 
 ## `CommandHandler`
 
