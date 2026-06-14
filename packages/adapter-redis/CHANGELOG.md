@@ -1,5 +1,13 @@
 # @djs-commands/adapter-redis
 
+## 3.0.0
+
+### Patch Changes
+
+- Updated dependencies [94dac6a]
+- Updated dependencies [d6013fc]
+  - @djs-commands/core@3.0.0
+
 ## 2.0.1
 
 ### Patch Changes

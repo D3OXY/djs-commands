@@ -1,5 +1,17 @@
 # @djs-commands/adapter-mongoose
 
+## 3.0.0
+
+### Major Changes
+
+- d6013fc: Make storage schema user-owned. First-party adapters now require explicit framework model mappings and no longer export package-owned schemas/model factories. Core adds storage feature flags so disabled-command and channel-lock gates only query storage when enabled.
+
+### Patch Changes
+
+- Updated dependencies [94dac6a]
+- Updated dependencies [d6013fc]
+  - @djs-commands/core@3.0.0
+
 ## 2.0.1
 
 ### Patch Changes

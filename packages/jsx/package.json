@@ -1,6 +1,6 @@
 {
 	"name": "@djs-commands/jsx",
-	"version": "2.0.1",
+	"version": "3.0.0",
 	"description": "JSX runtime + components for djs-commands — Components V2 expressed as JSX",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",
