@@ -133,6 +133,15 @@ describe("prismaStorage (mocked)", () => {
 		await expect(storage.update<GuildPrefixRow>(GuildPrefixModel, { guild_id: "missing" }, { prefix: "$" })).rejects.toThrow(/no row matched update/);
 	});
 
+	test("update and delete reject empty where clauses", async () => {
+		const { delegate, calls } = createMockGuildPrefixDelegate();
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
+
+		await expect(storage.update<GuildPrefixRow>(GuildPrefixModel, {}, { prefix: "!" })).rejects.toThrow(/mutating operations require at least one where condition/);
+		await expect(storage.delete(GuildPrefixModel, {})).rejects.toThrow(/mutating operations require at least one where condition/);
+		expect(calls.some((call) => call.method === "updateMany" || call.method === "deleteMany")).toBe(false);
+	});
+
 	test("delete uses deleteMany with mapped keys", async () => {
 		const { delegate, store } = createMockGuildPrefixDelegate();
 		store.set("g1", { guildId: "g1", prefix: "?" });
@@ -171,6 +180,33 @@ describe("prismaStorage (mocked)", () => {
 				},
 			})
 		).toThrow(/invalid mapping/);
+	});
+
+	test("constructor validates delegate methods", () => {
+		expect(() =>
+			prismaStorage({
+				models: {
+					[GuildPrefixModel]: {
+						delegate: { create: async () => ({}) } as unknown as PrismaDelegate,
+						fields: { guild_id: "guildId", prefix: "prefix" },
+					},
+				},
+			})
+		).toThrow(/Prisma delegate.*findFirst/);
+	});
+
+	test("constructor validates field mapping values", () => {
+		const { delegate } = createMockGuildPrefixDelegate();
+		expect(() =>
+			prismaStorage({
+				models: {
+					[GuildPrefixModel]: {
+						delegate,
+						fields: { guild_id: "guildId", prefix: 1 } as unknown as Record<string, string>,
+					},
+				},
+			})
+		).toThrow(/must map to a string property name/);
 	});
 });
 

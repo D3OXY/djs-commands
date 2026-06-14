@@ -37,6 +37,14 @@ export function prismaStorage(options: PrismaStorageOptions): Storage {
 		return out;
 	};
 
+	const toDbWhere = (mapped: PrismaModelMapping, where: Record<string, unknown>, opts: { allowEmpty: boolean }): Record<string, unknown> => {
+		const out = toDb(mapped, where);
+		if (!opts.allowEmpty && Object.keys(out).length === 0) {
+			throw new Error("@djs-commands/adapter-prisma: mutating operations require at least one where condition");
+		}
+		return out;
+	};
+
 	const fromDb = (mapped: PrismaModelMapping, row: Record<string, unknown>): Record<string, unknown> => {
 		const out: Record<string, unknown> = {};
 		for (const [field, property] of Object.entries(mapped.fields)) out[field] = row[property];
@@ -73,7 +81,7 @@ export function prismaStorage(options: PrismaStorageOptions): Storage {
 		},
 		async update(model, where, data) {
 			const mapped = modelFor(model);
-			const mappedWhere = toDb(mapped, where);
+			const mappedWhere = toDbWhere(mapped, where, { allowEmpty: false });
 			const result = await mapped.delegate.updateMany({
 				where: mappedWhere,
 				data: toDb(mapped, data as Record<string, unknown>),
@@ -85,7 +93,7 @@ export function prismaStorage(options: PrismaStorageOptions): Storage {
 		},
 		async delete(model, where) {
 			const mapped = modelFor(model);
-			await mapped.delegate.deleteMany({ where: toDb(mapped, where) });
+			await mapped.delegate.deleteMany({ where: toDbWhere(mapped, where, { allowEmpty: false }) });
 		},
 		async count(model, where) {
 			const mapped = modelFor(model);
@@ -95,6 +103,8 @@ export function prismaStorage(options: PrismaStorageOptions): Storage {
 		},
 	};
 }
+
+const PRISMA_DELEGATE_METHODS = ["create", "findFirst", "findMany", "updateMany", "deleteMany", "count"] as const;
 
 function resolveModels(options: PrismaStorageOptions): Partial<Record<FrameworkStorageModel, PrismaModelMapping>> {
 	if (!options?.models || typeof options.models !== "object") {
@@ -106,15 +116,41 @@ function resolveModels(options: PrismaStorageOptions): Partial<Record<FrameworkS
 			throw new Error(`@djs-commands/adapter-prisma: invalid mapping for model "${model}"`);
 		}
 		const mapping = rawMapping as PrismaModelMapping;
+		assertMethods(mapping.delegate, PRISMA_DELEGATE_METHODS, `@djs-commands/adapter-prisma: model "${model}" must define a Prisma delegate`);
 		if (!isRecord(mapping.fields)) {
 			throw new Error(`@djs-commands/adapter-prisma: model "${model}" must define a fields mapping`);
 		}
+		assertStringFieldValues(model, mapping.fields, "@djs-commands/adapter-prisma");
 		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields)), "@djs-commands/adapter-prisma");
 		models[model as FrameworkStorageModel] = mapping;
 	}
 	return models;
 }
 
+function assertStringFieldValues(model: string, fields: Record<string, unknown>, adapterName: string): asserts fields is Record<string, string> {
+	for (const [field, property] of Object.entries(fields)) {
+		if (typeof property !== "string") {
+			throw new Error(`${adapterName}: field "${field}" for model "${model}" must map to a string property name`);
+		}
+	}
+}
+
+function assertMethods(value: unknown, methods: readonly string[], message: string): void {
+	if (!isObjectLike(value)) {
+		throw new Error(message);
+	}
+	const target = value as Record<string, unknown>;
+	for (const method of methods) {
+		if (typeof target[method] !== "function") {
+			throw new Error(`${message} with method "${method}"`);
+		}
+	}
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object";
+}
+
+function isObjectLike(value: unknown): value is object {
+	return (value !== null && typeof value === "object") || typeof value === "function";
 }

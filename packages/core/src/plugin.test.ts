@@ -291,6 +291,23 @@ describe("storage feature boot checks", () => {
 		await handler.destroy();
 	});
 
+	test("failed storage boot does not attach dispatch listeners", async () => {
+		const { client } = makeClient();
+		const run = mock(async () => {});
+		const handler = createCommandHandler({
+			client,
+			commands: [{ name: "ping", description: "ping", run }],
+			storageFeatures: { disabledCommands: true },
+		});
+
+		await expect(handler.ready).rejects.toThrow(/storage is required/);
+		client.emit(Events.InteractionCreate, fakeChatInteraction("ping"));
+		await new Promise((resolve) => setImmediate(resolve));
+
+		expect(run).toHaveBeenCalledTimes(0);
+		await handler.destroy();
+	});
+
 	test("legacy mode without storage rejects boot unless guild prefixes are disabled", async () => {
 		const { client } = makeClient();
 		const handler = createCommandHandler({

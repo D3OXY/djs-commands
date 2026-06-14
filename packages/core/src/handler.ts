@@ -73,71 +73,83 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		});
 	};
 
-	options.client.on(Events.InteractionCreate, onInteraction);
-	options.client.once(Events.ClientReady, onReady);
-	if (legacyEnabled) {
-		options.client.on(Events.MessageCreate, onMessage);
-	}
-
 	const loadedEventListeners: { event: string; handler: (...args: unknown[]) => void }[] = [];
 	let watchHandle: WatchHandle | null = null;
 
+	const detachRuntimeListeners = () => {
+		options.client.off(Events.InteractionCreate, onInteraction);
+		options.client.off(Events.ClientReady, onReady);
+		if (legacyEnabled) {
+			options.client.off(Events.MessageCreate, onMessage);
+		}
+		watchHandle?.stop();
+		watchHandle = null;
+		for (const { event, handler } of loadedEventListeners) {
+			options.client.off(event, handler);
+		}
+		loadedEventListeners.length = 0;
+	};
+
 	const bootPromise = (async () => {
-		assertConfiguredStorage(options.storage, storageFeatures);
+		try {
+			assertConfiguredStorage(options.storage, storageFeatures);
 
-		// Load fs-discovered commands first so they're registered before plugin setup runs.
-		if (options.commandDir) {
-			const discovered = await loadCommandsFromDir(options.commandDir);
-			for (const command of discovered) {
-				allCommands.push(command);
-				dispatcher.register(command);
+			options.client.on(Events.InteractionCreate, onInteraction);
+			options.client.once(Events.ClientReady, onReady);
+			if (legacyEnabled) {
+				options.client.on(Events.MessageCreate, onMessage);
 			}
-		}
 
-		if (options.eventDir) {
-			const events = await loadEventsFromDir(options.eventDir);
-			for (const evt of events) {
-				registerEvent(options.client, evt, loadedEventListeners);
-			}
-		}
-
-		if (dev && options.commandDir) {
-			watchHandle = watchCommandsDir(options.commandDir, {
-				onCommandChange: (file, command) => {
-					if (!command) {
-						console.warn(`[djs-commands] ${file} changed but no longer exports a valid command`);
-						return;
-					}
+			// Load fs-discovered commands first so they're registered before plugin setup runs.
+			if (options.commandDir) {
+				const discovered = await loadCommandsFromDir(options.commandDir);
+				for (const command of discovered) {
+					allCommands.push(command);
 					dispatcher.register(command);
-					console.log(`[djs-commands] hot-reloaded ${command.name}`);
-				},
-			});
-		}
-
-		for (const plugin of plugins) {
-			if (!plugin.setup) continue;
-			try {
-				await plugin.setup({ client: options.client });
-			} catch (err) {
-				throw new Error(`[djs-commands] Plugin '${plugin.name}' setup failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+				}
 			}
+
+			if (options.eventDir) {
+				const events = await loadEventsFromDir(options.eventDir);
+				for (const evt of events) {
+					registerEvent(options.client, evt, loadedEventListeners);
+				}
+			}
+
+			if (dev && options.commandDir) {
+				watchHandle = watchCommandsDir(options.commandDir, {
+					onCommandChange: (file, command) => {
+						if (!command) {
+							console.warn(`[djs-commands] ${file} changed but no longer exports a valid command`);
+							return;
+						}
+						dispatcher.register(command);
+						console.log(`[djs-commands] hot-reloaded ${command.name}`);
+					},
+				});
+			}
+
+			for (const plugin of plugins) {
+				if (!plugin.setup) continue;
+				try {
+					await plugin.setup({ client: options.client });
+				} catch (err) {
+					throw new Error(`[djs-commands] Plugin '${plugin.name}' setup failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+				}
+			}
+		} catch (err) {
+			detachRuntimeListeners();
+			throw err;
 		}
 	})();
 
 	return {
 		destroy: async () => {
-			options.client.off(Events.InteractionCreate, onInteraction);
-			options.client.off(Events.ClientReady, onReady);
-			if (legacyEnabled) {
-				options.client.off(Events.MessageCreate, onMessage);
-			}
-			watchHandle?.stop();
-			for (const { event, handler } of loadedEventListeners) {
-				options.client.off(event, handler);
-			}
+			detachRuntimeListeners();
 			// Wait for boot to settle so we don't tear down mid-setup. Boot errors
 			// are surfaced via `ready`; destroy still tears plugins down.
 			await bootPromise.catch(() => {});
+			detachRuntimeListeners();
 			for (const plugin of plugins) {
 				if (!plugin.teardown) continue;
 				try {

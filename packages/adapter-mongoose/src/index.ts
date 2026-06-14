@@ -29,6 +29,14 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 		return out;
 	};
 
+	const toDbWhere = (mapped: MongooseModelMapping, where: Record<string, unknown>, opts: { allowEmpty: boolean }): Record<string, unknown> => {
+		const out = toDb(mapped, where);
+		if (!opts.allowEmpty && Object.keys(out).length === 0) {
+			throw new Error("@djs-commands/adapter-mongoose: mutating operations require at least one where condition");
+		}
+		return out;
+	};
+
 	const fromDb = (mapped: MongooseModelMapping, doc: Record<string, unknown>): Record<string, unknown> => {
 		const out: Record<string, unknown> = {};
 		for (const [field, property] of Object.entries(mapped.fields)) out[field] = doc[property];
@@ -65,7 +73,7 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 		async update(name, where, data) {
 			const mapped = modelFor(name);
 			const updated = await mapped.model
-				.findOneAndUpdate(toDb(mapped, where), { $set: toDb(mapped, data as Record<string, unknown>) }, { new: true })
+				.findOneAndUpdate(toDbWhere(mapped, where, { allowEmpty: false }), { $set: toDb(mapped, data as Record<string, unknown>) }, { new: true })
 				.lean<Record<string, unknown> | null>()
 				.exec();
 			if (!updated) throw new Error(`@djs-commands/adapter-mongoose: no document matched update for model "${name}"`);
@@ -73,7 +81,7 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 		},
 		async delete(name, where) {
 			const mapped = modelFor(name);
-			await mapped.model.deleteOne(toDb(mapped, where)).exec();
+			await mapped.model.deleteOne(toDbWhere(mapped, where, { allowEmpty: false })).exec();
 		},
 		async count(name, where) {
 			const mapped = modelFor(name);
@@ -81,6 +89,8 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 		},
 	};
 }
+
+const MONGOOSE_MODEL_METHODS = ["create", "findOne", "find", "findOneAndUpdate", "deleteOne", "countDocuments"] as const;
 
 function resolveModels(options: MongooseStorageOptions): Partial<Record<FrameworkStorageModel, MongooseModelMapping>> {
 	if (!options?.models || typeof options.models !== "object") {
@@ -95,9 +105,11 @@ function resolveModels(options: MongooseStorageOptions): Partial<Record<Framewor
 		if (!isObjectLike(mapping.model)) {
 			throw new Error(`@djs-commands/adapter-mongoose: model "${model}" must define a Mongoose model`);
 		}
+		assertMethods(mapping.model, MONGOOSE_MODEL_METHODS, `@djs-commands/adapter-mongoose: model "${model}" must define a Mongoose model`);
 		if (!isRecord(mapping.fields)) {
 			throw new Error(`@djs-commands/adapter-mongoose: model "${model}" must define a fields mapping`);
 		}
+		assertStringFieldValues(model, mapping.fields, "@djs-commands/adapter-mongoose");
 		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields)), "@djs-commands/adapter-mongoose");
 		models[model as FrameworkStorageModel] = mapping;
 	}
@@ -111,6 +123,26 @@ function stripVersionKey(doc: Record<string, unknown>): Record<string, unknown> 
 		out[key] = value;
 	}
 	return out;
+}
+
+function assertStringFieldValues(model: string, fields: Record<string, unknown>, adapterName: string): asserts fields is Record<string, string> {
+	for (const [field, property] of Object.entries(fields)) {
+		if (typeof property !== "string") {
+			throw new Error(`${adapterName}: field "${field}" for model "${model}" must map to a string property name`);
+		}
+	}
+}
+
+function assertMethods(value: unknown, methods: readonly string[], message: string): void {
+	if (!isObjectLike(value)) {
+		throw new Error(message);
+	}
+	const target = value as Record<string, unknown>;
+	for (const method of methods) {
+		if (typeof target[method] !== "function") {
+			throw new Error(`${message} with method "${method}"`);
+		}
+	}
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

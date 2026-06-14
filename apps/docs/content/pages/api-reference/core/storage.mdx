@@ -124,7 +124,7 @@ function disableCommand(storage: Storage, guildId: string, commandName: string):
 function enableCommand(storage: Storage, guildId: string, commandName: string): Promise<void>;
 ```
 
-The dispatcher consults `isCommandDisabled` automatically — you don't wire it into your validators.
+The dispatcher consults `isCommandDisabled` automatically when `storageFeatures.disabledCommands` is enabled on `createCommandHandler`.
 
 ## ChannelLocks helpers
 
@@ -134,7 +134,7 @@ function lockCommandToChannel(storage: Storage, guildId: string, commandName: st
 function unlockCommandFromChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void>;
 ```
 
-Empty list = no restriction. Non-empty = command runs only in those channels for that guild.
+Empty list = no restriction. Non-empty = command runs only in those channels for that guild when `storageFeatures.channelLocks` is enabled.
 
 ```ts
 import { lockCommandToChannel } from "@djs-commands/core";
