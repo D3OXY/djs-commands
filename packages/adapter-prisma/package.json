@@ -1,6 +1,6 @@
 {
 	"name": "@djs-commands/adapter-prisma",
-	"version": "2.0.1",
+	"version": "3.0.0",
 	"description": "Prisma Storage adapter for djs-commands — persistent state via Prisma Client",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",

@@ -1,5 +1,12 @@
 # create-djs-commands
 
+## 3.0.0
+
+### Patch Changes
+
+- 94dac6a: Add explicit global and guild command registration sync controls.
+- d6013fc: Make storage schema user-owned. First-party adapters now require explicit framework model mappings and no longer export package-owned schemas/model factories. Core adds storage feature flags so disabled-command and channel-lock gates only query storage when enabled.
+
 ## 2.0.1
 
 ### Patch Changes
