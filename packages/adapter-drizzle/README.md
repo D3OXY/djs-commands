@@ -1,77 +1,45 @@
 # @djs-commands/adapter-drizzle
 
-Drizzle/Postgres `Storage` adapter for [`@djs-commands/core`](https://www.npmjs.com/package/@djs-commands/core).
+Drizzle/Postgres `Storage` adapter for framework-owned djs-commands state.
 
-Persists the framework's three built-in models — **guild prefixes**, **disabled commands**, and **channel locks** — and any custom models you reach for via the generic `Storage` interface.
-
-📘 **Full walk-through: https://djscommands.deoxy.dev/adapter-cookbook#drizzle-postgres**
-
-## Install
-
-```bash
-bun add @djs-commands/core @djs-commands/adapter-drizzle drizzle-orm pg
-bun add -d drizzle-kit
-```
+Users own schema, migrations, table names, column names, indexes, and DB connection lifecycle. This adapter only translates mapped framework models.
 
 ## Usage
 
-1. Re-export the framework's tables from your Drizzle schema:
-
-   ```ts
-   // src/db/schema.ts
-   export { channelLocks, disabledCommands, guildPrefix } from "@djs-commands/adapter-drizzle/schema";
-   // ...your own tables alongside
-   ```
-
-2. Run a migration so the tables exist:
-
-   ```bash
-   bunx drizzle-kit push
-   ```
-
-3. Wire it up:
-
-   ```ts
-   import { drizzleStorage } from "@djs-commands/adapter-drizzle";
-   import { drizzle } from "drizzle-orm/node-postgres";
-   import { Pool } from "pg";
-
-   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-   const db = drizzle(pool);
-
-   createCommandHandler({
-     client,
-     commands: [/* ... */],
-     storage: drizzleStorage(db),
-   });
-   ```
-
-The dispatcher reads/writes `guild_prefix`, `disabled_commands`, and `channel_locks` automatically — you don't write any code for the framework models.
-
-## Bring-your-own-tables
-
-Override any of the table objects (rename columns, add fields, share with your app's schema):
-
 ```ts
 import { drizzleStorage } from "@djs-commands/adapter-drizzle";
-import { myGuildPrefixTable } from "./schema";
+import { GuildPrefixModel } from "@djs-commands/core";
+import { pgTable, text } from "drizzle-orm/pg-core";
 
-drizzleStorage(db, {
-  tables: { guildPrefix: myGuildPrefixTable },
+export const guildPrefixes = pgTable("bot_prefixes", {
+	guildId: text("guild_id").primaryKey(),
+	value: text("prefix").notNull(),
+});
+
+export const storage = drizzleStorage(db, {
+	models: {
+		[GuildPrefixModel]: {
+			table: guildPrefixes,
+			fields: { guild_id: guildPrefixes.guildId, prefix: guildPrefixes.value },
+		},
+	},
 });
 ```
 
-## Local development
+Map only models for features you enable. Required logical fields:
 
-Spin up Postgres for testing:
+- `GuildPrefixModel`: `guild_id`, `prefix`
+- `DisabledCommandsModel`: `guild_id`, `command_name`
+- `ChannelLocksModel`: `guild_id`, `command_name`, `channel_id`
 
-```bash
-docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres bun test
-```
+Recommended unique constraints:
 
-The integration test suite skips cleanly if `DATABASE_URL` is unset or unreachable — CI without Postgres will not fail.
+- guild prefixes: `guild_id`
+- disabled commands: `guild_id`, `command_name`
+- channel locks: `guild_id`, `command_name`, `channel_id`
+
+Unknown or unmapped framework models throw loudly. The constructor validates mapping shape only; table existence and column mistakes surface from Drizzle/Postgres at operation time.
 
 ## License
 
-[MIT](https://github.com/D3OXY/djs-commands/blob/main/LICENSE) · Issues + discussions on [GitHub](https://github.com/D3OXY/djs-commands).
+[MIT](https://github.com/D3OXY/djs-commands/blob/main/LICENSE)

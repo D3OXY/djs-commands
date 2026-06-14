@@ -95,7 +95,7 @@ client.on("interactionCreate", async (i) => {
 
 ## Toggling commands per guild
 
-`disabledCommands` is a built-in storage model. The dispatcher consults it automatically — you only need to expose admin commands to flip the flag.
+Enable `storageFeatures.disabledCommands`; then expose admin commands to flip the flag.
 
 ```ts
 import { defineCommand, disableCommand, enableCommand } from "@djs-commands/core";
@@ -129,7 +129,7 @@ await lockCommandToChannel(storage, guildId, "music-play", musicChannelId);
 // `music-play` now only runs in `musicChannelId` for this guild
 ```
 
-The dispatcher consults channel locks alongside the static `channels` field.
+Enable `storageFeatures.channelLocks` for the dispatcher to consult channel locks alongside the static `channels` field.
 
 ## Hot-reload commands in development
 

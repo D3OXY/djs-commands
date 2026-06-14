@@ -14,6 +14,7 @@ Subscribes the dispatcher to your discord.js `Client` and registers commands wit
 ```ts
 import { createCommandHandler } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
+import { storage } from "./storage";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -21,7 +22,7 @@ const handler = createCommandHandler({
 	client,
 	commands: [ping, help],
 	commandDir: "./src/commands",
-	storage: drizzleStorage(db),
+	storage,
 	cacheAdapter: redisCacheAdapter(redis),
 });
 
@@ -45,6 +46,7 @@ interface CommandHandlerOptions {
 	cacheAdapter?: CacheAdapter;
 	legacy?: HandlerLegacyConfig;
 	storage?: Storage;
+	storageFeatures?: StorageFeaturesConfig;
 }
 ```
 
@@ -61,7 +63,8 @@ interface CommandHandlerOptions {
 | `plugins` | Plugin manifests merged at boot. |
 | `cacheAdapter` | TTL-native cache for cooldowns. Without it, cooldowns are in-memory. |
 | `legacy` | Master switch + default prefix for legacy invocation. |
-| `storage` | Persistence adapter for guild prefixes, disabled commands, channel locks, and your own models. |
+| `storage` | Persistence adapter for enabled framework storage features. |
+| `storageFeatures` | Opt into storage-backed framework features. `guildPrefixes` defaults to `legacy.enabled`; `disabledCommands` and `channelLocks` default to `false`. |
 
 ## `CommandHandler`
 
@@ -74,7 +77,7 @@ interface CommandHandler {
 
 | Field | Notes |
 | --- | --- |
-| `ready` | Resolves once all plugin `setup` hooks complete. Rejects if any setup throws (the handler then doesn't attach listeners). |
+| `ready` | Resolves once boot completes. Rejects if storage validation or plugin setup throws. Failed boot does not leave runtime listeners attached. |
 | `destroy` | Detaches all listeners, awaits each plugin's `teardown` in reverse-registration order, stops the fs watcher. Errors during teardown are logged but don't block other teardowns. Does **not** delete registered application commands from Discord. |
 
 ```ts
@@ -97,5 +100,18 @@ createCommandHandler({
 	client,
 	commands: [...],
 	legacy: { enabled: true, defaultPrefix: "!" },
+	storageFeatures: { guildPrefixes: false },
 });
 ```
+
+## `StorageFeaturesConfig`
+
+```ts
+interface StorageFeaturesConfig {
+	guildPrefixes?: boolean;
+	disabledCommands?: boolean;
+	channelLocks?: boolean;
+}
+```
+
+Only enabled features query storage. If an enabled feature needs an unmapped framework model, `handler.ready` rejects.

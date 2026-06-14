@@ -58,8 +58,17 @@ export type AnyCommand = Command<any>;
 export interface HandlerLegacyConfig {
 	/** Master switch — when false, the messageCreate listener is not attached. */
 	enabled: boolean;
-	/** Prefix used when no per-guild override exists. Storage-backed override lands in slice #59. */
+	/** Prefix used when no per-guild override exists. */
 	defaultPrefix: string;
+}
+
+export interface StorageFeaturesConfig {
+	/** Per-guild legacy prefix overrides. Defaults to `legacy.enabled` when storage is configured. */
+	guildPrefixes?: boolean;
+	/** Per-guild command kill switch. Defaults to false. */
+	disabledCommands?: boolean;
+	/** Per-guild command channel allow-list. Defaults to false. */
+	channelLocks?: boolean;
 }
 
 export interface CommandHandlerOptions {
@@ -77,8 +86,10 @@ export interface CommandHandlerOptions {
 	plugins?: PluginManifest[];
 	cacheAdapter?: CacheAdapter;
 	legacy?: HandlerLegacyConfig;
-	/** Persistent storage adapter for framework features that need it (e.g. per-guild legacy prefix). */
+	/** Persistent storage adapter for enabled framework features. */
 	storage?: Storage;
+	/** Opt into storage-backed framework features. */
+	storageFeatures?: StorageFeaturesConfig;
 }
 
 export interface CommandHandler {

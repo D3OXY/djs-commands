@@ -206,7 +206,7 @@ test("storage gate: blocks when DisabledCommands has a row for this guild+comman
 	const storage = fakeStorage({
 		disabled_commands: [{ guild_id: "guild-1", command_name: "ping" }],
 	});
-	const dispatcher = new Dispatcher({ storage });
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: true, channelLocks: false } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
 
@@ -217,7 +217,7 @@ test("storage gate: blocks when DisabledCommands has a row for this guild+comman
 
 test("storage gate: lets command through when not disabled", async () => {
 	const storage = fakeStorage();
-	const dispatcher = new Dispatcher({ storage });
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: true, channelLocks: false } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
 
@@ -230,7 +230,7 @@ test("storage gate: blocks when channel locks exist and current channel is not a
 	const storage = fakeStorage({
 		channel_locks: [{ guild_id: "guild-1", command_name: "ping", channel_id: "allowed-channel" }],
 	});
-	const dispatcher = new Dispatcher({ storage });
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: false, channelLocks: true } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
 
@@ -243,7 +243,7 @@ test("storage gate: allows when current channel is in the lock list", async () =
 	const storage = fakeStorage({
 		channel_locks: [{ guild_id: "guild-1", command_name: "ping", channel_id: "allowed-channel" }],
 	});
-	const dispatcher = new Dispatcher({ storage });
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: false, channelLocks: true } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
 
@@ -256,7 +256,7 @@ test("storage gate: no-op when invocation isn't in a guild (DMs)", async () => {
 	const storage = fakeStorage({
 		disabled_commands: [{ guild_id: "guild-1", command_name: "ping" }],
 	});
-	const dispatcher = new Dispatcher({ storage });
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: true, channelLocks: true } });
 	const run = mock(async (_ctx: unknown) => {});
 	dispatcher.register({ name: "ping", description: "ping", run });
 
@@ -264,4 +264,72 @@ test("storage gate: no-op when invocation isn't in a guild (DMs)", async () => {
 	await dispatcher.dispatch(fakeInteraction("ping"));
 
 	expect(run).toHaveBeenCalledTimes(1);
+});
+
+test("storage gate: storage presence alone does not query disabled commands or channel locks", async () => {
+	const storage: Storage = {
+		async create() {
+			throw new Error("unexpected storage query");
+		},
+		async findOne() {
+			throw new Error("unexpected storage query");
+		},
+		async findMany() {
+			throw new Error("unexpected storage query");
+		},
+		async update() {
+			throw new Error("unexpected storage query");
+		},
+		async delete() {
+			throw new Error("unexpected storage query");
+		},
+		async count() {
+			throw new Error("unexpected storage query");
+		},
+	};
+	const dispatcher = new Dispatcher({ storage });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+
+	await dispatcher.dispatch(guildInteraction("ping"));
+
+	expect(run).toHaveBeenCalledTimes(1);
+});
+
+test("storage gate: fails closed when disabled command lookup fails", async () => {
+	const storage = fakeStorage();
+	storage.findOne = async () => {
+		throw new Error("db unavailable");
+	};
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: true, channelLocks: false } });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+	const interaction = guildInteraction("ping");
+
+	await dispatcher.dispatch(interaction);
+
+	expect(run).toHaveBeenCalledTimes(0);
+	expect(interaction.reply).toHaveBeenCalledWith({
+		content: "Command availability checks are temporarily unavailable.",
+		flags: 64,
+	});
+});
+
+test("storage gate: fails closed when channel lock lookup fails", async () => {
+	const storage = fakeStorage();
+	storage.findMany = async () => {
+		throw new Error("db unavailable");
+	};
+	const dispatcher = new Dispatcher({ storage, storageFeatures: { disabledCommands: false, channelLocks: true } });
+	const run = mock(async (_ctx: unknown) => {});
+	dispatcher.register({ name: "ping", description: "ping", run });
+	const interaction = guildInteraction("ping");
+
+	await dispatcher.dispatch(interaction);
+
+	expect(run).toHaveBeenCalledTimes(0);
+	expect(interaction.reply).toHaveBeenCalledWith({
+		content: "Command availability checks are temporarily unavailable.",
+		flags: 64,
+	});
 });

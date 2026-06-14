@@ -9,6 +9,7 @@ See [Concepts → Storage](/concepts/storage) for the narrative.
 
 ```ts
 interface Storage {
+	assertModels?: (models: readonly FrameworkStorageModel[]) => void;
 	create<T>(model: string, data: T): Promise<T>;
 	findOne<T>(model: string, where: StorageWhere): Promise<T | null>;
 	findMany<T>(model: string, opts?: StorageFindOpts): Promise<T[]>;
@@ -18,7 +19,7 @@ interface Storage {
 }
 ```
 
-Generic CRUD contract that adapters implement once and the framework consumes for every persistent feature. `create<T>` should return the persisted row (use `RETURNING` or re-fetch).
+Generic CRUD contract used by framework helpers. `assertModels` is optional and lets handler boot fail early for enabled storage features without querying the database.
 
 ## `StorageWhere`
 
@@ -62,7 +63,7 @@ Pass it and your adapter will work for every shipped feature, including upserts,
 
 ## Framework models
 
-The framework reads/writes three built-in models. All adapters ship schemas for them out of the box.
+The framework reads/writes three built-in models. Users own the real schema and map these logical fields in adapters.
 
 ### `GuildPrefixModel` / `GuildPrefixRow`
 
@@ -123,7 +124,7 @@ function disableCommand(storage: Storage, guildId: string, commandName: string):
 function enableCommand(storage: Storage, guildId: string, commandName: string): Promise<void>;
 ```
 
-The dispatcher consults `isCommandDisabled` automatically — you don't wire it into your validators.
+The dispatcher consults `isCommandDisabled` automatically when `storageFeatures.disabledCommands` is enabled on `createCommandHandler`.
 
 ## ChannelLocks helpers
 
@@ -133,7 +134,7 @@ function lockCommandToChannel(storage: Storage, guildId: string, commandName: st
 function unlockCommandFromChannel(storage: Storage, guildId: string, commandName: string, channelId: string): Promise<void>;
 ```
 
-Empty list = no restriction. Non-empty = command runs only in those channels for that guild.
+Empty list = no restriction. Non-empty = command runs only in those channels for that guild when `storageFeatures.channelLocks` is enabled.
 
 ```ts
 import { lockCommandToChannel } from "@djs-commands/core";

@@ -113,27 +113,11 @@ function indexTs(opts: ScaffoldOptions): string {
 		intents.push("GatewayIntentBits.MessageContent");
 	}
 
-	let storageSetup = "";
+	const storageSetup = "";
 	let storageOption = "";
-	if (opts.adapter === "drizzle") {
-		imports.push(`import { drizzleStorage } from "@djs-commands/adapter-drizzle";`, `import { drizzle } from "drizzle-orm/node-postgres";`, `import pg from "pg";`);
-		storageSetup = `
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool);
-`;
-		storageOption = "\n\tstorage: drizzleStorage(db),";
-	} else if (opts.adapter === "prisma") {
-		imports.push(`import { prismaStorage } from "@djs-commands/adapter-prisma";`, `import { PrismaClient } from "@prisma/client";`);
-		storageSetup = `
-const prisma = new PrismaClient();
-`;
-		storageOption = "\n\tstorage: prismaStorage(prisma),";
-	} else if (opts.adapter === "mongoose") {
-		imports.push(`import { mongooseStorage } from "@djs-commands/adapter-mongoose";`, `import mongoose from "mongoose";`);
-		storageSetup = `
-const connection = mongoose.createConnection(process.env.MONGO_URL!);
-`;
-		storageOption = "\n\tstorage: mongooseStorage(connection),";
+	if (opts.adapter !== "none") {
+		imports.push(`import { storage } from "./storage";`);
+		storageOption = "\n\tstorage,";
 	}
 
 	const dirImport = opts.packageManager === "bun" ? '"./commands"' : 'fileURLToPath(new URL("./commands", import.meta.url))';
@@ -142,6 +126,7 @@ const connection = mongoose.createConnection(process.env.MONGO_URL!);
 	}
 
 	const legacyOption = opts.legacy ? '\n\tlegacy: { enabled: true, defaultPrefix: "!" },' : "";
+	const storageFeaturesOption = opts.legacy && opts.adapter === "none" ? "\n\tstorageFeatures: { guildPrefixes: false }," : "";
 
 	return `${imports.join("\n")}
 ${storageSetup}
@@ -155,7 +140,7 @@ const client = new Client({ intents: [${intents.join(", ")}] });
 
 const handler = createCommandHandler({
 \tclient,
-\tcommandDir: ${dirImport},${storageOption}${legacyOption}
+\tcommandDir: ${dirImport},${storageOption}${legacyOption}${storageFeaturesOption}
 });
 
 handler.ready.catch((err) => {
@@ -168,6 +153,201 @@ client.once("clientReady", (c) => {
 });
 
 await client.login(token);
+`;
+}
+
+function storageTs(adapter: Adapter): string | null {
+	if (adapter === "drizzle") {
+		return `import { drizzleStorage } from "@djs-commands/adapter-drizzle";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel } from "@djs-commands/core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
+import { channelLocks, disabledCommands, guildPrefixes } from "./db/schema";
+
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+\tthrow new Error("DATABASE_URL environment variable is required");
+}
+
+const pool = new pg.Pool({ connectionString: databaseUrl });
+const db = drizzle(pool);
+
+export const storage = drizzleStorage(db, {
+\tmodels: {
+\t\t[GuildPrefixModel]: {
+\t\t\ttable: guildPrefixes,
+\t\t\tfields: { guild_id: guildPrefixes.guildId, prefix: guildPrefixes.prefix },
+\t\t},
+\t\t[DisabledCommandsModel]: {
+\t\t\ttable: disabledCommands,
+\t\t\tfields: { guild_id: disabledCommands.guildId, command_name: disabledCommands.commandName },
+\t\t},
+\t\t[ChannelLocksModel]: {
+\t\t\ttable: channelLocks,
+\t\t\tfields: { guild_id: channelLocks.guildId, command_name: channelLocks.commandName, channel_id: channelLocks.channelId },
+\t\t},
+\t},
+});
+`;
+	}
+	if (adapter === "prisma") {
+		return `import { prismaStorage, type PrismaDelegate } from "@djs-commands/adapter-prisma";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel } from "@djs-commands/core";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export const storage = prismaStorage({
+\tmodels: {
+\t\t[GuildPrefixModel]: {
+\t\t\tdelegate: prisma.guildPrefix as PrismaDelegate,
+\t\t\tfields: { guild_id: "guildId", prefix: "prefix" },
+\t\t},
+\t\t[DisabledCommandsModel]: {
+\t\t\tdelegate: prisma.disabledCommand as PrismaDelegate,
+\t\t\tfields: { guild_id: "guildId", command_name: "commandName" },
+\t\t},
+\t\t[ChannelLocksModel]: {
+\t\t\tdelegate: prisma.channelLock as PrismaDelegate,
+\t\t\tfields: { guild_id: "guildId", command_name: "commandName", channel_id: "channelId" },
+\t\t},
+\t},
+});
+`;
+	}
+	if (adapter === "mongoose") {
+		return `import { mongooseStorage } from "@djs-commands/adapter-mongoose";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel } from "@djs-commands/core";
+import mongoose from "mongoose";
+import { ChannelLock, DisabledCommand, GuildPrefix } from "./db/models";
+
+const mongoUrl = process.env.MONGO_URL;
+if (!mongoUrl) {
+\tthrow new Error("MONGO_URL environment variable is required");
+}
+
+mongoose.connect(mongoUrl);
+
+export const storage = mongooseStorage({
+\tmodels: {
+\t\t[GuildPrefixModel]: {
+\t\t\tmodel: GuildPrefix as unknown as mongoose.Model<Record<string, unknown>>,
+\t\t\tfields: { guild_id: "guildId", prefix: "prefix" },
+\t\t},
+\t\t[DisabledCommandsModel]: {
+\t\t\tmodel: DisabledCommand as unknown as mongoose.Model<Record<string, unknown>>,
+\t\t\tfields: { guild_id: "guildId", command_name: "commandName" },
+\t\t},
+\t\t[ChannelLocksModel]: {
+\t\t\tmodel: ChannelLock as unknown as mongoose.Model<Record<string, unknown>>,
+\t\t\tfields: { guild_id: "guildId", command_name: "commandName", channel_id: "channelId" },
+\t\t},
+\t},
+});
+`;
+	}
+	return null;
+}
+
+function drizzleSchemaTs(): string {
+	return `import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+
+export const guildPrefixes = pgTable("guild_prefixes", {
+\tguildId: text("guild_id").primaryKey(),
+\tprefix: text("prefix").notNull(),
+});
+
+export const disabledCommands = pgTable(
+\t"disabled_commands",
+\t{
+\t\tguildId: text("guild_id").notNull(),
+\t\tcommandName: text("command_name").notNull(),
+\t},
+\t(t) => [primaryKey({ columns: [t.guildId, t.commandName] })]
+);
+
+export const channelLocks = pgTable(
+\t"channel_locks",
+\t{
+\t\tguildId: text("guild_id").notNull(),
+\t\tcommandName: text("command_name").notNull(),
+\t\tchannelId: text("channel_id").notNull(),
+\t},
+\t(t) => [primaryKey({ columns: [t.guildId, t.commandName, t.channelId] })]
+);
+`;
+}
+
+function mongooseModelsTs(): string {
+	return `import mongoose from "mongoose";
+
+export const GuildPrefix = mongoose.model(
+\t"GuildPrefix",
+\tnew mongoose.Schema(
+\t\t{
+\t\t\tguildId: { type: String, required: true, unique: true },
+\t\t\tprefix: { type: String, required: true },
+\t\t},
+\t\t{ collection: "guild_prefixes" }
+\t)
+);
+
+const disabledCommandSchema = new mongoose.Schema(
+\t{
+\t\tguildId: { type: String, required: true },
+\t\tcommandName: { type: String, required: true },
+\t},
+\t{ collection: "disabled_commands" }
+);
+disabledCommandSchema.index({ guildId: 1, commandName: 1 }, { unique: true });
+export const DisabledCommand = mongoose.model("DisabledCommand", disabledCommandSchema);
+
+const channelLockSchema = new mongoose.Schema(
+\t{
+\t\tguildId: { type: String, required: true },
+\t\tcommandName: { type: String, required: true },
+\t\tchannelId: { type: String, required: true },
+\t},
+\t{ collection: "channel_locks" }
+);
+channelLockSchema.index({ guildId: 1, commandName: 1, channelId: 1 }, { unique: true });
+export const ChannelLock = mongoose.model("ChannelLock", channelLockSchema);
+`;
+}
+
+function prismaSchema(): string {
+	return `datasource db {
+\tprovider = "postgresql"
+\turl      = env("DATABASE_URL")
+}
+
+generator client {
+\tprovider = "prisma-client-js"
+}
+
+model GuildPrefix {
+\tguildId String @id @map("guild_id")
+\tprefix  String
+
+\t@@map("guild_prefixes")
+}
+
+model DisabledCommand {
+\tguildId     String @map("guild_id")
+\tcommandName String @map("command_name")
+
+\t@@id([guildId, commandName])
+\t@@map("disabled_commands")
+}
+
+model ChannelLock {
+\tguildId     String @map("guild_id")
+\tcommandName String @map("command_name")
+\tchannelId   String @map("channel_id")
+
+\t@@id([guildId, commandName, channelId])
+\t@@map("channel_locks")
+}
 `;
 }
 
@@ -196,7 +376,7 @@ function readme(opts: ScaffoldOptions): string {
 docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres:16
 \`\`\`
 
-Then push the schema using drizzle-kit (see [@djs-commands/adapter-drizzle](https://github.com/D3OXY/djs-commands/tree/main/packages/adapter-drizzle) for the model fragment).
+Then push the generated \`src/db/schema.ts\` using drizzle-kit.
 `
 			: opts.adapter === "prisma"
 				? `\n## Database (Postgres + Prisma)
@@ -234,7 +414,7 @@ Drop a \`defineCommand({...})\` default export into \`src/commands/\` — it'll 
 }
 
 export function buildFiles(opts: ScaffoldOptions): FileContent[] {
-	return [
+	const files = [
 		{ path: "package.json", content: packageJson(opts) },
 		{ path: "tsconfig.json", content: tsconfigJson() },
 		{ path: ".gitignore", content: gitignore() },
@@ -243,6 +423,12 @@ export function buildFiles(opts: ScaffoldOptions): FileContent[] {
 		{ path: "src/commands/ping.ts", content: pingCommandTs(opts) },
 		{ path: "README.md", content: readme(opts) },
 	];
+	const storage = storageTs(opts.adapter);
+	if (storage) files.push({ path: "src/storage.ts", content: storage });
+	if (opts.adapter === "drizzle") files.push({ path: "src/db/schema.ts", content: drizzleSchemaTs() });
+	if (opts.adapter === "mongoose") files.push({ path: "src/db/models.ts", content: mongooseModelsTs() });
+	if (opts.adapter === "prisma") files.push({ path: "prisma/schema.prisma", content: prismaSchema() });
+	return files;
 }
 
 export function installCommand(pm: PackageManager): { cmd: string; args: string[] } {

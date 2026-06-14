@@ -1,252 +1,127 @@
 ---
 title: Adapter Cookbook
-description: End-to-end recipes for plugging djs-commands into a real database.
+description: Wire djs-commands storage adapters to your own schema.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-
-Each entry walks through wiring a specific backing store to djs-commands' `Storage` adapter interface, soup-to-nuts. All four first-party adapters implement the same contract, so the **only** thing that changes between them is the constructor call and the schema/migration step.
-
-```ts
-const handler = createCommandHandler({
-	client,
-	commands: [...],
-	storage, // ← swap this line
-});
-```
 
 <Callout type="info">
-The framework's three built-in models — `guild_prefix`, `disabled_commands`, `channel_locks` — are read/written automatically by the dispatcher. You don't write any code for them; you just need the table/collection to exist.
+You own schema, migrations, indexes, model names, and connections. First-party adapters map framework models only.
 </Callout>
 
-## Drizzle (Postgres)
+## Feature flags
 
-The Drizzle adapter is recommended for new projects. It ships a ready-made schema you import directly.
-
-```bash
-bun add @djs-commands/adapter-drizzle drizzle-orm pg
-bun add -d drizzle-kit
-```
-
-```ts title="src/db.ts"
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool);
-```
-
-```ts title="drizzle.config.ts"
-import type { Config } from "drizzle-kit";
-
-export default {
-	schema: ["./node_modules/@djs-commands/adapter-drizzle/dist/schema.js"],
-	out: "./drizzle",
-	dialect: "postgresql",
-	dbCredentials: { url: process.env.DATABASE_URL! },
-} satisfies Config;
-```
-
-Generate and apply migrations:
-
-```bash
-bunx drizzle-kit generate
-bunx drizzle-kit migrate
-```
-
-Wire into the handler:
-
-```ts title="src/index.ts"
-import { drizzleStorage } from "@djs-commands/adapter-drizzle";
-import { db } from "./db";
-
+```ts
 createCommandHandler({
 	client,
-	commands: [...],
-	storage: drizzleStorage(db),
+	storage,
+	legacy: { enabled: true, defaultPrefix: "!" }, // enables guild prefix storage
+	storageFeatures: {
+		disabledCommands: true,
+		channelLocks: true,
+	},
 });
 ```
 
-To use your own table objects (renamed columns, extra fields), pass them via `tables`:
+Only enabled features query storage.
 
-```ts
-import { drizzleStorage, schema } from "@djs-commands/adapter-drizzle";
-import { myGuildPrefixTable } from "./schema";
+## Drizzle
 
-drizzleStorage(db, {
-	tables: { guildPrefix: myGuildPrefixTable },
+```ts title="src/db/schema.ts"
+import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+
+export const guildPrefixes = pgTable("guild_prefixes", {
+	guildId: text("guild_id").primaryKey(),
+	prefix: text("prefix").notNull(),
+});
+```
+
+```ts title="src/storage.ts"
+import { drizzleStorage } from "@djs-commands/adapter-drizzle";
+import { GuildPrefixModel } from "@djs-commands/core";
+import { guildPrefixes } from "./db/schema";
+
+export const storage = drizzleStorage(db, {
+	models: {
+		[GuildPrefixModel]: {
+			table: guildPrefixes,
+			fields: { guild_id: guildPrefixes.guildId, prefix: guildPrefixes.prefix },
+		},
+	},
 });
 ```
 
 ## Prisma
 
-```bash
-bun add @djs-commands/adapter-prisma @prisma/client
-bun add -d prisma
-```
-
-The adapter ships schema fragments as exported template strings. Copy them into your `schema.prisma`:
-
-```ts
-import {
-	GUILD_PREFIX_PRISMA_MODEL,
-	DISABLED_COMMANDS_PRISMA_MODEL,
-	CHANNEL_LOCKS_PRISMA_MODEL,
-} from "@djs-commands/adapter-prisma/schema";
-
-console.log(GUILD_PREFIX_PRISMA_MODEL);
-// model GuildPrefix { ... }
-```
-
-Or copy the models manually:
-
 ```prisma title="prisma/schema.prisma"
 model GuildPrefix {
 	guildId String @id @map("guild_id")
 	prefix  String
-	@@map("guild_prefix")
-}
 
-model DisabledCommand {
-	guildId      String @map("guild_id")
-	commandName  String @map("command_name")
-	@@id([guildId, commandName])
-	@@map("disabled_commands")
-}
-
-model ChannelLock {
-	guildId      String @map("guild_id")
-	commandName  String @map("command_name")
-	channelId    String @map("channel_id")
-	@@id([guildId, commandName, channelId])
-	@@map("channel_locks")
+	@@map("guild_prefixes")
 }
 ```
 
-Then:
+```ts title="src/storage.ts"
+import { prismaStorage, type PrismaDelegate } from "@djs-commands/adapter-prisma";
+import { GuildPrefixModel } from "@djs-commands/core";
 
-```bash
-bunx prisma migrate dev --name add-djs-commands
-```
-
-```ts title="src/index.ts"
-import { PrismaClient } from "@prisma/client";
-import { prismaStorage } from "@djs-commands/adapter-prisma";
-
-const prisma = new PrismaClient();
-
-createCommandHandler({
-	client,
-	commands: [...],
-	storage: prismaStorage(prisma),
-});
-```
-
-If you renamed the Prisma models in your schema (e.g. you have a different naming convention), pass the delegates explicitly:
-
-```ts
-prismaStorage(prisma, {
-	delegates: { guildPrefix: prisma.myGuildPrefix },
-});
-```
-
-## Mongoose (MongoDB)
-
-The Mongoose adapter is the v1 continuity path — your existing v1 connection works as-is.
-
-```bash
-bun add @djs-commands/adapter-mongoose mongoose
-```
-
-```ts title="src/index.ts"
-import mongoose from "mongoose";
-import { mongooseStorage } from "@djs-commands/adapter-mongoose";
-
-await mongoose.connect(process.env.MONGODB_URI!);
-
-createCommandHandler({
-	client,
-	commands: [...],
-	storage: mongooseStorage(mongoose.connection),
-});
-```
-
-The adapter creates the three framework models automatically (`guildPrefix`, `disabledCommand`, `channelLock`). To reuse models from your own application — e.g. you already have a `Guild` collection — pass them via `models`:
-
-```ts
-import { createGuildPrefixModel } from "@djs-commands/adapter-mongoose";
-
-mongooseStorage(connection, {
+export const storage = prismaStorage({
 	models: {
-		guildPrefix: createGuildPrefixModel(connection, "MyGuildPrefix"),
+		[GuildPrefixModel]: {
+			delegate: prisma.guildPrefix as PrismaDelegate,
+			fields: { guild_id: "guildId", prefix: "prefix" },
+		},
 	},
 });
 ```
 
-## Redis (cache adapter, not storage)
+## Mongoose
 
-Redis isn't a `Storage` adapter — it's a `CacheAdapter` for cooldowns. Use it **alongside** one of the storage adapters above.
+```ts title="src/db/models.ts"
+import mongoose from "mongoose";
 
-```bash
-bun add @djs-commands/adapter-redis ioredis
+export const GuildPrefix = mongoose.model(
+	"GuildPrefix",
+	new mongoose.Schema({
+		guildId: { type: String, required: true, unique: true },
+		prefix: { type: String, required: true },
+	})
+);
 ```
 
-```ts title="src/index.ts"
-import Redis from "ioredis";
-import { redisCacheAdapter } from "@djs-commands/adapter-redis";
-import { drizzleStorage } from "@djs-commands/adapter-drizzle";
-import { db } from "./db";
+```ts title="src/storage.ts"
+import { mongooseStorage } from "@djs-commands/adapter-mongoose";
+import { GuildPrefixModel } from "@djs-commands/core";
+import mongoose from "mongoose";
+import { GuildPrefix } from "./db/models";
 
-const redis = new Redis(process.env.REDIS_URL!);
-
-createCommandHandler({
-	client,
-	commands: [...],
-	storage: drizzleStorage(db),       // persistent state (prefixes, locks)
-	cacheAdapter: redisCacheAdapter(redis), // hot state (cooldowns)
+export const storage = mongooseStorage({
+	models: {
+		[GuildPrefixModel]: {
+			model: GuildPrefix as mongoose.Model<Record<string, unknown>>,
+			fields: { guild_id: "guildId", prefix: "prefix" },
+		},
+	},
 });
 ```
 
-The Redis adapter uses `SET key expiresAt PX ttl` so Redis handles expiration server-side — you never accumulate dead keys.
+## Required fields
 
-To prefix Redis keys (e.g. multi-tenant Redis), pass `keyPrefix`:
+| Model | Required logical fields | Recommended unique constraint |
+| --- | --- | --- |
+| `GuildPrefixModel` | `guild_id`, `prefix` | `guild_id` |
+| `DisabledCommandsModel` | `guild_id`, `command_name` | `guild_id`, `command_name` |
+| `ChannelLocksModel` | `guild_id`, `command_name`, `channel_id` | `guild_id`, `command_name`, `channel_id` |
 
-```ts
-redisCacheAdapter(redis, { keyPrefix: "bot:prod:" });
-```
+## Redis
 
-Default prefix is `djs-commands:`.
-
-## In-memory (the default)
-
-If you don't pass a `storage`, only **non-persistent** features work — slash commands run, validators run, but `guild_prefix`, `disabled_commands`, and `channel_locks` lookups are skipped.
-
-If you don't pass a `cacheAdapter`, cooldowns are stored in a process-local `Map`. That's fine for development and single-process bots.
-
-For production, register **both** a storage adapter (persistent, durable) and a cache adapter (fast, ephemeral).
-
-## Writing your own adapter
-
-`Storage` is six methods. Implement them, run the conformance suite, ship.
+Redis is a `CacheAdapter` for cooldowns, not a storage adapter.
 
 ```ts
-import type { Storage } from "@djs-commands/core";
-import { runStorageConformance } from "@djs-commands/core";
-
-export function myStorage(): Storage {
-	return {
-		async create(model, data) { /* ... */ },
-		async findOne(model, where) { /* ... */ },
-		async findMany(model, opts) { /* ... */ },
-		async update(model, where, data) { /* ... */ },
-		async delete(model, where) { /* ... */ },
-		async count(model, where) { /* ... */ },
-	};
-}
-
-// Validate against the framework's contract:
-runStorageConformance("my-adapter", () => myStorage());
+createCommandHandler({
+	client,
+	storage,
+	cacheAdapter: redisCacheAdapter(redis),
+});
 ```
-
-The conformance suite covers every code path the framework relies on — pass it and your adapter will work for every shipped feature.

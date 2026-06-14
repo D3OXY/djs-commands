@@ -58,7 +58,7 @@ import { lockCommandToChannel } from "@djs-commands/core";
 await lockCommandToChannel(storage, guildId, "admin", channelId);
 ```
 
-The framework runs both: a command must satisfy static `channels` AND any `ChannelLocks` entries for the guild.
+The framework runs both when `storageFeatures.channelLocks` is enabled: a command must satisfy static `channels` AND any `ChannelLocks` entries for the guild.
 
 ## Custom validators
 

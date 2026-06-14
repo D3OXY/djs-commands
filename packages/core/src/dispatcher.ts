@@ -13,6 +13,10 @@ interface DispatcherConfig {
 	canRunCommand?: CanRunCommand;
 	cacheAdapter?: CacheAdapter;
 	storage?: Storage;
+	storageFeatures: {
+		disabledCommands: boolean;
+		channelLocks: boolean;
+	};
 }
 
 export class Dispatcher {
@@ -28,6 +32,7 @@ export class Dispatcher {
 			canRunCommand: config.canRunCommand,
 			cacheAdapter: config.cacheAdapter,
 			storage: config.storage,
+			storageFeatures: config.storageFeatures ?? { disabledCommands: false, channelLocks: false },
 		};
 		this.cooldowns = new CooldownEngine(this.config.cacheAdapter);
 	}
@@ -149,15 +154,18 @@ export class Dispatcher {
 		if (!storage || !guildId) return null;
 
 		try {
-			if (await isCommandDisabled(storage, guildId, command.name)) {
+			if (this.config.storageFeatures.disabledCommands && (await isCommandDisabled(storage, guildId, command.name))) {
 				return "This command is currently disabled in this server.";
 			}
-			const locks = await getChannelLocks(storage, guildId, command.name);
-			if (locks.length > 0 && !locks.includes(channelId)) {
-				return "This command is locked to a different channel.";
+			if (this.config.storageFeatures.channelLocks) {
+				const locks = await getChannelLocks(storage, guildId, command.name);
+				if (locks.length > 0 && !locks.includes(channelId)) {
+					return "This command is locked to a different channel.";
+				}
 			}
 		} catch (err) {
 			console.error("[djs-commands] Storage gate check failed:", err);
+			return "Command availability checks are temporarily unavailable.";
 		}
 		return null;
 	}

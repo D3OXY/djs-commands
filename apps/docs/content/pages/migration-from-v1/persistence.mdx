@@ -16,28 +16,25 @@ bun add @djs-commands/adapter-mongoose mongoose
 ```
 
 ```ts
-import { mongooseStorage } from "@djs-commands/adapter-mongoose";
-import mongoose from "mongoose";
-
-const connection = mongoose.createConnection(process.env.MONGO_URI!);
+import { storage } from "./storage";
 
 createCommandHandler({
     client,
-    storage: mongooseStorage(connection),
+    storage,
     // …
 });
 ```
 
-The collections (`guild_prefix`, `disabled_commands`, `channel_locks`) are auto-created by Mongoose when first written. You can swap to Drizzle/Postgres or Prisma later just by changing the adapter import — your bot code doesn't move.
+Define your own Mongoose schemas/models, then map framework logical fields in `mongooseStorage({ models })`. You can swap to Drizzle/Postgres or Prisma later by changing storage wiring and migrations.
 
 ## Schema mapping
 
 | v1 collection | v2 model | What changed |
 |---|---|---|
 | `cooldowns` | (in-memory + optional `CacheAdapter`) | Cooldowns no longer hit the DB by default. Use `@djs-commands/adapter-redis` for sharded bots. |
-| `guild-prefix-schema` | `GuildPrefix` model | Resolved automatically when `legacy.enabled` + `storage` are set. |
-| `disabled-commands-schema` | `DisabledCommands` model | Same shape, now part of the framework's gate chain. |
-| `channel-commands-schema` | `ChannelLocks` model | Same shape. |
+| `guild-prefix-schema` | `GuildPrefixModel` | Resolved when `storageFeatures.guildPrefixes` is enabled. It defaults from `legacy.enabled`, but can be configured. |
+| `disabled-commands-schema` | `DisabledCommandsModel` | Requires `storageFeatures.disabledCommands`. |
+| `channel-commands-schema` | `ChannelLocksModel` | Requires `storageFeatures.channelLocks`. |
 | `custom-command-schema` | dropped | The custom-commands feature is gone. |
 | `required-permissions-schema` | dropped | Use the `permissions` property on `defineCommand` (static) or `canRunCommand` for runtime gating. |
 | `required-roles-schema` | dropped | Use the `roles` property on `defineCommand` (static) or `canRunCommand`. |
@@ -62,21 +59,29 @@ await lockCommandToChannel(storage, guildId, "ban", channelId);
 
 ## Switching adapters later
 
-Because the `Storage` contract is the same across adapters, moving from Mongo to Postgres later means changing two lines:
+Because handler code only receives `storage`, moving from Mongo to Postgres later means changing storage wiring:
 
 ```diff
-- import { mongooseStorage } from "@djs-commands/adapter-mongoose";
-- const connection = mongoose.createConnection(process.env.MONGO_URI!);
+- import { storage } from "./mongoose-storage";
 + import { drizzleStorage } from "@djs-commands/adapter-drizzle";
++ import { GuildPrefixModel } from "@djs-commands/core";
 + import { drizzle } from "drizzle-orm/node-postgres";
 + import pg from "pg";
++ import { guildPrefixes } from "./schema";
 + const db = drizzle(new pg.Pool({ connectionString: process.env.DATABASE_URL }));
++ const storage = drizzleStorage(db, {
++     models: {
++         [GuildPrefixModel]: {
++             table: guildPrefixes,
++             fields: { guild_id: guildPrefixes.guildId, prefix: guildPrefixes.prefix },
++         },
++     },
++ });
 
   createCommandHandler({
       client,
--     storage: mongooseStorage(connection),
-+     storage: drizzleStorage(db),
+      storage,
   });
 ```
 
-Plus, of course, copying the framework's tables into your new schema (each adapter's README has the schema fragment).
+Plus, of course, writing the new schema/migration.
