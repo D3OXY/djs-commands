@@ -27,7 +27,17 @@ test("scaffolds a baseline bot with the bun + drizzle defaults", async () => {
 		{ cwd: dir, skipInstall: true, stdio: "ignore" }
 	);
 
-	expect(result.files.sort()).toEqual([".env.example", ".gitignore", "README.md", "package.json", "src/commands/ping.ts", "src/index.ts", "tsconfig.json"]);
+	expect(result.files.sort()).toEqual([
+		".env.example",
+		".gitignore",
+		"README.md",
+		"package.json",
+		"src/commands/ping.ts",
+		"src/db/schema.ts",
+		"src/index.ts",
+		"src/storage.ts",
+		"tsconfig.json",
+	]);
 
 	const pkg = JSON.parse(await readFile(join(result.targetDir, "package.json"), "utf8"));
 	expect(pkg.name).toBe("test-bot");
@@ -35,6 +45,10 @@ test("scaffolds a baseline bot with the bun + drizzle defaults", async () => {
 	expect(pkg.dependencies["@djs-commands/adapter-drizzle"]).toBeDefined();
 	expect(pkg.dependencies["drizzle-orm"]).toBeDefined();
 	expect(pkg.dependencies.pg).toBeDefined();
+
+	const storage = await readFile(join(result.targetDir, "src/storage.ts"), "utf8");
+	expect(storage).toContain("[GuildPrefixModel]");
+	expect(storage).toContain("fields:");
 });
 
 test("adapter=none excludes ORM dependencies", async () => {
@@ -73,6 +87,7 @@ test("adapter=prisma adds prisma + @prisma/client", async () => {
 	expect(pkg.dependencies["@djs-commands/adapter-prisma"]).toBeDefined();
 	expect(pkg.dependencies["@prisma/client"]).toBeDefined();
 	expect(pkg.devDependencies.prisma).toBeDefined();
+	expect(result.files).toContain("prisma/schema.prisma");
 });
 
 test("adapter=mongoose adds mongoose and a Mongo URL in env", async () => {
@@ -93,6 +108,7 @@ test("adapter=mongoose adds mongoose and a Mongo URL in env", async () => {
 
 	const env = await readFile(join(result.targetDir, ".env.example"), "utf8");
 	expect(env).toContain("MONGO_URL=");
+	expect(result.files).toContain("src/db/models.ts");
 });
 
 test("legacy mode is reflected in src/index.ts and src/commands/ping.ts", async () => {

@@ -55,6 +55,7 @@ export type {
 } from "./options";
 export type { PluginManifest, PluginSetupContext } from "./plugin";
 export {
+	assertRequiredStorageFields,
 	type ChannelLockRow,
 	ChannelLocksModel,
 	clearGuildPrefix,
@@ -62,6 +63,8 @@ export {
 	DisabledCommandsModel,
 	disableCommand,
 	enableCommand,
+	type FrameworkStorageModel,
+	FrameworkStorageModelFields,
 	GuildPrefixModel,
 	type GuildPrefixRow,
 	getChannelLocks,
@@ -86,5 +89,6 @@ export type {
 	HandlerLegacyConfig,
 	LegacyRunContext,
 	SlashRunContext,
+	StorageFeaturesConfig,
 } from "./types";
 export type { CanRunCommand, ValidationResult, Validator, ValidatorContext, ValidatorSource } from "./validators";

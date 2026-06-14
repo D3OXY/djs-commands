@@ -7,6 +7,8 @@
  * RETURNING). Adapters that don't support returning should re-fetch.
  */
 export interface Storage {
+	/** Optional non-DB capability check used by handler boot for enabled storage-backed features. */
+	assertModels?: (models: readonly FrameworkStorageModel[]) => void;
 	create<T extends Record<string, unknown>>(model: string, data: T): Promise<T>;
 	findOne<T extends Record<string, unknown>>(model: string, where: StorageWhere): Promise<T | null>;
 	findMany<T extends Record<string, unknown>>(model: string, opts?: StorageFindOpts): Promise<T[]>;
@@ -22,6 +24,22 @@ export interface StorageFindOpts {
 	limit?: number;
 	offset?: number;
 	orderBy?: { field: string; direction: "asc" | "desc" };
+}
+
+export type FrameworkStorageModel = typeof GuildPrefixModel | typeof DisabledCommandsModel | typeof ChannelLocksModel;
+
+export const FrameworkStorageModelFields: Record<FrameworkStorageModel, readonly string[]> = {
+	guild_prefix: ["guild_id", "prefix"],
+	disabled_commands: ["guild_id", "command_name"],
+	channel_locks: ["guild_id", "command_name", "channel_id"],
+};
+
+export function assertRequiredStorageFields(model: FrameworkStorageModel, fields: ReadonlySet<string>, adapterName: string): void {
+	for (const field of FrameworkStorageModelFields[model]) {
+		if (!fields.has(field)) {
+			throw new Error(`${adapterName}: model "${model}" is missing required field mapping "${field}"`);
+		}
+	}
 }
 
 // ─── GuildPrefix model ─────────────────────────────────────────────────────

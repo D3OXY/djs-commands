@@ -1,141 +1,154 @@
-import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
+import { assertRequiredStorageFields, type FrameworkStorageModel, type Storage, type StorageFindOpts, type StorageWhere } from "@djs-commands/core";
 import { and, asc, count, desc, eq, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { channelLocks, disabledCommands, guildPrefix } from "./schema";
 
-export type { ChannelLockRow, DisabledCommandRow, GuildPrefixRow } from "./schema";
-export { channelLocks, disabledCommands, guildPrefix } from "./schema";
+type DrizzleColumn = unknown;
 
-interface ModelTables {
-	[GuildPrefixModel]: typeof guildPrefix;
-	[DisabledCommandsModel]: typeof disabledCommands;
-	[ChannelLocksModel]: typeof channelLocks;
+export interface DrizzleModelMapping {
+	table: PgTable;
+	fields: Record<string, DrizzleColumn>;
 }
 
-interface DrizzleStorageOptions {
-	tables?: Partial<ModelTables>;
+export interface DrizzleStorageOptions {
+	models: Partial<Record<FrameworkStorageModel, DrizzleModelMapping>>;
 }
 
-/**
- * Returns a `Storage` implementation backed by Drizzle Postgres. Models the
- * framework knows about (GuildPrefix, DisabledCommands, ChannelLocks) are
- * mapped to their Drizzle tables. Unknown models throw — adapters that don't
- * recognize a model name should fail loud, not silently no-op.
- *
- * Bring-your-own-tables: pass `options.tables` to override defaults if you've
- * customized table names or want to share a table object with other code.
- */
-export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOptions = {}): Storage {
-	const tables: ModelTables = {
-		[GuildPrefixModel]: options.tables?.[GuildPrefixModel] ?? guildPrefix,
-		[DisabledCommandsModel]: options.tables?.[DisabledCommandsModel] ?? disabledCommands,
-		[ChannelLocksModel]: options.tables?.[ChannelLocksModel] ?? channelLocks,
+interface ResolvedModel {
+	table: PgTable;
+	fields: Record<string, DrizzleColumn>;
+	properties: Record<string, string>;
+}
+
+export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOptions): Storage {
+	const models = resolveModels(options);
+
+	const modelFor = (model: string): ResolvedModel => {
+		const mapped = models[model as FrameworkStorageModel];
+		if (!mapped) throw new Error(`@djs-commands/adapter-drizzle: missing mapping for model "${model}"`);
+		return mapped;
 	};
 
-	const tableFor = (model: string): PgTable => {
-		const table = tables[model as keyof ModelTables];
-		if (!table) throw new Error(`@djs-commands/adapter-drizzle: unknown model "${model}"`);
-		return table;
-	};
-
-	const buildWhere = (table: PgTable, where: StorageWhere): SQL | undefined => {
+	const buildWhere = (mapped: ResolvedModel, where: StorageWhere): SQL | undefined => {
 		const conditions: SQL[] = [];
-		for (const [key, value] of Object.entries(where)) {
-			const column = (table as unknown as Record<string, unknown>)[snakeToCamel(key)];
-			if (!column) throw new Error(`@djs-commands/adapter-drizzle: unknown column "${key}" on table for model`);
+		for (const [field, value] of Object.entries(where)) {
+			const column = mapped.fields[field];
+			if (!column) throw new Error(`@djs-commands/adapter-drizzle: unknown mapped field "${field}"`);
 			conditions.push(eq(column as never, value));
 		}
 		if (conditions.length === 0) return undefined;
 		return conditions.length === 1 ? conditions[0] : and(...conditions);
 	};
 
+	const toDb = (mapped: ResolvedModel, data: Record<string, unknown>): Record<string, unknown> => {
+		const out: Record<string, unknown> = {};
+		for (const [field, value] of Object.entries(data)) {
+			const property = mapped.properties[field];
+			if (!property) throw new Error(`@djs-commands/adapter-drizzle: unknown mapped field "${field}"`);
+			out[property] = value;
+		}
+		return out;
+	};
+
+	const fromDb = (mapped: ResolvedModel, row: Record<string, unknown>): Record<string, unknown> => {
+		const out: Record<string, unknown> = {};
+		for (const [field, property] of Object.entries(mapped.properties)) out[field] = row[property];
+		return out;
+	};
+
 	return {
+		assertModels(required) {
+			for (const model of required) modelFor(model);
+		},
 		async create(model, data) {
-			const table = tableFor(model);
-			const insertData = mapKeysToCamel(data as Record<string, unknown>);
+			const mapped = modelFor(model);
 			const [row] = await db
-				.insert(table)
-				.values(insertData as never)
+				.insert(mapped.table)
+				.values(toDb(mapped, data as Record<string, unknown>) as never)
 				.returning();
-			return mapKeysToSnake(row as Record<string, unknown>) as never;
+			return fromDb(mapped, row as Record<string, unknown>) as never;
 		},
 		async findOne(model, where) {
-			const table = tableFor(model);
-			const condition = buildWhere(table, where);
+			const mapped = modelFor(model);
+			const condition = buildWhere(mapped, where);
 			const rows = await db
 				.select()
-				.from(table)
+				.from(mapped.table)
 				.where(condition ?? undefined)
 				.limit(1);
 			const row = rows[0];
-			return row ? (mapKeysToSnake(row as Record<string, unknown>) as never) : null;
+			return row ? (fromDb(mapped, row as Record<string, unknown>) as never) : null;
 		},
 		async findMany(model, opts: StorageFindOpts = {}) {
-			const table = tableFor(model);
-			let q = db.select().from(table).$dynamic();
+			const mapped = modelFor(model);
+			let q = db.select().from(mapped.table).$dynamic();
 			if (opts.where) {
-				const condition = buildWhere(table, opts.where);
+				const condition = buildWhere(mapped, opts.where);
 				if (condition) q = q.where(condition);
 			}
 			if (opts.orderBy) {
-				const column = (table as unknown as Record<string, unknown>)[snakeToCamel(opts.orderBy.field)];
-				if (column) {
-					q = q.orderBy(opts.orderBy.direction === "desc" ? desc(column as never) : asc(column as never));
-				}
+				const column = mapped.fields[opts.orderBy.field];
+				if (!column) throw new Error(`@djs-commands/adapter-drizzle: unknown mapped field "${opts.orderBy.field}"`);
+				q = q.orderBy(opts.orderBy.direction === "desc" ? desc(column as never) : asc(column as never));
 			}
 			if (opts.limit !== undefined) q = q.limit(opts.limit);
 			if (opts.offset !== undefined) q = q.offset(opts.offset);
 			const rows = await q;
-			return rows.map((r) => mapKeysToSnake(r as Record<string, unknown>)) as never;
+			return rows.map((row) => fromDb(mapped, row as Record<string, unknown>)) as never;
 		},
 		async update(model, where, data) {
-			const table = tableFor(model);
-			const condition = buildWhere(table, where);
-			const updateData = mapKeysToCamel(data as Record<string, unknown>);
+			const mapped = modelFor(model);
+			const condition = buildWhere(mapped, where);
 			const [row] = await db
-				.update(table)
-				.set(updateData as never)
+				.update(mapped.table)
+				.set(toDb(mapped, data as Record<string, unknown>) as never)
 				.where(condition ?? undefined)
 				.returning();
 			if (!row) throw new Error(`@djs-commands/adapter-drizzle: no row matched update for model "${model}"`);
-			return mapKeysToSnake(row as Record<string, unknown>) as never;
+			return fromDb(mapped, row as Record<string, unknown>) as never;
 		},
 		async delete(model, where) {
-			const table = tableFor(model);
-			const condition = buildWhere(table, where);
-			await db.delete(table).where(condition ?? undefined);
+			const mapped = modelFor(model);
+			const condition = buildWhere(mapped, where);
+			await db.delete(mapped.table).where(condition ?? undefined);
 		},
 		async count(model, where) {
-			const table = tableFor(model);
-			const condition = where ? buildWhere(table, where) : undefined;
+			const mapped = modelFor(model);
+			const condition = where ? buildWhere(mapped, where) : undefined;
 			const [row] = await db
 				.select({ value: count() })
-				.from(table)
+				.from(mapped.table)
 				.where(condition ?? undefined);
 			return row?.value ?? 0;
 		},
 	};
 }
 
-// Drizzle's TS-side column names use camelCase while the database uses
-// snake_case. The framework's API uses snake_case, so translate at the boundary.
-function snakeToCamel(s: string): string {
-	return s.replace(/_([a-z])/g, (_, c) => (c as string).toUpperCase());
+function resolveModels(options: DrizzleStorageOptions): Partial<Record<FrameworkStorageModel, ResolvedModel>> {
+	if (!options?.models || typeof options.models !== "object") {
+		throw new Error("@djs-commands/adapter-drizzle: options.models is required");
+	}
+	const models: Partial<Record<FrameworkStorageModel, ResolvedModel>> = {};
+	for (const [model, mapping] of Object.entries(options.models) as [FrameworkStorageModel, DrizzleModelMapping][]) {
+		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields ?? {})), "@djs-commands/adapter-drizzle");
+		models[model] = {
+			table: mapping.table,
+			fields: mapping.fields,
+			properties: resolveProperties(model, mapping),
+		};
+	}
+	return models;
 }
 
-function camelToSnake(s: string): string {
-	return s.replace(/([A-Z])/g, (_, c) => `_${(c as string).toLowerCase()}`);
-}
-
-function mapKeysToCamel(obj: Record<string, unknown>): Record<string, unknown> {
-	const out: Record<string, unknown> = {};
-	for (const [k, v] of Object.entries(obj)) out[snakeToCamel(k)] = v;
-	return out;
-}
-
-function mapKeysToSnake(obj: Record<string, unknown>): Record<string, unknown> {
-	const out: Record<string, unknown> = {};
-	for (const [k, v] of Object.entries(obj)) out[camelToSnake(k)] = v;
-	return out;
+function resolveProperties(model: FrameworkStorageModel, mapping: DrizzleModelMapping): Record<string, string> {
+	const properties: Record<string, string> = {};
+	const tableEntries = Object.entries(mapping.table as unknown as Record<string, unknown>);
+	for (const [field, column] of Object.entries(mapping.fields)) {
+		const property = tableEntries.find(([, value]) => value === column)?.[0];
+		if (!property) {
+			throw new Error(`@djs-commands/adapter-drizzle: field "${field}" for model "${model}" does not reference a column on its table`);
+		}
+		properties[field] = property;
+	}
+	return properties;
 }

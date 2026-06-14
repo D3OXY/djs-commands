@@ -1,86 +1,39 @@
 ---
 title: adapter-prisma
-description: Prisma Storage adapter — prismaStorage, options, schema fragments.
+description: Prisma Storage adapter with explicit delegate mappings.
 ---
 
-```bash
-bun add @djs-commands/core @djs-commands/adapter-prisma @prisma/client
-bun add -d prisma
-```
-
-For setup (schema model copies, migrations) see [Adapter Cookbook → Prisma](/adapter-cookbook#prisma).
-
-## `prismaStorage(prisma, options?)`
+## `prismaStorage(options)`
 
 ```ts
-function prismaStorage(
-	prisma: PrismaClientLike,
-	options?: PrismaStorageOptions,
-): Storage;
+function prismaStorage(options: PrismaStorageOptions): Storage;
 ```
 
-Returns a [`Storage`](/api-reference/core/storage) backed by a Prisma Client.
+`options.models` is required. Each enabled framework model needs a delegate and logical-field mapping.
 
 ```ts
-import { prismaStorage } from "@djs-commands/adapter-prisma";
-import { PrismaClient } from "@prisma/client";
+import { prismaStorage, type PrismaDelegate } from "@djs-commands/adapter-prisma";
+import { GuildPrefixModel } from "@djs-commands/core";
 
-const prisma = new PrismaClient();
-
-createCommandHandler({
-	client,
-	commands: [...],
-	storage: prismaStorage(prisma),
+prismaStorage({
+	models: {
+		[GuildPrefixModel]: {
+			delegate: prisma.guildPrefix as PrismaDelegate,
+			fields: { guild_id: "guildId", prefix: "prefix" },
+		},
+	},
 });
 ```
-
-## `PrismaClientLike`
-
-```ts
-type PrismaClientLike = Record<string, unknown>;
-```
-
-Intentionally loose typing so the package doesn't require `@prisma/client` as a hard dependency. The adapter accesses delegates by name (`prisma.guildPrefix.findUnique(...)` etc.).
-
-## `PrismaStorageOptions`
 
 ```ts
 interface PrismaStorageOptions {
-	delegates?: Partial<{
-		guildPrefix: unknown;
-		disabledCommands: unknown;
-		channelLocks: unknown;
-	}>;
+	models: Partial<Record<FrameworkStorageModel, PrismaModelMapping>>;
+}
+
+interface PrismaModelMapping {
+	delegate: PrismaDelegate;
+	fields: Record<string, string>;
 }
 ```
 
-If you renamed the framework models in your schema, pass the delegates explicitly:
-
-```ts
-prismaStorage(prisma, {
-	delegates: { guildPrefix: prisma.myCustomGuildPrefix },
-});
-```
-
-## Schema fragment exports
-
-```ts
-import {
-	GUILD_PREFIX_PRISMA_MODEL,
-	DISABLED_COMMANDS_PRISMA_MODEL,
-	CHANNEL_LOCKS_PRISMA_MODEL,
-} from "@djs-commands/adapter-prisma";
-```
-
-Each is a multi-line `string` containing the Prisma DSL for that model. Use them programmatically (e.g. for codegen / docs); for everyday use, copy the model definitions into your `schema.prisma` directly:
-
-```prisma
-model GuildPrefix {
-	guildId String @id @map("guild_id")
-	prefix  String
-
-	@@map("guild_prefix")
-}
-```
-
-(See the cookbook for the full set.)
+Constructor validates required logical fields. It does not query the database.

@@ -43,7 +43,7 @@ Prefer scaffolding? Run `npx create-djs-commands my-bot` and you're online in un
 - **Validators** — built-in `ownerOnly` / `guildOnly` / `channels` / `permissions` / `roles`, plus custom `Validator` functions. [Docs →](https://djscommands.deoxy.dev/concepts/validators)
 - **Cooldowns** — four scopes (`perUser` / `perGuild` / `perUserPerGuild` / `global`); pluggable `CacheAdapter` for distributed setups. [Docs →](https://djscommands.deoxy.dev/concepts/cooldowns)
 - **Plugins** — bundle commands and lifecycle hooks; `setup`/`teardown` awaited at boot. [Docs →](https://djscommands.deoxy.dev/concepts/plugins)
-- **Storage** — generic `Storage` adapter contract drives `guild_prefix`, `disabled_commands`, `channel_locks` framework models, plus your own. [Docs →](https://djscommands.deoxy.dev/concepts/storage)
+- **Storage** — user-owned schema for `guild_prefix`, `disabled_commands`, and `channel_locks` framework models. [Docs →](https://djscommands.deoxy.dev/concepts/storage)
 - **Components V2** — function-form builders (`button`, `container`, `section`, `modal`, …); pair with [`@djs-commands/jsx`](https://www.npmjs.com/package/@djs-commands/jsx) for JSX. [Docs →](https://djscommands.deoxy.dev/components-v2)
 - **fs-autoloader** — `commandDir` autoloads files; hot reloads in dev.
 

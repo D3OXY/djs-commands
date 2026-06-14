@@ -10,7 +10,7 @@ Every option you passed to `new CommandHandler({ … })` in v1 has a mapping in 
 | v1 option | v2 equivalent |
 |---|---|
 | `client` | `client` (unchanged) |
-| `mongoUri` | `storage: mongooseStorage(connection)` from `@djs-commands/adapter-mongoose` |
+| `mongoUri` | Own a Mongoose connection/model and pass mapped `storage` from `@djs-commands/adapter-mongoose` |
 | `commandDir` | `commandDir` (unchanged — fs-autoloader is still the default) |
 | `featuresDir` | `plugins: [...]` — see [Events and plugins](/migration-from-v1/events-and-plugins) |
 | `events.dir` | `eventDir` |
@@ -55,10 +55,9 @@ client.login(process.env.TOKEN);
 ```ts
 // v2
 import { createCommandHandler } from "@djs-commands/core";
-import { mongooseStorage } from "@djs-commands/adapter-mongoose";
 import { Client, GatewayIntentBits } from "discord.js";
 import { fileURLToPath } from "node:url";
-import mongoose from "mongoose";
+import { storage } from "./storage";
 
 const client = new Client({
     intents: [
@@ -68,11 +67,9 @@ const client = new Client({
     ],
 });
 
-const connection = mongoose.createConnection(process.env.MONGO_URI!);
-
 createCommandHandler({
     client,
-    storage: mongooseStorage(connection),
+    storage,
     commandDir: fileURLToPath(new URL("./commands", import.meta.url)),
     eventDir: fileURLToPath(new URL("./events", import.meta.url)),
     legacy: { enabled: true, defaultPrefix: "!" },

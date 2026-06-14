@@ -3,8 +3,8 @@ import type { EventDefinition } from "./define-event";
 import { Dispatcher } from "./dispatcher";
 import { loadCommandsFromDir, loadEventsFromDir, type WatchHandle, watchCommandsDir } from "./fs-loader";
 import { buildOptionsData } from "./options";
-import { getGuildPrefix } from "./storage";
-import type { AnyCommand, CommandHandler, CommandHandlerOptions } from "./types";
+import { ChannelLocksModel, DisabledCommandsModel, type FrameworkStorageModel, GuildPrefixModel, getGuildPrefix } from "./storage";
+import type { AnyCommand, CommandHandler, CommandHandlerOptions, StorageFeaturesConfig } from "./types";
 
 export function createCommandHandler(options: CommandHandlerOptions): CommandHandler {
 	const plugins = options.plugins ?? [];
@@ -15,20 +15,25 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		if (plugin.commands) allCommands.push(...plugin.commands);
 	}
 
+	const legacyEnabled = options.legacy?.enabled === true;
+	const legacyPrefix = options.legacy?.defaultPrefix ?? "!";
+	const storageFeatures = resolveStorageFeatures(options.storageFeatures, legacyEnabled);
+
 	const dispatcher = new Dispatcher({
 		botOwners: options.botOwners ?? [],
 		globalValidators: options.validators ?? [],
 		canRunCommand: options.canRunCommand,
 		cacheAdapter: options.cacheAdapter,
 		storage: options.storage,
+		storageFeatures: {
+			disabledCommands: storageFeatures.disabledCommands,
+			channelLocks: storageFeatures.channelLocks,
+		},
 	});
 
 	for (const command of allCommands) {
 		dispatcher.register(command);
 	}
-
-	const legacyEnabled = options.legacy?.enabled === true;
-	const legacyPrefix = options.legacy?.defaultPrefix ?? "!";
 
 	const onInteraction = (interaction: Interaction) => {
 		if (!interaction.isChatInputCommand()) return;
@@ -39,7 +44,7 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 	const handleMessage = async (message: Message): Promise<void> => {
 		let prefix = legacyPrefix;
-		if (options.storage && message.guild) {
+		if (storageFeatures.guildPrefixes && options.storage && message.guild) {
 			try {
 				const override = await getGuildPrefix(options.storage, message.guild.id);
 				if (override) prefix = override;
@@ -78,6 +83,8 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 	let watchHandle: WatchHandle | null = null;
 
 	const bootPromise = (async () => {
+		assertConfiguredStorage(options.storage, storageFeatures);
+
 		// Load fs-discovered commands first so they're registered before plugin setup runs.
 		if (options.commandDir) {
 			const discovered = await loadCommandsFromDir(options.commandDir);
@@ -142,6 +149,26 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		},
 		ready: bootPromise,
 	};
+}
+
+function resolveStorageFeatures(features: StorageFeaturesConfig | undefined, legacyEnabled: boolean): Required<StorageFeaturesConfig> {
+	return {
+		guildPrefixes: features?.guildPrefixes ?? legacyEnabled,
+		disabledCommands: features?.disabledCommands ?? false,
+		channelLocks: features?.channelLocks ?? false,
+	};
+}
+
+function assertConfiguredStorage(storage: CommandHandlerOptions["storage"], features: Required<StorageFeaturesConfig>): void {
+	const requiredModels: FrameworkStorageModel[] = [];
+	if (features.guildPrefixes) requiredModels.push(GuildPrefixModel);
+	if (features.disabledCommands) requiredModels.push(DisabledCommandsModel);
+	if (features.channelLocks) requiredModels.push(ChannelLocksModel);
+	if (requiredModels.length === 0) return;
+	if (!storage) {
+		throw new Error(`[djs-commands] storage is required for enabled storage features: ${requiredModels.join(", ")}`);
+	}
+	storage.assertModels?.(requiredModels);
 }
 
 function registerEvent(client: Client, evt: EventDefinition, listeners: { event: string; handler: (...args: unknown[]) => void }[]): void {

@@ -9,6 +9,7 @@ See [Concepts → Storage](/concepts/storage) for the narrative.
 
 ```ts
 interface Storage {
+	assertModels?: (models: readonly FrameworkStorageModel[]) => void;
 	create<T>(model: string, data: T): Promise<T>;
 	findOne<T>(model: string, where: StorageWhere): Promise<T | null>;
 	findMany<T>(model: string, opts?: StorageFindOpts): Promise<T[]>;
@@ -18,7 +19,7 @@ interface Storage {
 }
 ```
 
-Generic CRUD contract that adapters implement once and the framework consumes for every persistent feature. `create<T>` should return the persisted row (use `RETURNING` or re-fetch).
+Generic CRUD contract used by framework helpers. `assertModels` is optional and lets handler boot fail early for enabled storage features without querying the database.
 
 ## `StorageWhere`
 
@@ -62,7 +63,7 @@ Pass it and your adapter will work for every shipped feature, including upserts,
 
 ## Framework models
 
-The framework reads/writes three built-in models. All adapters ship schemas for them out of the box.
+The framework reads/writes three built-in models. Users own the real schema and map these logical fields in adapters.
 
 ### `GuildPrefixModel` / `GuildPrefixRow`
 

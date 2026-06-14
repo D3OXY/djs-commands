@@ -41,15 +41,12 @@ new CommandHandler({
 ```ts
 // v2
 import { createCommandHandler } from "@djs-commands/core";
-import { mongooseStorage } from "@djs-commands/adapter-mongoose";
 import { fileURLToPath } from "node:url";
-import mongoose from "mongoose";
-
-const connection = mongoose.createConnection(process.env.MONGO_URI!);
+import { storage } from "./storage";
 
 createCommandHandler({
     client,
-    storage: mongooseStorage(connection),
+    storage,
     commandDir: fileURLToPath(new URL("./commands", import.meta.url)),
     eventDir: fileURLToPath(new URL("./events", import.meta.url)),
     legacy: { enabled: true, defaultPrefix: "!" },

@@ -4,6 +4,7 @@ import type { ChatInputCommandInteraction, Client } from "discord.js";
 import { Events } from "discord.js";
 import { createCommandHandler } from "./handler";
 import type { PluginManifest } from "./plugin";
+import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel, type Storage } from "./storage";
 import type { AnyCommand } from "./types";
 
 const fakeChatInteraction = (commandName: string, optionValues: Record<string, unknown> = {}) =>
@@ -218,6 +219,75 @@ describe("plugin runtime", () => {
 		const { client } = makeClient();
 		const handler = createCommandHandler({ client, commands: [] });
 		await handler.ready;
+		await handler.destroy();
+	});
+});
+
+describe("storage feature boot checks", () => {
+	const storage = (assertModels: Storage["assertModels"]): Storage => ({
+		assertModels,
+		async create() {
+			throw new Error("not used");
+		},
+		async findOne() {
+			throw new Error("not used");
+		},
+		async findMany() {
+			throw new Error("not used");
+		},
+		async update() {
+			throw new Error("not used");
+		},
+		async delete() {
+			throw new Error("not used");
+		},
+		async count() {
+			throw new Error("not used");
+		},
+	});
+
+	test("legacy mode infers guild-prefix storage mapping", async () => {
+		const { client } = makeClient();
+		const assertModels = mock(() => {});
+		const handler = createCommandHandler({
+			client,
+			commands: [],
+			legacy: { enabled: true, defaultPrefix: "!" },
+			storage: storage(assertModels),
+		});
+
+		await handler.ready;
+		await handler.destroy();
+
+		expect(assertModels).toHaveBeenCalledWith([GuildPrefixModel]);
+	});
+
+	test("enabled disabled-command and channel-lock features require mappings", async () => {
+		const { client } = makeClient();
+		const assertModels = mock((models: readonly string[]) => {
+			if (models.includes(ChannelLocksModel)) throw new Error("missing channel locks");
+		});
+		const handler = createCommandHandler({
+			client,
+			commands: [],
+			storage: storage(assertModels),
+			storageFeatures: { disabledCommands: true, channelLocks: true },
+		});
+
+		await expect(handler.ready).rejects.toThrow(/missing channel locks/);
+		await handler.destroy();
+		expect(assertModels).toHaveBeenCalledWith([DisabledCommandsModel, ChannelLocksModel]);
+	});
+
+	test("enabled storage feature without storage rejects boot", async () => {
+		const { client } = makeClient();
+		const handler = createCommandHandler({
+			client,
+			commands: [],
+			storageFeatures: { disabledCommands: true },
+		});
+
+		await expect(handler.ready).rejects.toThrow(/storage is required/);
 		await handler.destroy();
 	});
 });

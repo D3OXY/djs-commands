@@ -1,5 +1,5 @@
-import { afterAll, describe, test } from "bun:test";
-import { runStorageConformance } from "@djs-commands/core";
+import { afterAll, describe, expect, test } from "bun:test";
+import { GuildPrefixModel, runStorageConformance } from "@djs-commands/core";
 import mongoose from "mongoose";
 import { mongooseStorage } from "./index";
 
@@ -29,7 +29,22 @@ async function tryConnect(url: string): Promise<mongoose.Connection | null> {
 const liveConnection = MONGO_URL ? await tryConnect(MONGO_URL) : null;
 
 if (liveConnection) {
-	const storage = mongooseStorage(liveConnection);
+	const guildPrefixSchema = new mongoose.Schema(
+		{
+			serverId: { type: String, required: true, unique: true },
+			value: { type: String, required: true },
+		},
+		{ collection: "guild_prefix", versionKey: false }
+	);
+	const GuildPrefix = liveConnection.model("AppGuildPrefix", guildPrefixSchema);
+	const storage = mongooseStorage({
+		models: {
+			[GuildPrefixModel]: {
+				model: GuildPrefix as unknown as mongoose.Model<Record<string, unknown>>,
+				fields: { guild_id: "serverId", prefix: "value" },
+			},
+		},
+	});
 
 	describe("mongooseStorage (integration)", () => {
 		afterAll(async () => {
@@ -41,6 +56,24 @@ if (liveConnection) {
 		});
 
 		runStorageConformance("mongoose", async () => storage);
+
+		test("missing mapping throws from assertModels", () => {
+			const missing = mongooseStorage({ models: {} });
+			expect(() => missing.assertModels?.([GuildPrefixModel])).toThrow(/missing mapping/);
+		});
+
+		test("constructor validates required field mappings", () => {
+			expect(() =>
+				mongooseStorage({
+					models: {
+						[GuildPrefixModel]: {
+							model: GuildPrefix as unknown as mongoose.Model<Record<string, unknown>>,
+							fields: { guild_id: "serverId" },
+						},
+					},
+				})
+			).toThrow(/prefix/);
+		});
 	});
 } else {
 	describe.skip("mongooseStorage (MONGO_URL not set or unreachable)", () => {

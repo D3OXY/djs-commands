@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { GuildPrefixModel, type GuildPrefixRow, runStorageConformance } from "@djs-commands/core";
-import { GUILD_PREFIX_PRISMA_MODEL, prismaStorage } from "./index";
+import { type PrismaDelegate, prismaStorage } from "./index";
 
 // ---------------------------------------------------------------------------
 // Mock-based unit tests — always run, no Prisma client generation required.
@@ -16,57 +16,65 @@ interface DelegateCall {
 function createMockGuildPrefixDelegate() {
 	const store = new Map<string, { guildId: string; prefix: string }>();
 	const calls: DelegateCall[] = [];
-	const delegate = {
-		create: async (args: { data: { guildId: string; prefix: string } }) => {
+	const delegate: PrismaDelegate = {
+		create: async (args) => {
 			calls.push({ method: "create", args });
-			store.set(args.data.guildId, { ...args.data });
-			return { ...args.data };
+			const data = args.data as { guildId: string; prefix: string };
+			store.set(data.guildId, { ...data });
+			return { ...data };
 		},
-		findFirst: async (args: { where: { guildId?: string } }) => {
+		findFirst: async (args) => {
 			calls.push({ method: "findFirst", args });
-			if (args.where.guildId) {
-				return store.get(args.where.guildId) ?? null;
+			const where = args.where as { guildId?: string };
+			if (where.guildId) {
+				return store.get(where.guildId) ?? null;
 			}
 			const first = store.values().next();
 			return first.done ? null : first.value;
 		},
-		findMany: async (args: { where?: { guildId?: string }; orderBy?: { guildId?: "asc" | "desc" }; take?: number; skip?: number }) => {
+		findMany: async (args) => {
 			calls.push({ method: "findMany", args });
+			const where = args.where as { guildId?: string } | undefined;
+			const orderBy = args.orderBy as { guildId?: "asc" | "desc" } | undefined;
 			let rows = Array.from(store.values());
-			if (args.where?.guildId) rows = rows.filter((r) => r.guildId === args.where?.guildId);
-			if (args.orderBy?.guildId) {
-				rows = [...rows].sort((a, b) => (args.orderBy?.guildId === "asc" ? a.guildId.localeCompare(b.guildId) : b.guildId.localeCompare(a.guildId)));
+			if (where?.guildId) rows = rows.filter((r) => r.guildId === where.guildId);
+			if (orderBy?.guildId) {
+				rows = [...rows].sort((a, b) => (orderBy.guildId === "asc" ? a.guildId.localeCompare(b.guildId) : b.guildId.localeCompare(a.guildId)));
 			}
 			if (args.skip !== undefined) rows = rows.slice(args.skip);
 			if (args.take !== undefined) rows = rows.slice(0, args.take);
 			return rows;
 		},
-		updateMany: async (args: { where: { guildId?: string }; data: Partial<{ guildId: string; prefix: string }> }) => {
+		updateMany: async (args) => {
 			calls.push({ method: "updateMany", args });
+			const where = args.where as { guildId?: string };
+			const data = args.data as Partial<{ guildId: string; prefix: string }>;
 			let count = 0;
 			for (const [id, row] of store) {
-				if (args.where.guildId !== undefined && row.guildId !== args.where.guildId) continue;
-				store.set(id, { ...row, ...args.data });
+				if (where.guildId !== undefined && row.guildId !== where.guildId) continue;
+				store.set(id, { ...row, ...data });
 				count += 1;
 			}
 			return { count };
 		},
-		deleteMany: async (args: { where: { guildId?: string } }) => {
+		deleteMany: async (args) => {
 			calls.push({ method: "deleteMany", args });
+			const where = args.where as { guildId?: string };
 			let count = 0;
 			for (const [id, row] of store) {
-				if (args.where.guildId !== undefined && row.guildId !== args.where.guildId) continue;
+				if (where.guildId !== undefined && row.guildId !== where.guildId) continue;
 				store.delete(id);
 				count += 1;
 			}
 			return { count };
 		},
-		count: async (args: { where?: { guildId?: string } }) => {
+		count: async (args) => {
 			calls.push({ method: "count", args });
 			if (!args.where) return store.size;
+			const where = args.where as { guildId?: string };
 			let n = 0;
 			for (const row of store.values()) {
-				if (args.where.guildId !== undefined && row.guildId !== args.where.guildId) continue;
+				if (where.guildId !== undefined && row.guildId !== where.guildId) continue;
 				n += 1;
 			}
 			return n;
@@ -78,7 +86,7 @@ function createMockGuildPrefixDelegate() {
 describe("prismaStorage (mocked)", () => {
 	test("create maps guild_id → guildId on the way in and back on the way out", async () => {
 		const { delegate, calls } = createMockGuildPrefixDelegate();
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		const created = await storage.create<GuildPrefixRow>(GuildPrefixModel, { guild_id: "g1", prefix: "?" });
 		expect(created).toEqual({ guild_id: "g1", prefix: "?" });
@@ -89,7 +97,7 @@ describe("prismaStorage (mocked)", () => {
 	test("findOne uses findFirst with mapped keys", async () => {
 		const { delegate, store } = createMockGuildPrefixDelegate();
 		store.set("g1", { guildId: "g1", prefix: "!" });
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		const row = await storage.findOne<GuildPrefixRow>(GuildPrefixModel, { guild_id: "g1" });
 		expect(row).toEqual({ guild_id: "g1", prefix: "!" });
@@ -102,7 +110,7 @@ describe("prismaStorage (mocked)", () => {
 		const { delegate, calls, store } = createMockGuildPrefixDelegate();
 		store.set("a", { guildId: "a", prefix: "1" });
 		store.set("b", { guildId: "b", prefix: "2" });
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		const rows = await storage.findMany<GuildPrefixRow>(GuildPrefixModel, {
 			orderBy: { field: "guild_id", direction: "desc" },
@@ -117,7 +125,7 @@ describe("prismaStorage (mocked)", () => {
 	test("update uses updateMany then re-fetches; throws if no row matched", async () => {
 		const { delegate, store } = createMockGuildPrefixDelegate();
 		store.set("g1", { guildId: "g1", prefix: "?" });
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		const updated = await storage.update<GuildPrefixRow>(GuildPrefixModel, { guild_id: "g1" }, { prefix: "!" });
 		expect(updated).toEqual({ guild_id: "g1", prefix: "!" });
@@ -128,7 +136,7 @@ describe("prismaStorage (mocked)", () => {
 	test("delete uses deleteMany with mapped keys", async () => {
 		const { delegate, store } = createMockGuildPrefixDelegate();
 		store.set("g1", { guildId: "g1", prefix: "?" });
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		await storage.delete(GuildPrefixModel, { guild_id: "g1" });
 		expect(store.has("g1")).toBe(false);
@@ -138,21 +146,21 @@ describe("prismaStorage (mocked)", () => {
 		const { delegate, store } = createMockGuildPrefixDelegate();
 		store.set("g1", { guildId: "g1", prefix: "?" });
 		store.set("g2", { guildId: "g2", prefix: "!" });
-		const storage = prismaStorage({ guildPrefix: delegate });
+		const storage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 
 		expect(await storage.count(GuildPrefixModel)).toBe(2);
 		expect(await storage.count(GuildPrefixModel, { guild_id: "g1" })).toBe(1);
 	});
 
-	test("missing delegate on the client throws loud at first use (lazy)", async () => {
-		const storage = prismaStorage({});
-		await expect(async () => storage.findOne(GuildPrefixModel, { guild_id: "x" })).toThrow(/no delegate for "prisma\.guildPrefix"/);
+	test("missing mapping throws loud at first use and from assertModels", async () => {
+		const storage = prismaStorage({ models: {} });
+		await expect(async () => storage.findOne(GuildPrefixModel, { guild_id: "x" })).toThrow(/missing mapping/);
+		expect(() => storage.assertModels?.([GuildPrefixModel])).toThrow(/missing mapping/);
 	});
 
-	test("GUILD_PREFIX_PRISMA_MODEL exports the schema fragment string", () => {
-		expect(GUILD_PREFIX_PRISMA_MODEL).toContain("model GuildPrefix");
-		expect(GUILD_PREFIX_PRISMA_MODEL).toContain('@map("guild_id")');
-		expect(GUILD_PREFIX_PRISMA_MODEL).toContain('@@map("guild_prefix")');
+	test("constructor validates required field mappings", () => {
+		const { delegate } = createMockGuildPrefixDelegate();
+		expect(() => prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId" } } } })).toThrow(/prefix/);
 	});
 });
 
@@ -162,7 +170,7 @@ describe("prismaStorage (mocked)", () => {
 // when DATABASE_URL is set and `@prisma/client` has been generated.
 describe("prismaStorage (mocked) conformance", () => {
 	const { delegate } = createMockGuildPrefixDelegate();
-	const mockedStorage = prismaStorage({ guildPrefix: delegate });
+	const mockedStorage = prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId", prefix: "prefix" } } } });
 	runStorageConformance("prisma-mock", async () => mockedStorage);
 });
 
@@ -234,7 +242,14 @@ const live = await loadAndConnect();
 
 if (live) {
 	const { client } = live;
-	const storage = prismaStorage(client);
+	const storage = prismaStorage({
+		models: {
+			[GuildPrefixModel]: {
+				delegate: client.guildPrefix as never,
+				fields: { guild_id: "guildId", prefix: "prefix" },
+			},
+		},
+	});
 
 	describe("prismaStorage (integration)", () => {
 		afterAll(async () => {

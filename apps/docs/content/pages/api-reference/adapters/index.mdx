@@ -5,13 +5,13 @@ description: Storage and cache adapters for djs-commands — bring your own DB.
 
 import { Cards, Card } from "fumadocs-ui/components/card";
 
-Each adapter implements the same `Storage` (or `CacheAdapter`) contract from [`@djs-commands/core`](/api-reference/core/storage). The framework's three built-in models — guild prefixes, disabled commands, channel locks — work transparently across all of them; pick whichever fits your stack.
+Each storage adapter maps djs-commands framework models onto your schema. You own migrations, indexes, names, and connections.
 
 For end-to-end setup walk-throughs (migrations, schema configuration, environment variables), see the [Adapter Cookbook](/adapter-cookbook).
 
 <Cards>
-	<Card title="@djs-commands/adapter-drizzle" href="/api-reference/adapters/drizzle" description="Postgres via Drizzle. drizzleStorage(db, options?)." />
-	<Card title="@djs-commands/adapter-prisma" href="/api-reference/adapters/prisma" description="Generic Prisma client. prismaStorage(prisma, options?)." />
-	<Card title="@djs-commands/adapter-mongoose" href="/api-reference/adapters/mongoose" description="MongoDB via Mongoose. mongooseStorage(connection, options?)." />
+	<Card title="@djs-commands/adapter-drizzle" href="/api-reference/adapters/drizzle" description="Postgres via Drizzle. drizzleStorage(db, options)." />
+	<Card title="@djs-commands/adapter-prisma" href="/api-reference/adapters/prisma" description="Prisma delegates. prismaStorage(options)." />
+	<Card title="@djs-commands/adapter-mongoose" href="/api-reference/adapters/mongoose" description="MongoDB via Mongoose models. mongooseStorage(options)." />
 	<Card title="@djs-commands/adapter-redis" href="/api-reference/adapters/redis" description="TTL-native CacheAdapter for distributed cooldowns. redisCacheAdapter(redis, options?)." />
 </Cards>
