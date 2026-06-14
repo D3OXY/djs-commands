@@ -13,7 +13,7 @@ v1's command-level validation flags map 1:1 to v2 properties on `defineCommand`.
 | `requiredRoles: ["role-id-1"]` | `roles: ["role-id-1"]` |
 | `ownerOnly: true` | `ownerOnly: true` |
 | `guildOnly: true` | `guildOnly: true` |
-| `testOnly: true` | dropped — handle deploy gating yourself |
+| `testOnly: true` | `registration: { global: false, guilds: ["guild-id"] }` or your own deployment policy |
 
 ```ts
 // v1

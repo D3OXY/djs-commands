@@ -17,7 +17,7 @@ Every option you passed to `new CommandHandler({ … })` in v1 has a mapping in 
 | `defaultPrefix` | `legacy: { enabled: true, defaultPrefix: "!" }` |
 | `botOwners` | `botOwners` (unchanged) |
 | `cooldownConfig` | per-command `cooldown: { type, duration }` (no global config) |
-| `testServers` | dropped — handle via your own deploy logic per guild |
+| `testServers` | `registration: { guilds: ["guild-id"] }` for guild sync |
 | `defaultCommand` | dropped — built-in admin commands removed; build your own |
 | `antiCrash` | dropped — use process-level `unhandledRejection` / `uncaughtException` |
 
@@ -85,3 +85,4 @@ Notes:
 - v2 doesn't wait for `ready` to wire up — you call `createCommandHandler` synchronously after constructing the `Client`.
 - v2's `commandDir` accepts a path string. We use `fileURLToPath(new URL(...))` so it works under both Bun and Node + tsx; v1's `path.join(__dirname, ...)` worked because v1 was CJS — v2 is ESM.
 - `cooldownConfig.dbRequired` (v1's "use DB if duration ≥ 5min") doesn't exist. Cooldowns default to in-memory; provide a `cacheAdapter` (e.g. `@djs-commands/adapter-redis`) for distributed cooldowns.
+- Guild registration is no longer described as only testing. Use guild sync for private single-server bots or fast iteration; use global sync for public rollout.

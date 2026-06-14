@@ -1,8 +1,8 @@
 import { type ApplicationCommandDataResolvable, type Client, Events, type Interaction, type Message } from "discord.js";
 import type { EventDefinition } from "./define-event";
 import { Dispatcher } from "./dispatcher";
-import { loadCommandsFromDir, loadEventsFromDir, type WatchHandle, watchCommandsDir } from "./fs-loader";
-import { buildOptionsData } from "./options";
+import { loadCommandEntriesFromDir, loadEventsFromDir, type WatchHandle, watchCommandsDir } from "./fs-loader";
+import { createRegistrationPlan, type RegistrationPlan } from "./registration";
 import { ChannelLocksModel, DisabledCommandsModel, type FrameworkStorageModel, GuildPrefixModel, getGuildPrefix } from "./storage";
 import type { AnyCommand, CommandHandler, CommandHandlerOptions, StorageFeaturesConfig } from "./types";
 
@@ -35,6 +35,9 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		dispatcher.register(command);
 	}
 
+	const commandFiles = new Map<string, string>();
+	let readyClient: Client<true> | null = null;
+
 	const onInteraction = (interaction: Interaction) => {
 		if (!interaction.isChatInputCommand()) return;
 		dispatcher.dispatch(interaction).catch((err) => {
@@ -63,14 +66,12 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 	const onReady = (client: Client<true>) => {
 		if (!client.application) return;
-		const data = allCommands.map((c) => ({
-			name: c.name,
-			description: c.description,
-			options: buildOptionsData(c.options),
-		})) as unknown as ApplicationCommandDataResolvable[];
-		client.application.commands.set(data).catch((err) => {
-			console.error("[djs-commands] Failed to register application commands:", err);
-		});
+		readyClient = client;
+		bootPromise
+			.then(() => syncRegistration(client, allCommands, options.registration))
+			.catch((err) => {
+				console.error("[djs-commands] Failed to register application commands:", err);
+			});
 	};
 
 	const loadedEventListeners: { event: string; handler: (...args: unknown[]) => void }[] = [];
@@ -102,9 +103,10 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 
 			// Load fs-discovered commands first so they're registered before plugin setup runs.
 			if (options.commandDir) {
-				const discovered = await loadCommandsFromDir(options.commandDir);
-				for (const command of discovered) {
-					allCommands.push(command);
+				const discovered = await loadCommandEntriesFromDir(options.commandDir);
+				for (const { file, command } of discovered) {
+					commandFiles.set(file, command.name);
+					replaceCommand(allCommands, command);
 					dispatcher.register(command);
 				}
 			}
@@ -119,12 +121,28 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 			if (dev && options.commandDir) {
 				watchHandle = watchCommandsDir(options.commandDir, {
 					onCommandChange: (file, command) => {
+						const previousName = commandFiles.get(file);
 						if (!command) {
+							if (previousName) {
+								removeCommand(allCommands, previousName);
+								dispatcher.unregister(previousName);
+								commandFiles.delete(file);
+								console.log(`[djs-commands] removed ${previousName}`);
+								if (readyClient) syncRegistration(readyClient, allCommands, options.registration).catch(logRegistrationError);
+								return;
+							}
 							console.warn(`[djs-commands] ${file} changed but no longer exports a valid command`);
 							return;
 						}
+						if (previousName && previousName !== command.name) {
+							removeCommand(allCommands, previousName);
+							dispatcher.unregister(previousName);
+						}
+						replaceCommand(allCommands, command);
+						commandFiles.set(file, command.name);
 						dispatcher.register(command);
 						console.log(`[djs-commands] hot-reloaded ${command.name}`);
+						if (readyClient) syncRegistration(readyClient, allCommands, options.registration).catch(logRegistrationError);
 					},
 				});
 			}
@@ -181,6 +199,40 @@ function assertConfiguredStorage(storage: CommandHandlerOptions["storage"], feat
 		throw new Error(`[djs-commands] storage is required for enabled storage features: ${requiredModels.join(", ")}`);
 	}
 	storage.assertModels?.(requiredModels);
+}
+
+async function applyRegistrationPlan(client: Client<true>, plan: RegistrationPlan): Promise<void> {
+	if (!client.application) return;
+	for (const operation of plan.operations) {
+		const commands = operation.commands as ApplicationCommandDataResolvable[];
+		if (operation.scope === "global") {
+			await client.application.commands.set(commands);
+		} else {
+			const guild = await client.guilds.fetch(operation.guildId);
+			await guild.commands.set(commands);
+		}
+	}
+}
+
+async function syncRegistration(client: Client<true>, commands: readonly AnyCommand[], registration: CommandHandlerOptions["registration"]): Promise<void> {
+	await applyRegistrationPlan(client, createRegistrationPlan(commands, registration));
+}
+
+function logRegistrationError(err: unknown): void {
+	console.error("[djs-commands] Failed to register application commands:", err);
+}
+
+function replaceCommand(commands: AnyCommand[], command: AnyCommand): void {
+	removeCommand(commands, command.name);
+	commands.push(command);
+}
+
+function removeCommand(commands: AnyCommand[], name: string): void {
+	let index = commands.findIndex((command) => command.name === name);
+	while (index !== -1) {
+		commands.splice(index, 1);
+		index = commands.findIndex((command) => command.name === name);
+	}
 }
 
 function registerEvent(client: Client, evt: EventDefinition, listeners: { event: string; handler: (...args: unknown[]) => void }[]): void {

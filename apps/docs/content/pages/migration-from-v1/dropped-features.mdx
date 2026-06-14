@@ -54,24 +54,20 @@ Or better: don't add it at all. Let your supervisor restart the bot on crash and
 
 v1 had a `testServers` option that registered new commands against a list of guild IDs first, then promoted to global on success.
 
-**Why dropped**: the deploy story for slash commands varies a lot (you might use `discord.js`'s REST helpers directly, run a separate deploy script, gate on environment, etc.). Forcing one model in the framework limited flexibility.
-
-**Replacement**: handle it yourself in the `clientReady` event:
+**Replacement**: use explicit Discord registration scopes.
 
 ```ts
-client.once("clientReady", async (c) => {
-    if (process.env.NODE_ENV === "production") {
-        await c.application.commands.set(commands);
-    } else {
-        for (const guildId of TEST_GUILDS) {
-            const guild = await c.guilds.fetch(guildId);
-            await guild.commands.set(commands);
-        }
-    }
+createCommandHandler({
+    client,
+    commandDir: "./src/commands",
+    registration: {
+        global: "clear",
+        guilds: [{ id: "123456789012345678", mode: "sync" }],
+    },
 });
 ```
 
-The framework's default `clientReady` listener registers globally. If you want test-server gating, override it with your own listener BEFORE calling `createCommandHandler` (or pass `commands: []` to skip the framework's auto-register).
+Guild sync is useful for private single-server bots and fast iteration, not only tests. `sync` overwrites the configured scope with the current command list; `clear` overwrites it with an empty list. Discord commands persist until overwritten or cleared.
 
 ## `cooldownConfig.dbRequired` (5-minute DB persistence threshold)
 

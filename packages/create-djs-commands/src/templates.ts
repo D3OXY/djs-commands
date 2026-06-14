@@ -140,7 +140,8 @@ const client = new Client({ intents: [${intents.join(", ")}] });
 
 const handler = createCommandHandler({
 \tclient,
-\tcommandDir: ${dirImport},${storageOption}${legacyOption}${storageFeaturesOption}
+\tcommandDir: ${dirImport},
+\tregistration: { global: "sync" },${storageOption}${legacyOption}${storageFeaturesOption}
 });
 
 handler.ready.catch((err) => {
