@@ -101,9 +101,20 @@ function resolveModels(options: PrismaStorageOptions): Partial<Record<FrameworkS
 		throw new Error("@djs-commands/adapter-prisma: options.models is required");
 	}
 	const models: Partial<Record<FrameworkStorageModel, PrismaModelMapping>> = {};
-	for (const [model, mapping] of Object.entries(options.models) as [FrameworkStorageModel, PrismaModelMapping][]) {
-		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields ?? {})), "@djs-commands/adapter-prisma");
-		models[model] = mapping;
+	for (const [model, rawMapping] of Object.entries(options.models)) {
+		if (!isRecord(rawMapping)) {
+			throw new Error(`@djs-commands/adapter-prisma: invalid mapping for model "${model}"`);
+		}
+		const mapping = rawMapping as PrismaModelMapping;
+		if (!isRecord(mapping.fields)) {
+			throw new Error(`@djs-commands/adapter-prisma: model "${model}" must define a fields mapping`);
+		}
+		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields)), "@djs-commands/adapter-prisma");
+		models[model as FrameworkStorageModel] = mapping;
 	}
 	return models;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
 }

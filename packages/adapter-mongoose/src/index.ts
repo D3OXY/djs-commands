@@ -42,12 +42,12 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 		async create(name, data) {
 			const mapped = modelFor(name);
 			const created = await mapped.model.create(toDb(mapped, data as Record<string, unknown>));
-			return fromDb(mapped, stripInternalFields(created.toObject())) as never;
+			return fromDb(mapped, stripVersionKey(created.toObject())) as never;
 		},
 		async findOne(name, where) {
 			const mapped = modelFor(name);
 			const doc = await mapped.model.findOne(toDb(mapped, where)).lean<Record<string, unknown> | null>().exec();
-			return doc ? (fromDb(mapped, stripInternalFields(doc)) as never) : null;
+			return doc ? (fromDb(mapped, stripVersionKey(doc)) as never) : null;
 		},
 		async findMany(name, opts: StorageFindOpts = {}) {
 			const mapped = modelFor(name);
@@ -60,7 +60,7 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 			if (opts.offset !== undefined) q = q.skip(opts.offset);
 			if (opts.limit !== undefined) q = q.limit(opts.limit);
 			const rows = await q.lean<Record<string, unknown>[]>().exec();
-			return rows.map((row) => fromDb(mapped, stripInternalFields(row))) as never;
+			return rows.map((row) => fromDb(mapped, stripVersionKey(row))) as never;
 		},
 		async update(name, where, data) {
 			const mapped = modelFor(name);
@@ -69,7 +69,7 @@ export function mongooseStorage(options: MongooseStorageOptions): Storage {
 				.lean<Record<string, unknown> | null>()
 				.exec();
 			if (!updated) throw new Error(`@djs-commands/adapter-mongoose: no document matched update for model "${name}"`);
-			return fromDb(mapped, stripInternalFields(updated)) as never;
+			return fromDb(mapped, stripVersionKey(updated)) as never;
 		},
 		async delete(name, where) {
 			const mapped = modelFor(name);
@@ -87,18 +87,36 @@ function resolveModels(options: MongooseStorageOptions): Partial<Record<Framewor
 		throw new Error("@djs-commands/adapter-mongoose: options.models is required");
 	}
 	const models: Partial<Record<FrameworkStorageModel, MongooseModelMapping>> = {};
-	for (const [model, mapping] of Object.entries(options.models) as [FrameworkStorageModel, MongooseModelMapping][]) {
-		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields ?? {})), "@djs-commands/adapter-mongoose");
-		models[model] = mapping;
+	for (const [model, rawMapping] of Object.entries(options.models)) {
+		if (!isRecord(rawMapping)) {
+			throw new Error(`@djs-commands/adapter-mongoose: invalid mapping for model "${model}"`);
+		}
+		const mapping = rawMapping as MongooseModelMapping;
+		if (!isObjectLike(mapping.model)) {
+			throw new Error(`@djs-commands/adapter-mongoose: model "${model}" must define a Mongoose model`);
+		}
+		if (!isRecord(mapping.fields)) {
+			throw new Error(`@djs-commands/adapter-mongoose: model "${model}" must define a fields mapping`);
+		}
+		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields)), "@djs-commands/adapter-mongoose");
+		models[model as FrameworkStorageModel] = mapping;
 	}
 	return models;
 }
 
-function stripInternalFields(doc: Record<string, unknown>): Record<string, unknown> {
+function stripVersionKey(doc: Record<string, unknown>): Record<string, unknown> {
 	const out: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(doc)) {
-		if (key === "_id" || key === "__v") continue;
+		if (key === "__v") continue;
 		out[key] = value;
 	}
 	return out;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
+}
+
+function isObjectLike(value: unknown): value is object {
+	return (value !== null && typeof value === "object") || typeof value === "function";
 }

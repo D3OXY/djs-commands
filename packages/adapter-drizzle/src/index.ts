@@ -29,14 +29,17 @@ export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOption
 		return mapped;
 	};
 
-	const buildWhere = (mapped: ResolvedModel, where: StorageWhere): SQL | undefined => {
+	const buildWhere = (mapped: ResolvedModel, where: StorageWhere, opts: { allowEmpty: boolean }): SQL | undefined => {
 		const conditions: SQL[] = [];
 		for (const [field, value] of Object.entries(where)) {
 			const column = mapped.fields[field];
 			if (!column) throw new Error(`@djs-commands/adapter-drizzle: unknown mapped field "${field}"`);
 			conditions.push(eq(column as never, value));
 		}
-		if (conditions.length === 0) return undefined;
+		if (conditions.length === 0) {
+			if (opts.allowEmpty) return undefined;
+			throw new Error("@djs-commands/adapter-drizzle: mutating operations require at least one where condition");
+		}
 		return conditions.length === 1 ? conditions[0] : and(...conditions);
 	};
 
@@ -70,7 +73,7 @@ export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOption
 		},
 		async findOne(model, where) {
 			const mapped = modelFor(model);
-			const condition = buildWhere(mapped, where);
+			const condition = buildWhere(mapped, where, { allowEmpty: true });
 			const rows = await db
 				.select()
 				.from(mapped.table)
@@ -83,7 +86,7 @@ export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOption
 			const mapped = modelFor(model);
 			let q = db.select().from(mapped.table).$dynamic();
 			if (opts.where) {
-				const condition = buildWhere(mapped, opts.where);
+				const condition = buildWhere(mapped, opts.where, { allowEmpty: true });
 				if (condition) q = q.where(condition);
 			}
 			if (opts.orderBy) {
@@ -98,7 +101,7 @@ export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOption
 		},
 		async update(model, where, data) {
 			const mapped = modelFor(model);
-			const condition = buildWhere(mapped, where);
+			const condition = buildWhere(mapped, where, { allowEmpty: false });
 			const [row] = await db
 				.update(mapped.table)
 				.set(toDb(mapped, data as Record<string, unknown>) as never)
@@ -109,12 +112,12 @@ export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOption
 		},
 		async delete(model, where) {
 			const mapped = modelFor(model);
-			const condition = buildWhere(mapped, where);
-			await db.delete(mapped.table).where(condition ?? undefined);
+			const condition = buildWhere(mapped, where, { allowEmpty: false });
+			await db.delete(mapped.table).where(condition);
 		},
 		async count(model, where) {
 			const mapped = modelFor(model);
-			const condition = where ? buildWhere(mapped, where) : undefined;
+			const condition = where ? buildWhere(mapped, where, { allowEmpty: true }) : undefined;
 			const [row] = await db
 				.select({ value: count() })
 				.from(mapped.table)
@@ -129,12 +132,23 @@ function resolveModels(options: DrizzleStorageOptions): Partial<Record<Framework
 		throw new Error("@djs-commands/adapter-drizzle: options.models is required");
 	}
 	const models: Partial<Record<FrameworkStorageModel, ResolvedModel>> = {};
-	for (const [model, mapping] of Object.entries(options.models) as [FrameworkStorageModel, DrizzleModelMapping][]) {
-		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields ?? {})), "@djs-commands/adapter-drizzle");
-		models[model] = {
+	for (const [model, rawMapping] of Object.entries(options.models)) {
+		if (!isRecord(rawMapping)) {
+			throw new Error(`@djs-commands/adapter-drizzle: invalid mapping for model "${model}"`);
+		}
+		const mapping = rawMapping as DrizzleModelMapping;
+		if (!isRecord(mapping.fields)) {
+			throw new Error(`@djs-commands/adapter-drizzle: model "${model}" must define a fields mapping`);
+		}
+		if (!isRecord(mapping.table)) {
+			throw new Error(`@djs-commands/adapter-drizzle: model "${model}" must define a table mapping`);
+		}
+		assertRequiredStorageFields(model, new Set(Object.keys(mapping.fields)), "@djs-commands/adapter-drizzle");
+		const frameworkModel = model as FrameworkStorageModel;
+		models[frameworkModel] = {
 			table: mapping.table,
 			fields: mapping.fields,
-			properties: resolveProperties(model, mapping),
+			properties: resolveProperties(frameworkModel, mapping),
 		};
 	}
 	return models;
@@ -151,4 +165,8 @@ function resolveProperties(model: FrameworkStorageModel, mapping: DrizzleModelMa
 		properties[field] = property;
 	}
 	return properties;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
 }

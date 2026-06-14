@@ -35,11 +35,11 @@ Map only models for features you enable. Required logical fields:
 - `DisabledCommandsModel`: `guild_id`, `command_name`
 - `ChannelLocksModel`: `guild_id`, `command_name`, `channel_id`
 
-Recommended unique indexes:
+Recommended unique indexes use your physical schema fields for these logical keys:
 
-- guild prefixes: `guild_id`
-- disabled commands: `guild_id`, `command_name`
-- channel locks: `guild_id`, `command_name`, `channel_id`
+- guild prefixes: mapped `guild_id`
+- disabled commands: mapped `guild_id`, mapped `command_name`
+- channel locks: mapped `guild_id`, mapped `command_name`, mapped `channel_id`
 
 Unknown or unmapped framework models throw loudly. The constructor validates mapping shape only; collection/index/field mistakes surface from Mongoose/MongoDB at operation time.
 

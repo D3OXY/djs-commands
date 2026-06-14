@@ -165,6 +165,7 @@ export class Dispatcher {
 			}
 		} catch (err) {
 			console.error("[djs-commands] Storage gate check failed:", err);
+			return "Command availability checks are temporarily unavailable.";
 		}
 		return null;
 	}

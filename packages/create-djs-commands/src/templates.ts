@@ -126,6 +126,7 @@ function indexTs(opts: ScaffoldOptions): string {
 	}
 
 	const legacyOption = opts.legacy ? '\n\tlegacy: { enabled: true, defaultPrefix: "!" },' : "";
+	const storageFeaturesOption = opts.legacy && opts.adapter === "none" ? "\n\tstorageFeatures: { guildPrefixes: false }," : "";
 
 	return `${imports.join("\n")}
 ${storageSetup}
@@ -139,7 +140,7 @@ const client = new Client({ intents: [${intents.join(", ")}] });
 
 const handler = createCommandHandler({
 \tclient,
-\tcommandDir: ${dirImport},${storageOption}${legacyOption}
+\tcommandDir: ${dirImport},${storageOption}${legacyOption}${storageFeaturesOption}
 });
 
 handler.ready.catch((err) => {
@@ -163,7 +164,12 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { channelLocks, disabledCommands, guildPrefixes } from "./db/schema";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+\tthrow new Error("DATABASE_URL environment variable is required");
+}
+
+const pool = new pg.Pool({ connectionString: databaseUrl });
 const db = drizzle(pool);
 
 export const storage = drizzleStorage(db, {
@@ -215,7 +221,12 @@ import { ChannelLocksModel, DisabledCommandsModel, GuildPrefixModel } from "@djs
 import mongoose from "mongoose";
 import { ChannelLock, DisabledCommand, GuildPrefix } from "./db/models";
 
-mongoose.connect(process.env.MONGO_URL!);
+const mongoUrl = process.env.MONGO_URL;
+if (!mongoUrl) {
+\tthrow new Error("MONGO_URL environment variable is required");
+}
+
+mongoose.connect(mongoUrl);
 
 export const storage = mongooseStorage({
 \tmodels: {
@@ -365,7 +376,7 @@ function readme(opts: ScaffoldOptions): string {
 docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres:16
 \`\`\`
 
-Then push the schema using drizzle-kit (see [@djs-commands/adapter-drizzle](https://github.com/D3OXY/djs-commands/tree/main/packages/adapter-drizzle) for the model fragment).
+Then push the generated \`src/db/schema.ts\` using drizzle-kit.
 `
 			: opts.adapter === "prisma"
 				? `\n## Database (Postgres + Prisma)

@@ -34,8 +34,12 @@ export const FrameworkStorageModelFields: Record<FrameworkStorageModel, readonly
 	channel_locks: ["guild_id", "command_name", "channel_id"],
 };
 
-export function assertRequiredStorageFields(model: FrameworkStorageModel, fields: ReadonlySet<string>, adapterName: string): void {
-	for (const field of FrameworkStorageModelFields[model]) {
+export function assertRequiredStorageFields(model: string, fields: ReadonlySet<string>, adapterName: string): void {
+	const requiredFields = (FrameworkStorageModelFields as Record<string, readonly string[]>)[model];
+	if (!requiredFields) {
+		throw new Error(`${adapterName}: unknown framework model "${model}"`);
+	}
+	for (const field of requiredFields) {
 		if (!fields.has(field)) {
 			throw new Error(`${adapterName}: model "${model}" is missing required field mapping "${field}"`);
 		}

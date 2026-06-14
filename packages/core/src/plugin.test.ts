@@ -290,4 +290,29 @@ describe("storage feature boot checks", () => {
 		await expect(handler.ready).rejects.toThrow(/storage is required/);
 		await handler.destroy();
 	});
+
+	test("legacy mode without storage rejects boot unless guild prefixes are disabled", async () => {
+		const { client } = makeClient();
+		const handler = createCommandHandler({
+			client,
+			commands: [],
+			legacy: { enabled: true, defaultPrefix: "!" },
+		});
+
+		await expect(handler.ready).rejects.toThrow(/storage is required/);
+		await handler.destroy();
+	});
+
+	test("legacy mode without storage boots when guild prefixes are disabled", async () => {
+		const { client } = makeClient();
+		const handler = createCommandHandler({
+			client,
+			commands: [],
+			legacy: { enabled: true, defaultPrefix: "!" },
+			storageFeatures: { guildPrefixes: false },
+		});
+
+		await handler.ready;
+		await handler.destroy();
+	});
 });

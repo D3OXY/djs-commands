@@ -154,13 +154,23 @@ describe("prismaStorage (mocked)", () => {
 
 	test("missing mapping throws loud at first use and from assertModels", async () => {
 		const storage = prismaStorage({ models: {} });
-		await expect(async () => storage.findOne(GuildPrefixModel, { guild_id: "x" })).toThrow(/missing mapping/);
+		await expect(storage.findOne(GuildPrefixModel, { guild_id: "x" })).rejects.toThrow(/missing mapping/);
 		expect(() => storage.assertModels?.([GuildPrefixModel])).toThrow(/missing mapping/);
 	});
 
 	test("constructor validates required field mappings", () => {
 		const { delegate } = createMockGuildPrefixDelegate();
 		expect(() => prismaStorage({ models: { [GuildPrefixModel]: { delegate, fields: { guild_id: "guildId" } } } })).toThrow(/prefix/);
+	});
+
+	test("constructor validates mapping shape", () => {
+		expect(() =>
+			prismaStorage({
+				models: {
+					[GuildPrefixModel]: null as unknown as never,
+				},
+			})
+		).toThrow(/invalid mapping/);
 	});
 });
 

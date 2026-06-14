@@ -13,6 +13,33 @@ const appGuildPrefixes = pgTable("guild_prefix", {
 	value: text("prefix").notNull(),
 });
 
+describe("drizzleStorage config validation", () => {
+	const db = {} as NodePgDatabase;
+
+	test("constructor validates required field mappings", () => {
+		expect(() =>
+			drizzleStorage(db, {
+				models: {
+					[GuildPrefixModel]: {
+						table: appGuildPrefixes,
+						fields: { guild_id: appGuildPrefixes.serverId },
+					},
+				},
+			})
+		).toThrow(/prefix/);
+	});
+
+	test("constructor validates mapping shape", () => {
+		expect(() =>
+			drizzleStorage(db, {
+				models: {
+					[GuildPrefixModel]: null as unknown as never,
+				},
+			})
+		).toThrow(/invalid mapping/);
+	});
+});
+
 async function tryConnect(url: string): Promise<{ db: NodePgDatabase; pool: pg.Pool } | null> {
 	const pool = new pg.Pool({ connectionString: url, connectionTimeoutMillis: 3000, max: 1 });
 	try {
@@ -55,19 +82,6 @@ if (live) {
 		test("missing mapping throws from assertModels", () => {
 			const missing = drizzleStorage(db, { models: {} });
 			expect(() => missing.assertModels?.([GuildPrefixModel])).toThrow(/missing mapping/);
-		});
-
-		test("constructor validates required field mappings", () => {
-			expect(() =>
-				drizzleStorage(db, {
-					models: {
-						[GuildPrefixModel]: {
-							table: appGuildPrefixes,
-							fields: { guild_id: appGuildPrefixes.serverId },
-						},
-					},
-				})
-			).toThrow(/prefix/);
 		});
 	});
 } else {

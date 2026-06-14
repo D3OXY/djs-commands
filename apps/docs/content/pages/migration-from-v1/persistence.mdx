@@ -32,7 +32,7 @@ Define your own Mongoose schemas/models, then map framework logical fields in `m
 | v1 collection | v2 model | What changed |
 |---|---|---|
 | `cooldowns` | (in-memory + optional `CacheAdapter`) | Cooldowns no longer hit the DB by default. Use `@djs-commands/adapter-redis` for sharded bots. |
-| `guild-prefix-schema` | `GuildPrefixModel` | Resolved when `legacy.enabled` + `storage` are set. |
+| `guild-prefix-schema` | `GuildPrefixModel` | Resolved when `storageFeatures.guildPrefixes` is enabled. It defaults from `legacy.enabled`, but can be configured. |
 | `disabled-commands-schema` | `DisabledCommandsModel` | Requires `storageFeatures.disabledCommands`. |
 | `channel-commands-schema` | `ChannelLocksModel` | Requires `storageFeatures.channelLocks`. |
 | `custom-command-schema` | dropped | The custom-commands feature is gone. |
