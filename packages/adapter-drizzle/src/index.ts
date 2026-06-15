@@ -5,12 +5,17 @@ import type { PgTable } from "drizzle-orm/pg-core";
 
 type DrizzleColumn = unknown;
 
+/** Mapping from one djs-commands framework model to an app-owned Drizzle table. */
 export interface DrizzleModelMapping {
+	/** App-owned table. DJS Commands never creates tables or migrations. */
 	table: PgTable;
+	/** Logical framework fields mapped to Drizzle columns from `table`. */
 	fields: Record<string, DrizzleColumn>;
 }
 
+/** Options for `drizzleStorage`. Map only models required by enabled storage features. */
 export interface DrizzleStorageOptions {
+	/** Framework model mappings keyed by `GuildPrefixModel`, `DisabledCommandsModel`, or `ChannelLocksModel`. */
 	models: Partial<Record<FrameworkStorageModel, DrizzleModelMapping>>;
 }
 
@@ -20,6 +25,25 @@ interface ResolvedModel {
 	properties: Record<string, string>;
 }
 
+/**
+ * Creates a Storage adapter backed by Drizzle.
+ *
+ * @remarks
+ * Your app owns schema, table names, indexes, migrations, and connection lifecycle.
+ * This adapter only translates djs-commands logical fields to your mapped columns.
+ *
+ * @example
+ * ```ts
+ * drizzleStorage(db, {
+ *   models: {
+ *     [GuildPrefixModel]: {
+ *       table: guildPrefixes,
+ *       fields: { guild_id: guildPrefixes.guildId, prefix: guildPrefixes.prefix },
+ *     },
+ *   },
+ * });
+ * ```
+ */
 export function drizzleStorage(db: NodePgDatabase, options: DrizzleStorageOptions): Storage {
 	const models = resolveModels(options);
 

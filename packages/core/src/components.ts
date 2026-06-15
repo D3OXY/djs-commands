@@ -36,10 +36,15 @@ import {
 
 // --- Display components ------------------------------------------------------
 
+/** Options for a Components V2 container. Containers can hold layout/display components and action rows. */
 export interface ContainerOptions {
+	/** Optional accent bar color as `0xRRGGBB` or RGB tuple. */
 	accentColor?: number | readonly [number, number, number];
+	/** Whether Discord should blur the container behind a spoiler veil. */
 	spoiler?: boolean;
+	/** Optional Discord component ID. */
 	id?: number;
+	/** Direct child builders allowed by Discord inside a container. */
 	children?: readonly ContainerChild[];
 }
 
@@ -49,6 +54,14 @@ export interface ContainerOptions {
  */
 export type ContainerChild = TextDisplayBuilder | SectionBuilder | MediaGalleryBuilder | SeparatorBuilder | FileBuilder | ActionRowBuilder<MessageActionRowComponentBuilder>;
 
+/**
+ * Builds a Components V2 `ContainerBuilder`.
+ *
+ * @example
+ * ```ts
+ * container({ children: [textDisplay("# Hi"), actionRow({ children: [button({ style: "primary", customId: "ok", label: "OK" })] })] });
+ * ```
+ */
 export function container(options: ContainerOptions = {}): ContainerBuilder {
 	const builder = new ContainerBuilder({
 		type: ComponentType.Container,
@@ -81,12 +94,17 @@ function appendContainerChild(builder: ContainerBuilder, child: ContainerChild):
 	}
 }
 
+/** Options for a Components V2 section. Discord allows exactly one button or thumbnail accessory. */
 export interface SectionOptions {
+	/** Button or thumbnail shown beside the section text. */
 	accessory: ButtonBuilder | ThumbnailBuilder;
+	/** Optional Discord component ID. */
 	id?: number;
+	/** One or more text display rows inside the section. */
 	text: string | readonly string[];
 }
 
+/** Builds a Components V2 `SectionBuilder` with text and one accessory. */
 export function section(options: SectionOptions): SectionBuilder {
 	const builder = new SectionBuilder({
 		type: ComponentType.Section,
@@ -109,6 +127,7 @@ export function section(options: SectionOptions): SectionBuilder {
 	return builder;
 }
 
+/** Builds a Components V2 text display builder. Markdown is supported by Discord. */
 export function textDisplay(content: string, options: { id?: number } = {}): TextDisplayBuilder {
 	return new TextDisplayBuilder({
 		type: ComponentType.TextDisplay,
@@ -117,11 +136,15 @@ export function textDisplay(content: string, options: { id?: number } = {}): Tex
 	});
 }
 
+/** Options for a Components V2 media gallery. */
 export interface MediaGalleryOptions {
+	/** Raw Discord media gallery items. Discord currently accepts up to 10. */
 	items: readonly APIMediaGalleryItem[];
+	/** Optional Discord component ID. */
 	id?: number;
 }
 
+/** Builds a Components V2 media gallery builder. */
 export function mediaGallery(options: MediaGalleryOptions): MediaGalleryBuilder {
 	return new MediaGalleryBuilder({
 		type: ComponentType.MediaGallery,
@@ -130,12 +153,17 @@ export function mediaGallery(options: MediaGalleryOptions): MediaGalleryBuilder 
 	});
 }
 
+/** Options for a Components V2 separator. */
 export interface SeparatorOptions {
+	/** Optional Discord component ID. */
 	id?: number;
+	/** Whether to show a divider line. */
 	divider?: boolean;
+	/** Discord separator spacing value. */
 	spacing?: SeparatorSpacingSize;
 }
 
+/** Builds a Components V2 separator builder. */
 export function separator(options: SeparatorOptions = {}): SeparatorBuilder {
 	return new SeparatorBuilder({
 		type: ComponentType.Separator,
@@ -145,12 +173,17 @@ export function separator(options: SeparatorOptions = {}): SeparatorBuilder {
 	});
 }
 
+/** Options for a Components V2 file attachment reference. */
 export interface FileOptions {
+	/** Attachment URL, usually `attachment://filename.ext`. */
 	url: string;
+	/** Optional Discord component ID. */
 	id?: number;
+	/** Whether Discord should mark the file as a spoiler. */
 	spoiler?: boolean;
 }
 
+/** Builds a Components V2 file builder. The file must refer to an attachment supplied with the message. */
 export function file(options: FileOptions): FileBuilder {
 	return new FileBuilder({
 		type: ComponentType.File,
@@ -160,12 +193,17 @@ export function file(options: FileOptions): FileBuilder {
 	});
 }
 
+/** Options for a Components V2 thumbnail accessory. */
 export interface ThumbnailOptions {
+	/** Image URL for the thumbnail. */
 	url: string;
+	/** Alt/description text for the image. */
 	description?: string;
+	/** Whether Discord should blur the thumbnail behind a spoiler veil. */
 	spoiler?: boolean;
 }
 
+/** Builds a thumbnail accessory for `section()`. */
 export function thumbnail(options: ThumbnailOptions): ThumbnailBuilder {
 	return new ThumbnailBuilder({
 		type: ComponentType.Thumbnail,
@@ -177,6 +215,7 @@ export function thumbnail(options: ThumbnailOptions): ThumbnailBuilder {
 
 // --- Form components --------------------------------------------------------
 
+/** Friendly button style aliases accepted by `button()`. */
 export type ButtonStyleName = "primary" | "secondary" | "success" | "danger" | "link" | "premium";
 
 const buttonStyleMap: Record<ButtonStyleName, ButtonStyle> = {
@@ -210,12 +249,14 @@ interface PremiumButtonOptions extends ButtonBaseOptions {
 	skuId: string;
 }
 
+/** Options for a Components V2 button. Interactive buttons need `customId`; link buttons need `url`; premium buttons need `skuId`. */
 export type ButtonOptions = InteractiveButtonOptions | LinkButtonOptions | PremiumButtonOptions;
 
 function resolveButtonStyle(style: ButtonStyle | ButtonStyleName): ButtonStyle {
 	return typeof style === "string" ? buttonStyleMap[style] : style;
 }
 
+/** Builds a Discord button builder for action rows or section accessories. */
 export function button(options: ButtonOptions): ButtonBuilder {
 	const style = resolveButtonStyle(options.style);
 	let data: APIButtonComponent;
@@ -254,11 +295,15 @@ export function button(options: ButtonOptions): ButtonBuilder {
 	return new ButtonBuilder(data as ConstructorParameters<typeof ButtonBuilder>[0]);
 }
 
+/** Options for a Components V2 action row. Discord message action rows contain buttons here. */
 export interface ActionRowOptions {
+	/** Optional Discord component ID. */
 	id?: number;
+	/** Buttons to place in the row. */
 	children: readonly ButtonBuilder[];
 }
 
+/** Builds an action row of buttons for use inside a container or as a top-level component. */
 export function actionRow(options: ActionRowOptions): ActionRowBuilder<MessageActionRowComponentBuilder> {
 	const row = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 	if (options.id !== undefined) (row.data as { id?: number }).id = options.id;
@@ -266,6 +311,7 @@ export function actionRow(options: ActionRowOptions): ActionRowBuilder<MessageAc
 	return row;
 }
 
+/** Friendly text input style aliases accepted by `textInput()`. */
 export type TextInputStyleName = "short" | "paragraph";
 
 const textInputStyleMap: Record<TextInputStyleName, TextInputStyle> = {
@@ -273,18 +319,29 @@ const textInputStyleMap: Record<TextInputStyleName, TextInputStyle> = {
 	paragraph: TextInputStyle.Paragraph,
 };
 
+/** Options for a modal text input. Components V2 modals wrap inputs in labels. */
 export interface TextInputOptions {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
+	/** Label text shown by Discord. */
 	label?: string;
+	/** Short or paragraph input style. Defaults to `short`. */
 	style?: TextInputStyle | TextInputStyleName;
+	/** Placeholder text shown before the user types. */
 	placeholder?: string;
+	/** Pre-filled value. */
 	value?: string;
+	/** Minimum accepted character count. */
 	minLength?: number;
+	/** Maximum accepted character count. */
 	maxLength?: number;
+	/** Whether Discord requires a value. */
 	required?: boolean;
+	/** Optional Discord component ID. */
 	id?: number;
 }
 
+/** Builds a text input for `modal()`. */
 export function textInput(options: TextInputOptions): TextInputBuilder {
 	const rawStyle = options.style ?? "short";
 	const style = typeof rawStyle === "string" ? textInputStyleMap[rawStyle] : rawStyle;
@@ -302,14 +359,21 @@ export function textInput(options: TextInputOptions): TextInputBuilder {
 	});
 }
 
+/** Options for a Components V2 modal radio group. */
 export interface RadioGroupOptions {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
+	/** Label text shown above the group. */
 	label: string;
+	/** Optional helper text. */
 	description?: string;
+	/** Discord radio options. */
 	options: readonly APIRadioGroupOption[];
+	/** Whether Discord requires a selection. */
 	required?: boolean;
 }
 
+/** Builds a labeled radio group for `modal()`. */
 export function radioGroup(opts: RadioGroupOptions): LabelBuilder {
 	const builder = new LabelBuilder().setLabel(opts.label);
 	if (opts.description !== undefined) builder.setDescription(opts.description);
@@ -322,16 +386,25 @@ export function radioGroup(opts: RadioGroupOptions): LabelBuilder {
 	return builder;
 }
 
+/** Options for a Components V2 modal checkbox group. */
 export interface CheckboxGroupOptions {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
+	/** Label text shown above the group. */
 	label: string;
+	/** Optional helper text. */
 	description?: string;
+	/** Discord checkbox options. */
 	options: readonly APICheckboxGroupOption[];
+	/** Minimum number of selected values. */
 	minValues?: number;
+	/** Maximum number of selected values. */
 	maxValues?: number;
+	/** Whether Discord requires a selection. */
 	required?: boolean;
 }
 
+/** Builds a labeled checkbox group for `modal()`. */
 export function checkboxGroup(opts: CheckboxGroupOptions): LabelBuilder {
 	const builder = new LabelBuilder().setLabel(opts.label);
 	if (opts.description !== undefined) builder.setDescription(opts.description);
@@ -346,8 +419,11 @@ export function checkboxGroup(opts: CheckboxGroupOptions): LabelBuilder {
 	return builder;
 }
 
+/** Options for a Components V2 modal. */
 export interface ModalOptions {
+	/** Modal title shown by Discord. */
 	title: string;
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
 	/**
 	 * Either a `LabelBuilder` (preferred — wraps a single interactive
@@ -357,6 +433,7 @@ export interface ModalOptions {
 	fields: readonly (LabelBuilder | TextInputBuilder)[];
 }
 
+/** Builds a Discord modal. Fields are emitted as Components V2 labels, not legacy modal action rows. */
 export function modal(options: ModalOptions): ModalBuilder {
 	const builder = new ModalBuilder().setCustomId(options.customId).setTitle(options.title);
 	const labels: LabelBuilder[] = [];

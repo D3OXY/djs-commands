@@ -2,12 +2,16 @@ import type { ApplicationCommandDataResolvable } from "discord.js";
 import { buildOptionsData } from "./options";
 import type { AnyCommand } from "./types";
 
+/** Registration behavior for a Discord application-command scope. */
 export type RegistrationScopeMode = "sync" | "clear" | "ignore";
 
+/** Handler registration setting for one scope. `sync` overwrites, `clear` empties, `ignore` leaves untouched. */
 export type RegistrationScopeConfig = RegistrationScopeMode | { mode: RegistrationScopeMode };
 
+/** Guild registration target. Guild sync is fast and best for development; global sync can take time to propagate. */
 export type RegistrationGuildScopeConfig = string | { id: string; mode?: RegistrationScopeMode };
 
+/** Per-command guild registration override. */
 export type CommandGuildRegistrationConfig =
 	| boolean
 	| readonly string[]
@@ -16,21 +20,36 @@ export type CommandGuildRegistrationConfig =
 			exclude?: readonly string[];
 	  };
 
+/** Per-command registration override. `false` loads the command for dispatch but excludes it from handler-managed Discord registration. */
 export type CommandRegistrationConfig =
 	| false
 	| {
+			/** Include or exclude this command from global registration. Defaults to true. */
 			global?: boolean;
+			/** Include, exclude, or fully disable this command for configured guild scopes. */
 			guilds?: CommandGuildRegistrationConfig;
 	  };
 
+/**
+ * Handler-wide Discord registration plan.
+ *
+ * Omit for global `sync`. Use guild `sync` for near-instant development.
+ * Global command changes can take time to appear in Discord. `sync` and
+ * `clear` overwrite the configured scope; `ignore` leaves existing commands
+ * untouched. Pass `false` to disable framework registration entirely.
+ */
 export type HandlerRegistrationConfig =
 	| false
 	| {
+			/** Master switch. `false` is equivalent to `registration: false`. */
 			enabled?: boolean;
+			/** Global command behavior. */
 			global?: RegistrationScopeConfig;
+			/** Guild command behavior for each guild ID. */
 			guilds?: readonly RegistrationGuildScopeConfig[];
 	  };
 
+/** One concrete operation produced by `createRegistrationPlan`. */
 export type RegistrationPlanOperation =
 	| {
 			scope: "global";
@@ -44,10 +63,13 @@ export type RegistrationPlanOperation =
 			commands: ApplicationCommandDataResolvable[];
 	  };
 
+/** Registration operations ready to apply to Discord. */
 export interface RegistrationPlan {
+	/** Ordered scope operations. Empty means registration is disabled or all scopes are ignored. */
 	operations: RegistrationPlanOperation[];
 }
 
+/** Creates a Discord registration plan without calling Discord. Useful for tests and dry runs. */
 export function createRegistrationPlan(commands: readonly AnyCommand[], registration?: HandlerRegistrationConfig): RegistrationPlan {
 	const scopes = resolveManagedScopes(registration);
 	return {

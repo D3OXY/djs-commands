@@ -17,7 +17,8 @@
 			"!**/.nitro",
 			"!**/.tanstack",
 			"!**/routeTree.gen.ts",
-			"!apps/docs/source.generated.ts"
+			"!apps/docs/source.generated.ts",
+			"!apps/docs/src/styles/app.css"
 		]
 	},
 	"formatter": {

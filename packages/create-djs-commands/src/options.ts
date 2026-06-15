@@ -1,20 +1,34 @@
+/** Storage adapter choice for generated projects. `none` scaffolds an in-memory-only bot. */
 export type Adapter = "drizzle" | "prisma" | "mongoose" | "none";
+
+/** Package manager used for generated install and scripts. */
 export type PackageManager = "bun" | "pnpm" | "npm";
 
+/** Fully resolved scaffold options used by the wizard and non-interactive flags. */
 export interface ScaffoldOptions {
+	/** Directory/package name for the generated bot. */
 	projectName: string;
+	/** Storage adapter template to include. */
 	adapter: Adapter;
+	/** Whether to enable legacy prefix commands. */
 	legacy: boolean;
+	/** Whether to add `@djs-commands/jsx` and Components V2 examples. */
 	componentsV2: boolean;
+	/** Package manager for install commands and generated scripts. */
 	packageManager: PackageManager;
+	/** Whether to initialize a git repository in the generated project. */
 	initGit: boolean;
 }
 
+/** Partial options parsed from CLI flags before interactive prompts fill defaults. */
 export interface ParsedFlags extends Partial<ScaffoldOptions> {
+	/** Show CLI help and exit. */
 	help?: boolean;
+	/** Skip dependency installation after files are written. */
 	skipInstall?: boolean;
 }
 
+/** Parses `create-djs-commands` CLI flags without prompting. */
 export function parseFlags(argv: readonly string[]): ParsedFlags & { positional: string[] } {
 	const flags: ParsedFlags & { positional: string[] } = { positional: [] };
 	for (let i = 0; i < argv.length; i++) {
@@ -51,6 +65,7 @@ export function parseFlags(argv: readonly string[]): ParsedFlags & { positional:
 	return flags;
 }
 
+/** Help text printed by `create-djs-commands --help`. */
 export const HELP_TEXT = `
 create-djs-commands — scaffold a new Discord.js bot using @djs-commands
 

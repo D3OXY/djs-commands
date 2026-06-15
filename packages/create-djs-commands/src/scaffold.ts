@@ -15,6 +15,7 @@ interface ScaffoldRunOptions {
 	stdio?: "inherit" | "ignore";
 }
 
+/** Writes a new bot project to disk using resolved scaffold options. */
 export async function scaffold(opts: ScaffoldOptions, runOpts: ScaffoldRunOptions = {}): Promise<ScaffoldResult> {
 	const cwd = runOpts.cwd ?? process.cwd();
 	const targetDir = resolve(cwd, opts.projectName);
