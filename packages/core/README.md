@@ -60,7 +60,7 @@ Prefer scaffolding? Run `npx create-djs-commands my-bot` and you're online in un
 
 ## Migrating from v1?
 
-`@d3oxy/djs-commands@1.4.x` is preserved at the [`v1-final-commit` git tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and is no longer maintained. Every v1 API has a v2 equivalent — see the [v1 → v2 migration guide](https://djscommands.deoxy.dev/migration-from-v1).
+`@d3oxy/djs-commands@1.4.x` is preserved at the [`v1-final-commit` git tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and is no longer maintained. Every v1 API has a v3 equivalent — see the [v1 → v3 migration guide](https://djscommands.deoxy.dev/migration-from-v1).
 
 ## License
 

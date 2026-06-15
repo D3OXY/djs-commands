@@ -115,7 +115,7 @@ function DocsLayoutWrapper({ children, tree }: DocsLayoutWrapperProps) {
 					<div className="flex items-center gap-2.5">
 						<img src="/logo.png" alt="" aria-hidden="true" className="size-6 rounded-md" />
 						<span className="font-semibold text-[0.95rem] tracking-tight">DJS Commands</span>
-						<span className="font-medium text-fd-muted-foreground text-xs opacity-60">v2 docs</span>
+						<span className="font-medium text-fd-muted-foreground text-xs opacity-60">v3 docs</span>
 					</div>
 				),
 			}}

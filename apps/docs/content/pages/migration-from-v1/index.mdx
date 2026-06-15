@@ -5,7 +5,7 @@ description: A guide for upgrading bots from @d3oxy/djs-commands to @djs-command
 
 # Migrating from v1
 
-If you're coming from `@d3oxy/djs-commands` (v1), this guide walks you through every API that moved, renamed, or was dropped in v2.
+If you're coming from `@d3oxy/djs-commands` (v1), this guide walks you through every API that moved, renamed, or was dropped in v3.
 
 ## TL;DR
 
@@ -13,7 +13,7 @@ If you're coming from `@d3oxy/djs-commands` (v1), this guide walks you through e
 # 1. Remove the old package
 bun remove @d3oxy/djs-commands
 
-# 2. Install v2 packages
+# 2. Install v3 packages
 bun add @djs-commands/core discord.js
 # Optional based on your stack:
 bun add @djs-commands/adapter-mongoose mongoose  # if you used mongoUri in v1
@@ -39,7 +39,7 @@ new CommandHandler({
 ```
 
 ```ts
-// v2
+// v3
 import { createCommandHandler } from "@djs-commands/core";
 import { fileURLToPath } from "node:url";
 import { storage } from "./storage";
@@ -56,7 +56,7 @@ createCommandHandler({
 
 ## What's in this section
 
-- [Handler options](/migration-from-v1/handler) — every `CommandHandler` option mapped to v2
+- [Handler options](/migration-from-v1/handler) — every `CommandHandler` option mapped to v3
 - [Command files](/migration-from-v1/commands) — `CommandType`, `callback(usage)` → unified `defineCommand`
 - [Validators](/migration-from-v1/validators) — `requiredPermissions` / `requiredRoles` / `ownerOnly` / `guildOnly` / `channelOnly`
 - [Persistence](/migration-from-v1/persistence) — Mongoose schemas → Storage adapters
@@ -65,4 +65,4 @@ createCommandHandler({
 
 ## Why the rewrite
 
-v1 was unmaintained since late 2023. Discord shipped Components V2, polls, voice messages, user-installable apps, and ~18 months of API surface that v1 couldn't reach. v2 is built on `discord.js@^14.26`, ships first-class Components V2 via `@djs-commands/jsx`, drops the Mongoose lock-in, and is structured for the upcoming discord.js v15. v1 stays on npm at `@d3oxy/djs-commands@1.4.x` for bots that aren't ready to upgrade — it just won't get new features.
+v1 was unmaintained since late 2023. Discord shipped Components V2, polls, voice messages, user-installable apps, and ~18 months of API surface that v1 couldn't reach. v3 is built on `discord.js@^14.26`, ships first-class Components V2 via `@djs-commands/jsx`, drops the Mongoose lock-in, and is structured for the upcoming discord.js v15. v1 stays on npm at `@d3oxy/djs-commands@1.4.x` for bots that aren't ready to upgrade — it just won't get new features.

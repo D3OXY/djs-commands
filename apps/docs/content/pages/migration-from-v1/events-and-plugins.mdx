@@ -18,7 +18,7 @@ module.exports = (client) => {
 ```
 
 ```ts
-// v2 — events/ready.ts
+// v3 — events/ready.ts
 import { defineEvent } from "@djs-commands/core";
 
 export default defineEvent({
@@ -54,7 +54,7 @@ module.exports = (commandHandler, client) => {
 ```
 
 ```ts
-// v2 — plugins/leveling.ts
+// v3 — plugins/leveling.ts
 import { defineCommand, type PluginManifest } from "@djs-commands/core";
 
 interface LevelingOptions {
@@ -92,4 +92,4 @@ Why this is better:
 
 ## Hot reload
 
-v2's fs-autoloader watches `commandDir` and re-imports files on change in dev mode (`NODE_ENV !== "production"`). v1 required a full restart on every command change. No code changes needed to opt in — it just works.
+v3's fs-autoloader watches `commandDir` and re-imports files on change in dev mode (`NODE_ENV !== "production"`). v1 required a full restart on every command change. No code changes needed to opt in — it just works.

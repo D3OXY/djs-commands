@@ -5,9 +5,9 @@ description: requiredPermissions / requiredRoles / ownerOnly / guildOnly / chann
 
 # Validators
 
-v1's command-level validation flags map 1:1 to v2 properties on `defineCommand`.
+v1's command-level validation flags map 1:1 to v3 properties on `defineCommand`.
 
-| v1 | v2 |
+| v1 | v3 |
 |---|---|
 | `requiredPermissions: ["BanMembers"]` | `permissions: ["BanMembers"]` |
 | `requiredRoles: ["role-id-1"]` | `roles: ["role-id-1"]` |
@@ -27,7 +27,7 @@ module.exports = {
 ```
 
 ```ts
-// v2
+// v3
 export default defineCommand({
     name: "ban",
     description: "Ban a user",
@@ -40,7 +40,7 @@ export default defineCommand({
 
 ## Channel locks: static vs dynamic
 
-v1 had a `channels` array on the command (static) and a separate `channel-commands-schema` for runtime channel locks. In v2:
+v1 had a `channels` array on the command (static) and a separate `channel-commands-schema` for runtime channel locks. In v3:
 
 - **Static**: `channels: ["channel-id"]` on `defineCommand` (declared once, in code)
 - **Dynamic**: `ChannelLocks` storage model (per-guild ops control)
@@ -81,7 +81,7 @@ new CommandHandler({
 ```
 
 ```ts
-// v2 — global `validators` or per-command
+// v3 — global `validators` or per-command
 import type { Validator } from "@djs-commands/core";
 
 const betaOnly: Validator = ({ command, user }) => {
@@ -100,7 +100,7 @@ Custom validators return `{ ok: true } | { ok: false, reason: string }`. The fra
 
 ## Dynamic per-invocation gates
 
-v1 didn't have a hook for runtime gating (you'd build one through `customValidations`). v2 has `canRunCommand`:
+v1 didn't have a hook for runtime gating (you'd build one through `customValidations`). v3 has `canRunCommand`:
 
 ```ts
 createCommandHandler({

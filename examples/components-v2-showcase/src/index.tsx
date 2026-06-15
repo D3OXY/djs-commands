@@ -19,7 +19,7 @@ const welcome = defineCommand({
 			flags: MessageFlags.IsComponentsV2,
 			components: render(
 				<Container accentColor={0x5865f2}>
-					<TextDisplay># Welcome to djs-commands v2</TextDisplay>
+					<TextDisplay># Welcome to djs-commands v3</TextDisplay>
 					<Section accessory={<Button style="primary" customId="welcome:open-feedback" label="Send Feedback" />}>
 						Components V2 lets you compose rich messages from layout primitives. Click the button to open a feedback modal.
 					</Section>

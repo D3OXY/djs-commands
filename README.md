@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://djscommands.deoxy.dev">Docs</a> ·
   <a href="https://djscommands.deoxy.dev/getting-started">Quick start</a> ·
-  <a href="https://djscommands.deoxy.dev/migration-from-v1">v1 → v2 migration</a> ·
+  <a href="https://djscommands.deoxy.dev/migration-from-v1">v1 → v3 migration</a> ·
   <a href="https://www.npmjs.com/org/djs-commands">NPM</a>
 </p>
 
@@ -21,7 +21,7 @@
 
 ## Coming from v1 (`@d3oxy/djs-commands`)?
 
-The v1 package is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and stays on npm under `@d3oxy/djs-commands@1.4.x`. To upgrade to v2, follow the [Migration from v1](https://djscommands.deoxy.dev/migration-from-v1) guide — every v1 API has a v2 equivalent (with side-by-side examples).
+The v1 package is preserved at the [`v1-final-commit` tag](https://github.com/D3OXY/djs-commands/tree/v1-final-commit) and stays on npm under `@d3oxy/djs-commands@1.4.x`. To upgrade to v3, follow the [Migration from v1](https://djscommands.deoxy.dev/migration-from-v1) guide — every v1 API has a v3 equivalent (with side-by-side examples).
 
 ## Quick start
 
