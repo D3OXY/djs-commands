@@ -1,5 +1,11 @@
 # @djs-commands/adapter-redis
 
+## 3.1.0
+
+### Patch Changes
+
+- 5ff7936: Add public API TSDoc hover docs and coverage enforcement.
+
 ## 3.0.0
 
 ### Patch Changes

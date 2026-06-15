@@ -1,6 +1,6 @@
 {
 	"name": "@djs-commands/core",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Modern Discord.js command handler — dispatcher, definitions, validators, plugins",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",
