@@ -95,6 +95,7 @@ export type {
 	CommandHandler,
 	CommandHandlerOptions,
 	CommandLegacyConfig,
+	CommandReplyInput,
 	CommandRun,
 	CommandRunContext,
 	HandlerLegacyConfig,

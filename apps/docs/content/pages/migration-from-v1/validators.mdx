@@ -64,12 +64,14 @@ The framework runs both when `storageFeatures.channelLocks` is enabled: a comman
 
 ```ts
 // v1 — registered through `customValidations`
+import { MessageFlags } from "discord.js";
+
 new CommandHandler({
     client,
     customValidations: [
         ({ command, interaction }) => {
             if (command.beta && !isBetaUser(interaction.user.id)) {
-                interaction.reply({ content: "Beta only", ephemeral: true });
+                interaction.reply({ content: "Beta only", flags: MessageFlags.Ephemeral });
                 return false;
             }
             return true;

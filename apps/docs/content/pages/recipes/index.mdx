@@ -84,12 +84,14 @@ defineCommand({
 });
 
 // Wire submission handling on the discord.js client itself:
+import { MessageFlags } from "discord.js";
+
 client.on("interactionCreate", async (i) => {
 	if (!i.isModalSubmit() || i.customId !== "feedback-modal") return;
 	const subject = i.fields.getTextInputValue("subject");
 	const body = i.fields.getTextInputValue("body");
 	// store, log, post to a channel...
-	await i.reply({ content: "Thanks!", ephemeral: true });
+	await i.reply({ content: "Thanks!", flags: MessageFlags.Ephemeral });
 });
 ```
 
