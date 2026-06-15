@@ -139,6 +139,8 @@ await handler.destroy();   // Removes listeners, awaits plugin teardown
 
 `destroy()` does **not** delete the registered application commands from Discord — those persist until you explicitly clear them.
 
+After `handler.ready`, Discord `clientReady`, and command registration complete, DJS Commands prints a startup summary with the package version, bot tag, loaded command count, registration scopes, legacy mode, storage, cache, and dev mode. Pass `startupLog: false` to silence it, or `startupLog: "line"` for compact log output.
+
 ### Registration scopes
 
 Discord has separate global and guild application command scopes. The handler owns only the scopes you configure:

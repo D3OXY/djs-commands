@@ -149,10 +149,6 @@ handler.ready.catch((err) => {
 \tprocess.exit(1);
 });
 
-client.once("clientReady", (c) => {
-\tconsole.log(\`Logged in as \${c.user.tag}\`);
-});
-
 await client.login(token);
 `;
 }

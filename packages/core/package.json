@@ -26,6 +26,9 @@
 	"peerDependencies": {
 		"discord.js": "^14.26.0"
 	},
+	"dependencies": {
+		"picocolors": "^1.1.1"
+	},
 	"devDependencies": {
 		"@djs-commands/tsconfig": "workspace:*",
 		"@types/bun": "catalog:",

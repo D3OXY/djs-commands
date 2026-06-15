@@ -121,6 +121,20 @@ export interface StorageFeaturesConfig {
 	channelLocks?: boolean;
 }
 
+/** Startup console output style. `box` is best for local terminals; `line` is compact for logs and CI. */
+export type StartupLogStyle = "box" | "line";
+
+/** Startup console output configuration. Pass `false` to silence the DJS Commands boot banner. */
+export type StartupLogConfig =
+	| boolean
+	| StartupLogStyle
+	| {
+			/** Disable startup output without removing the option object. */
+			enabled?: boolean;
+			/** Force a specific output shape. Defaults to `box` in TTY terminals and `line` elsewhere. */
+			style?: StartupLogStyle;
+	  };
+
 /** Options passed to `createCommandHandler` to wire a discord.js client. */
 export interface CommandHandlerOptions {
 	/** Discord.js client instance. */
@@ -151,6 +165,8 @@ export interface CommandHandlerOptions {
 	storage?: Storage;
 	/** Opt into storage-backed framework features. */
 	storageFeatures?: StorageFeaturesConfig;
+	/** Prints a DJS Commands boot summary after the client is ready and command registration completes. Defaults to enabled. */
+	startupLog?: StartupLogConfig;
 }
 
 /** Handle returned by `createCommandHandler`. */
