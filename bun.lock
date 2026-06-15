@@ -88,7 +88,7 @@
     },
     "packages/adapter-drizzle": {
       "name": "@djs-commands/adapter-drizzle",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "devDependencies": {
         "@djs-commands/core": "workspace:*",
         "@djs-commands/tsconfig": "workspace:*",
@@ -106,7 +106,7 @@
     },
     "packages/adapter-mongoose": {
       "name": "@djs-commands/adapter-mongoose",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "devDependencies": {
         "@djs-commands/core": "workspace:*",
         "@djs-commands/tsconfig": "workspace:*",
@@ -122,7 +122,7 @@
     },
     "packages/adapter-prisma": {
       "name": "@djs-commands/adapter-prisma",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "devDependencies": {
         "@djs-commands/core": "workspace:*",
         "@djs-commands/tsconfig": "workspace:*",
@@ -139,7 +139,7 @@
     },
     "packages/adapter-redis": {
       "name": "@djs-commands/adapter-redis",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "devDependencies": {
         "@djs-commands/core": "workspace:*",
         "@djs-commands/tsconfig": "workspace:*",
@@ -156,7 +156,10 @@
     },
     "packages/core": {
       "name": "@djs-commands/core",
-      "version": "2.0.1",
+      "version": "3.0.0",
+      "dependencies": {
+        "picocolors": "^1.1.1",
+      },
       "devDependencies": {
         "@djs-commands/tsconfig": "workspace:*",
         "@types/bun": "catalog:",
@@ -171,7 +174,7 @@
     },
     "packages/create-djs-commands": {
       "name": "create-djs-commands",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "bin": {
         "create-djs-commands": "dist/cli.js",
       },
@@ -188,7 +191,7 @@
     },
     "packages/jsx": {
       "name": "@djs-commands/jsx",
-      "version": "2.0.1",
+      "version": "3.0.0",
       "devDependencies": {
         "@djs-commands/tsconfig": "workspace:*",
         "@types/bun": "catalog:",

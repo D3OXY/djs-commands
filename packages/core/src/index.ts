@@ -101,6 +101,8 @@ export type {
 	HandlerLegacyConfig,
 	LegacyRunContext,
 	SlashRunContext,
+	StartupLogConfig,
+	StartupLogStyle,
 	StorageFeaturesConfig,
 } from "./types";
 export type { CanRunCommand, ValidationResult, Validator, ValidatorContext, ValidatorSource } from "./validators";

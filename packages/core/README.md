@@ -46,6 +46,7 @@ Prefer scaffolding? Run `npx create-djs-commands my-bot` and you're online in un
 - **Storage** — user-owned schema for `guild_prefix`, `disabled_commands`, and `channel_locks` framework models. [Docs →](https://djscommands.deoxy.dev/concepts/storage)
 - **Components V2** — function-form builders (`button`, `container`, `section`, `modal`, …); pair with [`@djs-commands/jsx`](https://www.npmjs.com/package/@djs-commands/jsx) for JSX. [Docs →](https://djscommands.deoxy.dev/components-v2)
 - **fs-autoloader** — `commandDir` autoloads files; hot reloads in dev.
+- **Startup summary** — prints a DJS Commands boot banner after registration; set `startupLog: false` for custom logging.
 
 ## Companion packages
 

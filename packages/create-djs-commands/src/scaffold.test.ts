@@ -132,6 +132,7 @@ test("legacy mode is reflected in src/index.ts and src/commands/ping.ts", async 
 	expect(index).toContain("legacy: { enabled: true");
 	expect(index).toContain("storageFeatures: { guildPrefixes: false }");
 	expect(index).toContain("GatewayIntentBits.MessageContent");
+	expect(index).not.toContain("clientReady");
 
 	const ping = await readFile(join(result.targetDir, "src/commands/ping.ts"), "utf8");
 	expect(ping).toContain("legacy:");

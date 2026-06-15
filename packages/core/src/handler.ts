@@ -3,6 +3,7 @@ import type { EventDefinition } from "./define-event";
 import { Dispatcher } from "./dispatcher";
 import { loadCommandEntriesFromDir, loadEventsFromDir, type WatchHandle, watchCommandsDir } from "./fs-loader";
 import { createRegistrationPlan, type RegistrationPlan } from "./registration";
+import { formatStartupLog, getCoreVersion } from "./startup-log";
 import { ChannelLocksModel, DisabledCommandsModel, type FrameworkStorageModel, GuildPrefixModel, getGuildPrefix } from "./storage";
 import type { AnyCommand, CommandHandler, CommandHandlerOptions, StorageFeaturesConfig } from "./types";
 
@@ -86,7 +87,19 @@ export function createCommandHandler(options: CommandHandlerOptions): CommandHan
 		if (!client.application) return;
 		readyClient = client;
 		bootPromise
-			.then(() => syncRegistration(client, allCommands, options.registration))
+			.then(async () => {
+				const plan = await syncRegistration(client, allCommands, options.registration);
+				logStartup(client, {
+					cacheConfigured: Boolean(options.cacheAdapter),
+					commandCount: allCommands.length,
+					dev,
+					legacy: { enabled: legacyEnabled, prefix: legacyPrefix },
+					registration: options.registration,
+					registrationPlan: plan,
+					startupLog: options.startupLog,
+					storage: { configured: Boolean(options.storage), features: storageFeatures },
+				});
+			})
 			.catch((err) => {
 				console.error("[djs-commands] Failed to register application commands:", err);
 			});
@@ -232,8 +245,40 @@ async function applyRegistrationPlan(client: Client<true>, plan: RegistrationPla
 	}
 }
 
-async function syncRegistration(client: Client<true>, commands: readonly AnyCommand[], registration: CommandHandlerOptions["registration"]): Promise<void> {
-	await applyRegistrationPlan(client, createRegistrationPlan(commands, registration));
+async function syncRegistration(client: Client<true>, commands: readonly AnyCommand[], registration: CommandHandlerOptions["registration"]): Promise<RegistrationPlan> {
+	const plan = createRegistrationPlan(commands, registration);
+	await applyRegistrationPlan(client, plan);
+	return plan;
+}
+
+function logStartup(
+	client: Client<true>,
+	input: {
+		cacheConfigured: boolean;
+		commandCount: number;
+		dev: boolean;
+		legacy: { enabled: boolean; prefix: string };
+		registration: CommandHandlerOptions["registration"];
+		registrationPlan: RegistrationPlan;
+		startupLog: CommandHandlerOptions["startupLog"];
+		storage: { configured: boolean; features: Required<StorageFeaturesConfig> };
+	}
+): void {
+	const message = formatStartupLog(
+		{
+			bot: client.user?.tag ?? client.user?.id,
+			cacheConfigured: input.cacheConfigured,
+			commandCount: input.commandCount,
+			dev: input.dev,
+			legacy: input.legacy,
+			registration: input.registration,
+			registrationPlan: input.registrationPlan,
+			storage: input.storage,
+			version: getCoreVersion(),
+		},
+		input.startupLog
+	);
+	if (message) console.log(message);
 }
 
 function logRegistrationError(err: unknown): void {

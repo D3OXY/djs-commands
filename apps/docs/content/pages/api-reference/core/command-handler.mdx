@@ -48,6 +48,7 @@ interface CommandHandlerOptions {
 	legacy?: HandlerLegacyConfig;
 	storage?: Storage;
 	storageFeatures?: StorageFeaturesConfig;
+	startupLog?: StartupLogConfig;
 }
 ```
 
@@ -67,6 +68,7 @@ interface CommandHandlerOptions {
 | `legacy` | Master switch + default prefix for legacy invocation. |
 | `storage` | Persistence adapter for enabled framework storage features. |
 | `storageFeatures` | Opt into storage-backed framework features. `guildPrefixes` defaults to `legacy.enabled`; `disabledCommands` and `channelLocks` default to `false`. |
+| `startupLog` | Controls the DJS Commands boot summary printed after the client is ready and registration completes. Defaults to enabled. |
 
 ## `HandlerRegistrationConfig`
 
@@ -162,3 +164,41 @@ interface StorageFeaturesConfig {
 ```
 
 Only enabled features query storage. If an enabled feature needs an unmapped framework model, `handler.ready` rejects.
+
+## `StartupLogConfig`
+
+```ts
+type StartupLogConfig =
+	| boolean
+	| "box"
+	| "line"
+	| {
+			enabled?: boolean;
+			style?: "box" | "line";
+	  };
+```
+
+By default, the handler prints a DJS Commands startup summary after `handler.ready`, Discord `clientReady`, and command registration complete. TTY terminals get a boxed summary; CI and redirected logs get a compact single line.
+
+```txt
+╭─ DJS Commands ─────────────────────────╮
+│ Version       3.0.1                    │
+│ Bot           MyBot#1234               │
+│ Commands      18 loaded                │
+│ Registration  guild sync: 1            │
+│ Legacy        enabled, prefix "!"      │
+│ Storage       configured               │
+│ Cache         memory                   │
+│ Dev           hot reload enabled       │
+╰────────────────────────────────────────╯
+```
+
+Disable it for fully custom logging:
+
+```ts
+createCommandHandler({
+	client,
+	commandDir: "./src/commands",
+	startupLog: false,
+});
+```

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { EventEmitter } from "node:events";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -35,9 +35,11 @@ const makeClient = () => {
 	const writableClient = client as unknown as {
 		application: { commands: { set: typeof globalSetMock } };
 		guilds: { fetch: typeof guildFetchMock };
+		user: { tag: string };
 	};
 	writableClient.application = { commands: { set: globalSetMock } };
 	writableClient.guilds = { fetch: guildFetchMock };
+	writableClient.user = { tag: "TestBot#0001" };
 	return { client, globalSetMock, guildFetchMock, guildSetCalls };
 };
 
@@ -50,8 +52,14 @@ const emitReady = async (client: Client): Promise<void> => {
 const namesFromData = (data: unknown): string[] => (data as { name: string }[]).map((entry) => entry.name);
 
 const tempDirs: string[] = [];
+let consoleLogSpy: ReturnType<typeof spyOn> | undefined;
+
+beforeEach(() => {
+	consoleLogSpy = spyOn(console, "log").mockImplementation(() => {});
+});
 
 afterEach(async () => {
+	consoleLogSpy?.mockRestore();
 	await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
@@ -109,6 +117,28 @@ describe("handler registration", () => {
 		await emitReady(client);
 
 		expect(namesFromData(globalSetMock.mock.calls[0]?.[0])).toEqual(["base", "from-plugin"]);
+
+		await handler.destroy();
+	});
+
+	test("prints a startup summary after registration", async () => {
+		const { client } = makeClient();
+		const handler = createCommandHandler({
+			client,
+			commands: [command("ping"), command("role")],
+			registration: { guilds: ["guild-1"] },
+			startupLog: "line",
+		});
+		await handler.ready;
+
+		await emitReady(client);
+
+		expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+		const output = String(consoleLogSpy?.mock.calls[0]?.[0]);
+		expect(output).toContain("[djs-commands] ready");
+		expect(output).toContain("bot TestBot#0001");
+		expect(output).toContain("commands 2 loaded");
+		expect(output).toContain("registration guild sync: 1");
 
 		await handler.destroy();
 	});
