@@ -60,7 +60,7 @@ interface BaseRunContext {
 	channel: TextBasedChannel | null;
 	channelId: string | null;
 	options: ResolveOptions<S>; // typed from your `options` schema
-	reply: (content: string | { content?: string; ephemeral?: boolean }) => Promise<unknown>;
+	reply: (content: CommandReplyInput) => Promise<unknown>; // use flags: MessageFlags.Ephemeral for ephemeral slash replies
 }
 
 type SlashRunContext = BaseRunContext & { type: "slash"; interaction: ChatInputCommandInteraction };
@@ -70,9 +70,11 @@ type LegacyRunContext = BaseRunContext & { type: "legacy"; message: Message };
 When you need source-specific behavior, narrow on `ctx.type`:
 
 ```ts
+import { MessageFlags } from "discord.js";
+
 run: async (ctx) => {
 	if (ctx.type === "slash") {
-		await ctx.interaction.deferReply({ ephemeral: true });
+		await ctx.interaction.deferReply({ flags: MessageFlags.Ephemeral });
 	}
 	await ctx.reply("hi");
 }

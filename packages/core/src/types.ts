@@ -1,4 +1,15 @@
-import type { ChatInputCommandInteraction, Client, Guild, GuildMember, Message, PermissionsString, TextBasedChannel, User } from "discord.js";
+import type {
+	ChatInputCommandInteraction,
+	Client,
+	Guild,
+	GuildMember,
+	InteractionReplyOptions,
+	Message,
+	MessageReplyOptions,
+	PermissionsString,
+	TextBasedChannel,
+	User,
+} from "discord.js";
 import type { CacheAdapter, CooldownConfig } from "./cooldowns";
 import type { CommandOptions, ResolveOptions } from "./options";
 import type { PluginManifest } from "./plugin";
@@ -7,6 +18,8 @@ import type { Storage } from "./storage";
 import type { CanRunCommand, Validator } from "./validators";
 
 /** Shared fields available to both slash and legacy command runs. */
+export type CommandReplyInput = string | Omit<InteractionReplyOptions, "ephemeral"> | MessageReplyOptions;
+
 interface BaseRunContext<S extends CommandOptions = Record<string, never>> {
 	/** Discord.js client that received the command. */
 	client: Client;
@@ -22,8 +35,8 @@ interface BaseRunContext<S extends CommandOptions = Record<string, never>> {
 	channelId: string | null;
 	/** Typed option values resolved from slash options or legacy positional args. */
 	options: ResolveOptions<S>;
-	/** Convenience reply helper for slash interactions and legacy messages. */
-	reply: (content: string | { content?: string; ephemeral?: boolean; [key: string]: unknown }) => Promise<unknown>;
+	/** Convenience reply helper for slash interactions and legacy messages. Use `flags: MessageFlags.Ephemeral` for ephemeral slash replies. */
+	reply: (content: CommandReplyInput) => Promise<unknown>;
 }
 
 /** Command context for slash-command invocations. Narrow with `ctx.type === "slash"`. */
