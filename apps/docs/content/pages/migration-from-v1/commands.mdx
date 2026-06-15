@@ -5,7 +5,7 @@ description: CommandType.SLASH/LEGACY/BOTH and callback(usage) become defineComm
 
 # Command files
 
-v1 used `CommandType.SLASH | LEGACY | BOTH` and a `callback(usage)` shape. v2 unifies everything under `defineCommand`. The same `defineCommand` serves slash invocations, prefix invocations, or both.
+v1 used `CommandType.SLASH | LEGACY | BOTH` and a `callback(usage)` shape. v3 unifies everything under `defineCommand`. The same `defineCommand` serves slash invocations, prefix invocations, or both.
 
 ## Slash command
 
@@ -23,7 +23,7 @@ module.exports = {
 ```
 
 ```ts
-// v2 — commands/ping.ts
+// v3 — commands/ping.ts
 import { defineCommand } from "@djs-commands/core";
 
 export default defineCommand({
@@ -40,7 +40,7 @@ The big shifts:
 - `module.exports = { … }` → `export default defineCommand({ … })`. The wrapper is just an identity function for type inference.
 - `callback(usage)` → `run(ctx)`. The `ctx` is normalized — `ctx.reply(...)` works for both slash and legacy invocations.
 - Slash is the default; you don't need a `type` flag.
-- Filename → command name in v1 was implicit; v2 is explicit (`name: "ping"`).
+- Filename → command name in v1 was implicit; v3 is explicit (`name: "ping"`).
 
 ## Slash + legacy from one definition
 
@@ -59,7 +59,7 @@ module.exports = {
 ```
 
 ```ts
-// v2 — commands/ping.ts
+// v3 — commands/ping.ts
 export default defineCommand({
     name: "ping",
     description: "Replies with pong",
@@ -83,7 +83,7 @@ run: async (ctx) => {
 
 ## Typed options
 
-v1 didn't infer types for command arguments. v2 does — `options.user` is typed as `User`, `options.message` is typed as `string`, choices narrow to literal unions.
+v1 didn't infer types for command arguments. v3 does — `options.user` is typed as `User`, `options.message` is typed as `string`, choices narrow to literal unions.
 
 ```ts
 // v1 — manually pulled args from `usage.args` (string[])
@@ -99,7 +99,7 @@ module.exports = {
 ```
 
 ```ts
-// v2 — schema is the source of truth, run handler args inferred
+// v3 — schema is the source of truth, run handler args inferred
 export default defineCommand({
     name: "echo",
     description: "Echo a message",
@@ -117,7 +117,7 @@ In legacy mode, arguments are auto-parsed from the message text using the same s
 
 ## Cooldowns
 
-v1 had a global `cooldownConfig` plus per-command cooldown declarations. v2 is per-command only:
+v1 had a global `cooldownConfig` plus per-command cooldown declarations. v3 is per-command only:
 
 ```ts
 // v1
@@ -130,7 +130,7 @@ module.exports = {
 ```
 
 ```ts
-// v2
+// v3
 export default defineCommand({
     name: "ping",
     description: "…",

@@ -1,6 +1,6 @@
 # Releasing
 
-This repo ships v2.x of `@djs-commands/*` packages via [Changesets](https://github.com/changesets/changesets) + GitHub Actions, authenticating to npm via [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (OIDC). No long-lived `NPM_TOKEN` secret is required.
+This repo ships v3.x of `@djs-commands/*` packages via [Changesets](https://github.com/changesets/changesets) + GitHub Actions, authenticating to npm via [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (OIDC). No long-lived `NPM_TOKEN` secret is required.
 
 ## Day-to-day flow
 
@@ -73,13 +73,13 @@ You'll need to be logged in via `npm login` and have publish access. Note that p
 
 ## v1 sunset
 
-After v2.0.0 publishes successfully, the maintainer also handles the v1 deprecation (these are one-way actions, not automated):
+After the current major publishes successfully, the maintainer also handles the v1 deprecation (these are one-way actions, not automated):
 
 ```bash
 # Final v1 maintenance release (replaces README with deprecation notice)
 git checkout v1-final-commit
 git switch -c v1-maintenance
-# … edit packages/v1's README.md to point at v2 …
+# … edit packages/v1's README.md to point at v3 …
 npm version patch       # bumps to 1.4.11 or similar
 npm publish --access public
 
@@ -87,7 +87,7 @@ npm publish --access public
 npm deprecate '@d3oxy/djs-commands@<2' '@d3oxy/djs-commands is unmaintained. Migrate to @djs-commands/core — see https://djscommands.deoxy.dev/migration-from-v1'
 
 # Update the GitHub repo description to mention the new package name
-# Open and pin a GitHub issue announcing v2
+# Open and pin a GitHub issue announcing the current major
 ```
 
 These steps are spelled out in [slice #67](https://github.com/D3OXY/djs-commands/issues/67).

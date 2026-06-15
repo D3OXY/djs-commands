@@ -1,13 +1,13 @@
 ---
 title: Handler options
-description: Mapping every v1 CommandHandler option to v2
+description: Mapping every v1 CommandHandler option to v3
 ---
 
 # Handler options
 
-Every option you passed to `new CommandHandler({ … })` in v1 has a mapping in v2.
+Every option you passed to `new CommandHandler({ … })` in v1 has a mapping in v3.
 
-| v1 option | v2 equivalent |
+| v1 option | v3 equivalent |
 |---|---|
 | `client` | `client` (unchanged) |
 | `mongoUri` | Own a Mongoose connection/model and pass mapped `storage` from `@djs-commands/adapter-mongoose` |
@@ -53,7 +53,7 @@ client.login(process.env.TOKEN);
 ```
 
 ```ts
-// v2
+// v3
 import { createCommandHandler } from "@djs-commands/core";
 import { Client, GatewayIntentBits } from "discord.js";
 import { fileURLToPath } from "node:url";
@@ -74,7 +74,7 @@ createCommandHandler({
     eventDir: fileURLToPath(new URL("./events", import.meta.url)),
     legacy: { enabled: true, defaultPrefix: "!" },
     botOwners: ["123…"],
-    // cooldowns are per-command in v2 — no global config
+    // cooldowns are per-command in v3 — no global config
 });
 
 await client.login(process.env.TOKEN!);
@@ -82,7 +82,7 @@ await client.login(process.env.TOKEN!);
 
 Notes:
 
-- v2 doesn't wait for `ready` to wire up — you call `createCommandHandler` synchronously after constructing the `Client`.
-- v2's `commandDir` accepts a path string. We use `fileURLToPath(new URL(...))` so it works under both Bun and Node + tsx; v1's `path.join(__dirname, ...)` worked because v1 was CJS — v2 is ESM.
+- v3 doesn't wait for `ready` to wire up — you call `createCommandHandler` synchronously after constructing the `Client`.
+- v3's `commandDir` accepts a path string. We use `fileURLToPath(new URL(...))` so it works under both Bun and Node + tsx; v1's `path.join(__dirname, ...)` worked because v1 was CJS — v3 is ESM.
 - `cooldownConfig.dbRequired` (v1's "use DB if duration ≥ 5min") doesn't exist. Cooldowns default to in-memory; provide a `cacheAdapter` (e.g. `@djs-commands/adapter-redis`) for distributed cooldowns.
 - Guild registration is no longer described as only testing. Use guild sync for private single-server bots or fast iteration; use global sync for public rollout.

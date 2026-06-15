@@ -5,7 +5,7 @@ description: What didn't make the cut and why
 
 # Dropped features
 
-These features existed in v1 and intentionally don't ship in v2. Each section explains the rationale and the recommended replacement.
+These features existed in v1 and intentionally don't ship in v3. Each section explains the rationale and the recommended replacement.
 
 ## Custom commands (user-defined runtime slash commands)
 
@@ -13,7 +13,7 @@ v1 had a `custom-command-schema` and built-in `/customcommand` admin command tha
 
 **Why dropped**: it's a whole feature inside a feature. It complicates persistence (every adapter would have to support it), it's a moderate fraction of v1's surface area, and most users either built their own version with richer behavior or never used it at all.
 
-**Replacement**: build it yourself on top of v2 if you need it. Define an admin command (`/define`) that writes to your own table and dynamically registers handlers via your application logic. Your data shape, your UI.
+**Replacement**: build it yourself on top of v3 if you need it. Define an admin command (`/define`) that writes to your own table and dynamically registers handlers via your application logic. Your data shape, your UI.
 
 ## Built-in default admin commands
 
@@ -73,6 +73,6 @@ Guild sync is useful for private single-server bots and fast iteration, not only
 
 v1 had a magic 300-second threshold above which cooldowns were persisted to MongoDB and below which they were in-memory.
 
-**Why dropped**: it was a heuristic that pleased no one. v2 makes it explicit: in-memory by default; provide `cacheAdapter` (e.g. `@djs-commands/adapter-redis`) if you want distributed cooldowns regardless of duration.
+**Why dropped**: it was a heuristic that pleased no one. v3 makes it explicit: in-memory by default; provide `cacheAdapter` (e.g. `@djs-commands/adapter-redis`) if you want distributed cooldowns regardless of duration.
 
 **Replacement**: `cacheAdapter: redisCacheAdapter(redis)` from `@djs-commands/adapter-redis`.
