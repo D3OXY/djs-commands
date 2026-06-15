@@ -3,6 +3,7 @@ import type { Redis } from "ioredis";
 
 const DEFAULT_KEY_PREFIX = "djs-commands:";
 
+/** Options for `redisCacheAdapter`. Redis is a `CacheAdapter` for cooldowns, not durable `Storage`. */
 export interface RedisCacheAdapterOptions {
 	/**
 	 * Prefix prepended to every Redis key written/read by this adapter.
@@ -28,7 +29,7 @@ export interface RedisCacheAdapterOptions {
  * const redis = new Redis(process.env.REDIS_URL!);
  * const cache = redisCacheAdapter(redis, { keyPrefix: "my-bot:" });
  *
- * createCommandHandler({ client, commands, cache });
+ * createCommandHandler({ client, commands, cacheAdapter: cache });
  * ```
  */
 export function redisCacheAdapter(redis: Redis, options: RedisCacheAdapterOptions = {}): CacheAdapter {

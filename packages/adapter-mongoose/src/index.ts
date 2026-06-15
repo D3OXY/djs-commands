@@ -1,15 +1,39 @@
 import { assertRequiredStorageFields, type FrameworkStorageModel, type Storage, type StorageFindOpts } from "@djs-commands/core";
 import type mongoose from "mongoose";
 
+/** Mapping from one djs-commands framework model to an app-owned Mongoose model. */
 export interface MongooseModelMapping {
+	/** App-owned Mongoose model. DJS Commands never registers schemas or connects MongoDB. */
 	model: mongoose.Model<Record<string, unknown>>;
+	/** Logical framework fields mapped to document property names. */
 	fields: Record<string, string>;
 }
 
+/** Options for `mongooseStorage`. Map only models required by enabled storage features. */
 export interface MongooseStorageOptions {
+	/** Framework model mappings keyed by `GuildPrefixModel`, `DisabledCommandsModel`, or `ChannelLocksModel`. */
 	models: Partial<Record<FrameworkStorageModel, MongooseModelMapping>>;
 }
 
+/**
+ * Creates a Storage adapter backed by Mongoose.
+ *
+ * @remarks
+ * Your app owns schemas, indexes, model names, migrations/backfills, and connection lifecycle.
+ * This adapter only translates djs-commands logical fields to mapped document properties.
+ *
+ * @example
+ * ```ts
+ * mongooseStorage({
+ *   models: {
+ *     [GuildPrefixModel]: {
+ *       model: GuildPrefix as mongoose.Model<Record<string, unknown>>,
+ *       fields: { guild_id: "guildId", prefix: "prefix" },
+ *     },
+ *   },
+ * });
+ * ```
+ */
 export function mongooseStorage(options: MongooseStorageOptions): Storage {
 	const models = resolveModels(options);
 

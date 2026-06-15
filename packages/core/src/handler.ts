@@ -6,6 +6,24 @@ import { createRegistrationPlan, type RegistrationPlan } from "./registration";
 import { ChannelLocksModel, DisabledCommandsModel, type FrameworkStorageModel, GuildPrefixModel, getGuildPrefix } from "./storage";
 import type { AnyCommand, CommandHandler, CommandHandlerOptions, StorageFeaturesConfig } from "./types";
 
+/**
+ * Wires commands, events, validators, cooldowns, plugins, storage, and Discord registration into a client.
+ *
+ * @remarks
+ * Omitted registration syncs global commands, which can take time to appear in Discord.
+ * Guild registration is faster for development. Storage-backed gates are opt-in and
+ * require mapped models only for enabled `storageFeatures`.
+ *
+ * @example
+ * ```ts
+ * const handler = createCommandHandler({
+ *   client,
+ *   commandDir: "./src/commands",
+ *   registration: { guilds: ["123456789012345678"] },
+ * });
+ * await handler.ready;
+ * ```
+ */
 export function createCommandHandler(options: CommandHandlerOptions): CommandHandler {
 	const plugins = options.plugins ?? [];
 	const dev = options.dev ?? process.env.NODE_ENV !== "production";

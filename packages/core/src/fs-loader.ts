@@ -13,8 +13,11 @@ interface DirEntry {
 	isFile(): boolean;
 }
 
+/** Command discovered from a file-system command directory. */
 export interface CommandFileEntry {
+	/** Absolute file path that produced the command. */
 	file: string;
+	/** Command exported from the file. */
 	command: AnyCommand;
 }
 
@@ -54,11 +57,13 @@ async function importModule(file: string, cacheBust?: number): Promise<unknown> 
 	return mod.default ?? mod.command ?? mod.event ?? null;
 }
 
+/** Loads command default exports from every source file under a directory. */
 export async function loadCommandsFromDir(dir: string): Promise<AnyCommand[]> {
 	const entries = await loadCommandEntriesFromDir(dir);
 	return entries.map((entry) => entry.command);
 }
 
+/** Loads command exports with source file paths, used by hot reload bookkeeping. */
 export async function loadCommandEntriesFromDir(dir: string): Promise<CommandFileEntry[]> {
 	const absolute = resolve(dir);
 	const entries: CommandFileEntry[] = [];
@@ -69,6 +74,7 @@ export async function loadCommandEntriesFromDir(dir: string): Promise<CommandFil
 	return entries;
 }
 
+/** Loads `defineEvent` exports from every source file under a directory. */
 export async function loadEventsFromDir(dir: string): Promise<EventDefinition[]> {
 	const absolute = resolve(dir);
 	const events: EventDefinition[] = [];
@@ -79,7 +85,9 @@ export async function loadEventsFromDir(dir: string): Promise<EventDefinition[]>
 	return events;
 }
 
+/** Handle for stopping a file-system watcher. */
 export interface WatchHandle {
+	/** Stops watching and releases the underlying file-system watcher. */
 	stop: () => void;
 }
 

@@ -1,23 +1,54 @@
 import { assertRequiredStorageFields, type FrameworkStorageModel, type Storage, type StorageFindOpts } from "@djs-commands/core";
 
+/** Minimal Prisma delegate shape required by the storage adapter. Cast generated delegates to this type. */
 export type PrismaDelegate = {
+	/** Prisma `create`. */
 	create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+	/** Prisma `findFirst`. */
 	findFirst: (args: { where: Record<string, unknown> }) => Promise<Record<string, unknown> | null>;
+	/** Prisma `findMany`. */
 	findMany: (args: { where?: Record<string, unknown>; orderBy?: Record<string, "asc" | "desc">; take?: number; skip?: number }) => Promise<Record<string, unknown>[]>;
+	/** Prisma `updateMany`, used so compound unique constraints are optional. */
 	updateMany: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<{ count: number }>;
+	/** Prisma `deleteMany`. */
 	deleteMany: (args: { where: Record<string, unknown> }) => Promise<{ count: number }>;
+	/** Prisma `count`. */
 	count: (args: { where?: Record<string, unknown> }) => Promise<number>;
 };
 
+/** Mapping from one djs-commands framework model to an app-owned Prisma delegate. */
 export interface PrismaModelMapping {
+	/** App-owned Prisma delegate, such as `prisma.guildPrefix as PrismaDelegate`. */
 	delegate: PrismaDelegate;
+	/** Logical framework fields mapped to Prisma model property names. */
 	fields: Record<string, string>;
 }
 
+/** Options for `prismaStorage`. Map only models required by enabled storage features. */
 export interface PrismaStorageOptions {
+	/** Framework model mappings keyed by `GuildPrefixModel`, `DisabledCommandsModel`, or `ChannelLocksModel`. */
 	models: Partial<Record<FrameworkStorageModel, PrismaModelMapping>>;
 }
 
+/**
+ * Creates a Storage adapter backed by Prisma Client.
+ *
+ * @remarks
+ * Your app owns `schema.prisma`, migrations, model names, indexes, and Prisma Client lifecycle.
+ * This adapter only translates djs-commands logical fields to mapped delegate properties.
+ *
+ * @example
+ * ```ts
+ * prismaStorage({
+ *   models: {
+ *     [GuildPrefixModel]: {
+ *       delegate: prisma.guildPrefix as PrismaDelegate,
+ *       fields: { guild_id: "guildId", prefix: "prefix" },
+ *     },
+ *   },
+ * });
+ * ```
+ */
 export function prismaStorage(options: PrismaStorageOptions): Storage {
 	const models = resolveModels(options);
 

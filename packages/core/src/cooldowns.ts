@@ -1,8 +1,11 @@
 import type { AnyCommand } from "./types";
 
+/** Cooldown key scope. Pick the smallest scope that matches the command's intent. */
 export type CooldownType = "perUser" | "perGuild" | "perUserPerGuild" | "global";
 
+/** Cooldown behavior for one command. */
 export interface CooldownConfig {
+	/** Keying strategy for the cooldown. */
 	type: CooldownType;
 	/** Duration in milliseconds */
 	duration: number;
@@ -10,7 +13,9 @@ export interface CooldownConfig {
 
 /** Identifies the actor (and optionally the guild) for cooldown key derivation. */
 export interface CooldownActor {
+	/** Discord user ID. */
 	userId: string;
+	/** Discord guild ID, or null outside guild context. */
 	guildId: string | null;
 }
 
@@ -22,10 +27,13 @@ export interface CooldownActor {
 export interface CacheAdapter {
 	/** Returns the absolute expiry timestamp (ms), or null if missing/expired. */
 	get(key: string): Promise<number | null>;
+	/** Stores an absolute expiry timestamp with a TTL hint for stores such as Redis. */
 	set(key: string, expiresAt: number, ttlMs: number): Promise<void>;
+	/** Removes one cooldown key. */
 	delete(key: string): Promise<void>;
 }
 
+/** Applies command cooldown checks using memory or an optional shared `CacheAdapter`. */
 export class CooldownEngine {
 	private readonly memory = new Map<string, number>();
 	private readonly cache?: CacheAdapter;

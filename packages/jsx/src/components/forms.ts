@@ -45,12 +45,14 @@ interface PremiumButtonProps extends ButtonBaseProps {
 	skuId: string;
 }
 
+/** Props for `<Button>`. Interactive buttons need `customId`; link buttons need `url`; premium buttons need `skuId`. */
 export type ButtonProps = InteractiveButtonProps | LinkButtonProps | PremiumButtonProps;
 
 function resolveButtonStyle(style: ButtonStyle | ButtonStyleName): ButtonStyle {
 	return typeof style === "string" ? buttonStyleMap[style] : style;
 }
 
+/** Creates a Components V2 button node for action rows or section accessories. */
 export function Button(props: ButtonProps): ButtonNode {
 	const style = resolveButtonStyle(props.style);
 	if (style === ButtonStyle.Link) {
@@ -96,7 +98,9 @@ export function Button(props: ButtonProps): ButtonNode {
 	};
 }
 
+/** Props for `<ActionRow>`. In this JSX runtime, message action rows contain buttons. */
 export interface ActionRowProps {
+	/** Optional Discord component ID. */
 	id?: number;
 	/**
 	 * Accepts only `<Button>` children at runtime. Typed as `DjsxNode` so JSX
@@ -107,6 +111,7 @@ export interface ActionRowProps {
 	children?: Children<DjsxNode>;
 }
 
+/** Creates an action row node. Children must be `<Button>` nodes. */
 export function ActionRow(props: ActionRowProps): ActionRowNode {
 	const children = flattenChildren(props.children);
 	for (const child of children) {
@@ -121,6 +126,7 @@ export function ActionRow(props: ActionRowProps): ActionRowNode {
 	};
 }
 
+/** Friendly text input style aliases accepted by `<TextInput>`. */
 export type TextInputStyleName = "short" | "paragraph";
 
 const textInputStyleMap: Record<TextInputStyleName, TextInputStyle> = {
@@ -128,18 +134,29 @@ const textInputStyleMap: Record<TextInputStyleName, TextInputStyle> = {
 	paragraph: TextInputStyle.Paragraph,
 };
 
+/** Props for `<TextInput>`, used inside `<Modal>`. */
 export interface TextInputProps {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
+	/** Label text shown by Discord. */
 	label?: string;
+	/** Short or paragraph input style. Defaults to `short`. */
 	style?: TextInputStyle | TextInputStyleName;
+	/** Placeholder text shown before the user types. */
 	placeholder?: string;
+	/** Pre-filled value. */
 	value?: string;
+	/** Minimum accepted character count. */
 	minLength?: number;
+	/** Maximum accepted character count. */
 	maxLength?: number;
+	/** Whether Discord requires a value. */
 	required?: boolean;
+	/** Optional Discord component ID. */
 	id?: number;
 }
 
+/** Creates a modal text input node. */
 export function TextInput(props: TextInputProps): TextInputNode {
 	const rawStyle = props.style ?? "short";
 	const style = typeof rawStyle === "string" ? textInputStyleMap[rawStyle] : rawStyle;
@@ -160,15 +177,21 @@ export function TextInput(props: TextInputProps): TextInputNode {
 	};
 }
 
+/** Props for `<RadioGroup>`, used inside Components V2 modals. */
 export interface RadioGroupProps {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
 	/** Label text shown above the group inside a modal — required by Discord. */
 	label: string;
+	/** Optional helper text. */
 	description?: string;
+	/** Discord radio options. */
 	options: readonly APIRadioGroupOption[];
+	/** Whether Discord requires a selection. */
 	required?: boolean;
 }
 
+/** Creates a modal radio group node. */
 export function RadioGroup(props: RadioGroupProps): RadioGroupNode {
 	return {
 		$$kind: "radioGroup",
@@ -180,17 +203,25 @@ export function RadioGroup(props: RadioGroupProps): RadioGroupNode {
 	};
 }
 
+/** Props for `<CheckboxGroup>`, used inside Components V2 modals. */
 export interface CheckboxGroupProps {
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
 	/** Label text shown above the group inside a modal — required by Discord. */
 	label: string;
+	/** Optional helper text. */
 	description?: string;
+	/** Discord checkbox options. */
 	options: readonly APICheckboxGroupOption[];
+	/** Minimum number of selected values. */
 	minValues?: number;
+	/** Maximum number of selected values. */
 	maxValues?: number;
+	/** Whether Discord requires a selection. */
 	required?: boolean;
 }
 
+/** Creates a modal checkbox group node. */
 export function CheckboxGroup(props: CheckboxGroupProps): CheckboxGroupNode {
 	return {
 		$$kind: "checkboxGroup",
@@ -204,8 +235,11 @@ export function CheckboxGroup(props: CheckboxGroupProps): CheckboxGroupNode {
 	};
 }
 
+/** Props for `<Modal>`. Children must be form inputs/groups, not message components. */
 export interface ModalProps {
+	/** Modal title shown by Discord. */
 	title: string;
+	/** Developer-defined ID returned in modal submit interactions. */
 	customId: string;
 	/**
 	 * Accepts only `<TextInput>`, `<RadioGroup>`, and `<CheckboxGroup>`
@@ -215,6 +249,7 @@ export interface ModalProps {
 	children?: Children<DjsxNode>;
 }
 
+/** Creates a modal node for `renderModal()`. */
 export function Modal(props: ModalProps): ModalNode {
 	const children = flattenChildren(props.children);
 	for (const child of children) {

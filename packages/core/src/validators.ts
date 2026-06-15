@@ -1,22 +1,34 @@
 import type { ChatInputCommandInteraction, Guild, GuildMember, Message, User } from "discord.js";
 import type { AnyCommand } from "./types";
 
+/** Result returned by validators. A failed result replies with `reason`. */
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
 
+/** Invocation source passed to validators for slash and legacy commands. */
 export type ValidatorSource = { type: "slash"; interaction: ChatInputCommandInteraction } | { type: "legacy"; message: Message };
 
+/** Context available to built-in, global, and command-specific validators. */
 export interface ValidatorContext {
+	/** Command being checked. */
 	command: AnyCommand;
+	/** Handler-level owner IDs used by `ownerOnly`. */
 	botOwners: readonly string[];
+	/** Invoking Discord user. */
 	user: User;
+	/** Guild context, or null in DMs. */
 	guild: Guild | null;
+	/** Guild member when available. */
 	member: GuildMember | null;
+	/** Channel ID where the command was invoked. */
 	channelId: string;
+	/** Raw invocation source. */
 	source: ValidatorSource;
 }
 
+/** Validator function. Return `{ ok: false, reason }` to stop command execution. */
 export type Validator = (ctx: ValidatorContext) => ValidationResult | Promise<ValidationResult>;
 
+/** Lightweight command gate. Return `false` or a string reason to reject. */
 export type CanRunCommand = (ctx: ValidatorContext) => boolean | string | Promise<boolean | string>;
 
 const ownerOnly: Validator = ({ command, user, botOwners }) => {
@@ -75,6 +87,7 @@ interface ValidatorChainOptions {
 	canRunCommand?: CanRunCommand;
 }
 
+/** Runs built-in validators, global validators, command validators, then `canRunCommand`. */
 export async function runValidatorChain(ctx: ValidatorContext, options: ValidatorChainOptions = {}): Promise<ValidationResult> {
 	const commandValidators = ctx.command.validators ?? [];
 	const allValidators = [...BUILTIN_VALIDATORS, ...(options.globalValidators ?? []), ...commandValidators];

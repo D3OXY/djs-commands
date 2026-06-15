@@ -1,6 +1,7 @@
 import type { Message } from "discord.js";
 import type { CommandOption, CommandOptions, ResolveOptions } from "./options";
 
+/** Result of parsing legacy positional tokens into typed command options. */
 export type LegacyParseResult<S extends CommandOptions> = { ok: true; options: ResolveOptions<S> } | { ok: false; error: string };
 
 const USER_MENTION = /^<@!?(\d+)>$/;

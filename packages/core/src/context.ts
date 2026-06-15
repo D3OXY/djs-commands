@@ -2,6 +2,7 @@ import type { ChatInputCommandInteraction, GuildMember, Message } from "discord.
 import type { CommandOptions, ResolveOptions } from "./options";
 import type { LegacyRunContext, SlashRunContext } from "./types";
 
+/** Converts a discord.js chat-input interaction into the command run context shape. */
 export function normalizeSlashContext<S extends CommandOptions>(interaction: ChatInputCommandInteraction, options: ResolveOptions<S>): SlashRunContext<S> {
 	return {
 		type: "slash",
@@ -17,6 +18,7 @@ export function normalizeSlashContext<S extends CommandOptions>(interaction: Cha
 	};
 }
 
+/** Converts a discord.js message into the legacy command run context shape. */
 export function normalizeLegacyContext<S extends CommandOptions>(message: Message, options: ResolveOptions<S>): LegacyRunContext<S> {
 	return {
 		type: "legacy",

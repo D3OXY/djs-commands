@@ -7,6 +7,7 @@ import type { AnyCommand } from "./types";
  * over their own values.
  */
 export interface PluginSetupContext {
+	/** Discord.js client controlled by the handler. */
 	client: Client;
 }
 
