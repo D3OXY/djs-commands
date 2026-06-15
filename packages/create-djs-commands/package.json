@@ -1,6 +1,6 @@
 {
 	"name": "create-djs-commands",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Scaffolding CLI for djs-commands — `npx create-djs-commands`",
 	"author": "D3OXY <hello@deoxy.dev>",
 	"license": "MIT",

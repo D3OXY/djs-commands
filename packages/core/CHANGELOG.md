@@ -1,5 +1,16 @@
 # @djs-commands/core
 
+## 3.1.0
+
+### Minor Changes
+
+- ecd03cf: Add a styled DJS Commands startup summary after bot boot and registration, with scaffolded bots relying on the built-in boot output.
+
+### Patch Changes
+
+- 14762e0: Replace deprecated `ephemeral` response examples with `MessageFlags.Ephemeral` and stop advertising the deprecated option on the command reply helper type.
+- 5ff7936: Add public API TSDoc hover docs and coverage enforcement.
+
 ## 3.0.0
 
 ### Major Changes

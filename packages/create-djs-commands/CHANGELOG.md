@@ -1,5 +1,13 @@
 # create-djs-commands
 
+## 3.1.0
+
+### Patch Changes
+
+- 5ff7936: Add public API TSDoc hover docs and coverage enforcement.
+- ecd03cf: Add a styled DJS Commands startup summary after bot boot and registration, with scaffolded bots relying on the built-in boot output.
+- 5d6084a: Update scaffolded package versions and public docs wording for the v3 release line.
+
 ## 3.0.0
 
 ### Patch Changes
